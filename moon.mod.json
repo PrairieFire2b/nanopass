@@ -1,9 +1,14 @@
 {
   "name": "YumeXi/nanopass",
   "version": "0.1.0",
+  "deps": {
+    "moonbitlang/parser": "0.3.1",
+    "moonbitlang/x": "0.4.43"
+  },
   "readme": "README.mbt.md",
   "repository": "",
   "license": "BSD-2-Clause",
   "keywords": [],
+  "preferred-target": "wasm",
   "description": ""
 }
