@@ -15,7 +15,7 @@ pub struct Language[L] {
   _ignore : L?
 } derive(@debug.Debug)
 #callsite(autofill(_args_loc, loc))
-pub fn[L] Language::def(name? : String, loc~ : SourceLoc, _args_loc~ : ArgsLoc) -> Self[L]
+pub fn[L] Language::def(name? : String, loc~ : SourceLoc, _args_loc~ : ArgsLoc) -> Self[L] raise
 
 // Type aliases
 

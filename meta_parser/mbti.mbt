@@ -60,16 +60,17 @@ pub impl Debug for Mbti with fn to_repr(self) {
   let { package_name, imports, sigs, .. } = mbti
 
   // Convert imports to array of Repr using map
-  let imports_repr = Repr::array(
-    imports.map(package_import_to_repr).to_array()
-  )
+  let imports_repr = Repr::array(imports.map(package_import_to_repr).to_array())
 
   // Convert sigs to array of Repr using map
   let sigs_repr = Repr::array(
-    sigs.iter().map(fn(pair) {
+    sigs
+    .iter()
+    .map(fn(pair) {
       let (sig, _loc) = pair
       sig_to_repr(sig)
-    }).collect()
+    })
+    .collect(),
   )
 
   // Build a readable representation using Repr::record
@@ -83,8 +84,7 @@ pub impl Debug for Mbti with fn to_repr(self) {
 ///|
 /// Resolve SourceLocRepr to Mbti AST
 ///
-/// This function takes a `SourceLocRepr`
-/// and parses its package's interface
+/// This function takes a `SourceLocRepr` and parses its package's interface
 pub fn resolve_mbti(loc_repr : SourceLocRepr) -> Mbti raise {
   // Construct path to pkg.generated.mbti
   // Format: <pkg>/pkg.generated.mbti
@@ -94,6 +94,9 @@ pub fn resolve_mbti(loc_repr : SourceLocRepr) -> Mbti raise {
   let content = @fs.read_file_to_string(mbti_path.0)
 
   // Parse the content into Mbti AST
-  let (mbti, _reports) = @mbti_parser.parse_string(content)
+  let (mbti, reports) = @mbti_parser.parse_string(content)
+  if !reports.is_empty() {
+    raise InvalidMbti(reports.to_json())
+  }
   mbti
 }

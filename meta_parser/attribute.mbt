@@ -1,17 +1,5 @@
 ///|
-pub(all) suberror NanopassParseError {
-  InvalidAttribute(String)
-} derive(Debug)
-
-///|
-/// Result type for language definitions found in a file
-pub struct LanguageDefinition {
-  name : String
-  type_decl : @syntax.TypeDecl
-}
-
-///|
-pub impl @debug.Debug for LanguageDefinition with fn to_repr(self) {
+pub impl @debug.Debug for LanguageDef with fn to_repr(self) {
   @debug.Repr::record({
     "name": @debug.to_repr(self.name),
     "tycon": @debug.to_repr(self.type_decl.tycon),
@@ -44,38 +32,27 @@ pub fn get_name_from_attr(attr : @attribute.Attribute) -> String raise {
 }
 
 ///|
-pub fn find_languages(src : String) -> Array[LanguageDefinition] raise {
-  // Parse the source file
+pub fn find_languages(src : String) -> Array[LanguageDef] raise {
   let (impls, _reports) = @parser.parse_file(src)
-
-  // Collect language definitions
-  let results : Array[LanguageDefinition] = []
-
-  // Iterate through all top-level implementations
-  for impl_ in impls {
+  impls
+  .filter_map(impl_ => {
     match impl_ {
-      // Only interested in type definitions
       @syntax.TopTypeDef(type_decl) =>
-        // Check if it's an enum (Variant)
         match type_decl.components {
           @syntax.Variant(_constructors) =>
-            // Check if it has the nanopass.language attribute
-            type_decl.attrs.each(attr => {
-              match attr.raw {
-                [.. "#nanopass.language", ..] => {
-                  debug(attr.to_repr())
-                  results.push({ name: get_name_from_attr(attr), type_decl })
-                }
-                _ => ()
-              }
-            })
-          _ => () // Not an enum, skip
+            type_decl.attrs
+            .iter()
+            .find_first(attr => attr.raw is [.. "#nanopass.language", ..])
+            .map(
+              // debug(attr.to_repr())
+              attr => { name: get_name_from_attr(attr), type_decl },
+            )
+          _ => None
         }
-      _ => () // Not a type definition, skip
+      _ => None
     }
-  }
-
-  results
+  })
+  .to_array()
 }
 
 ///|

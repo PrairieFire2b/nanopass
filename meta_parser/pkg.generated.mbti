@@ -3,17 +3,33 @@ package "YumeXi/nanopass/meta_parser"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/parser/attribute",
   "moonbitlang/parser/mbti_ast",
+  "moonbitlang/parser/syntax",
 }
 
 // Values
+pub fn find_languages(String) -> Array[LanguageDef] raise
+
+pub fn get_name_from_attr(@attribute.Attribute) -> String raise
+
 pub fn resolve(SourceLoc) -> SourceLocRepr
 
 pub fn resolve_mbti(SourceLocRepr) -> Mbti raise
 
 // Errors
+pub(all) suberror NanopassParseError {
+  InvalidAttribute(String)
+  InvalidMbti(Json)
+} derive(@debug.Debug)
 
 // Types and methods
+pub struct LanguageDef {
+  name : String
+  type_decl : @syntax.TypeDecl
+}
+pub impl @debug.Debug for LanguageDef
+
 pub(all) struct Mbti(@mbti_ast.Mbti)
 pub impl @debug.Debug for Mbti
 
@@ -26,6 +42,7 @@ pub struct SourceLocRepr {
   mod : String
   pkg : String
 } derive(@debug.Debug)
+pub fn SourceLocRepr::file_path(Self) -> String
 
 // Type aliases
 

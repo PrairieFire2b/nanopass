@@ -18,6 +18,11 @@ pub struct SourceLocRepr {
 } derive(Debug)
 
 ///|
+pub fn SourceLocRepr::file_path(self : SourceLocRepr) -> String {
+  self.filename
+}
+
+///|
 /// Resolve SourceLoc to SourceLocRepr with module and package information
 /// Parses the SourceLoc.to_string() format and extracts all components.
 pub fn resolve(loc : SourceLoc) -> SourceLocRepr {
