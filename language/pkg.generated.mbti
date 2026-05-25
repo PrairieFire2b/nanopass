@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "YumeXi/nanopass/language"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct Language[L] {
+  language_name : String
+  _ignore : L?
+} derive(@debug.Debug)
+#callsite(autofill(_args_loc, loc))
+pub fn[L] Language::def(name? : String, loc~ : SourceLoc, _args_loc~ : ArgsLoc) -> Self[L]
+
+// Type aliases
+
+// Traits
+

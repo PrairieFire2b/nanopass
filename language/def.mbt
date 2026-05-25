@@ -5,13 +5,14 @@ pub struct Language[L] {
 } derive(Debug)
 
 ///|
-#callsite(autofill(loc, args_loc))
+#callsite(autofill(loc, _args_loc))
 pub fn[L] Language::def(
   name? : String = "",
   loc~ : SourceLoc,
-  args_loc~ : ArgsLoc,
+  _args_loc~ : ArgsLoc,
 ) -> Language[L] {
-  let _ = loc |> @meta_parser.resolve
+  let repr = loc |> @meta_parser.resolve
+  let mbti = @meta_parser.resolve_mbti(repr) catch { _ => ... }
   ...
   { language_name: name, _ignore: None }
 }

@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "YumeXi/nanopass/meta_parser"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/parser/mbti_ast",
+}
+
+// Values
+pub fn resolve(SourceLoc) -> SourceLocRepr
+
+pub fn resolve_mbti(SourceLocRepr) -> Mbti raise
+
+// Errors
+
+// Types and methods
+pub(all) struct Mbti(@mbti_ast.Mbti)
+pub impl @debug.Debug for Mbti
+
+pub struct SourceLocRepr {
+  filename : String
+  line_start : Int
+  col_start : Int
+  line_end : Int
+  col_end : Int
+  mod : String
+  pkg : String
+} derive(@debug.Debug)
+
+// Type aliases
+
+// Traits
+
