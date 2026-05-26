@@ -54,7 +54,7 @@ fn type_def_to_type_desc(td : @mbti_ast.TypeDefinition) -> @syntax.TypeDesc {
 }
 
 ///|
-pub fn sig_to_impl(sig : @mbti_ast.Sig) -> @syntax.Impl? {
+fn sig_to_impl(sig : @mbti_ast.Sig) -> @syntax.Impl? {
   match sig {
     Type(type_sig) => {
       let params = type_sig.type_params.map(fn(p) {

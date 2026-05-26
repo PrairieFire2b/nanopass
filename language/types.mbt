@@ -10,4 +10,5 @@ pub suberror LangError {
 pub struct Language {
   name : String
   group : Array[NanoLangDef]
+  interface : @meta_parser.Mbti
 } derive(Debug)

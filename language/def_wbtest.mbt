@@ -74,7 +74,8 @@ test "sig_to_impl" {
     pkg="poc",
     mod="YumeXi/nanopass",
   )
-  let ext = find_external_types(a, tree, @meta_parser.resolve_mbti(poc_repr))
+  let mbti = @meta_parser.resolve_mbti(poc_repr)
+  let ext = find_external_types(a, tree, mbti)
   let impls : @list.List[@syntax.Impl] = @list.from_array(
     ext.filter_map(sig_to_impl),
   )

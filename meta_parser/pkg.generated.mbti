@@ -35,9 +35,8 @@ pub(all) struct Diff {
   added_terminals : Array[Terminal]
   removed_terminals : Array[Terminal]
   changed_terminals : Array[Modified[Terminal]]
-}
+} derive(@debug.Debug)
 pub impl Show for Diff
-pub impl @debug.Debug for Diff
 
 pub enum Extensible {
 }
@@ -76,6 +75,7 @@ pub struct SourceLocRepr {
   pkg : String
 } derive(@debug.Debug)
 pub fn SourceLocRepr::file_path(Self) -> String
+pub fn SourceLocRepr::for_pkg(pkg~ : String, mod~ : String) -> Self
 
 pub struct Terminal(@syntax.ConstrDecl)
 pub impl @debug.Debug for Terminal

@@ -4,19 +4,26 @@ package "YumeXi/nanopass/language"
 import {
   "YumeXi/nanopass/meta_parser",
   "moonbitlang/core/debug",
+  "moonbitlang/core/list",
+  "moonbitlang/parser/syntax",
 }
 
 // Values
 
 // Errors
+pub suberror LangError {
+  NoLanguageFound
+}
 
 // Types and methods
 pub struct Language {
   name : String
   group : Array[@meta_parser.NanoLangDef]
+  interface : @meta_parser.Mbti
 } derive(@debug.Debug)
 #callsite(autofill(_args_loc, loc))
 pub fn Language::def(name? : String, loc~ : SourceLoc, _args_loc~ : ArgsLoc) -> Self raise
+pub fn Language::gen(Self) -> @list.List[@syntax.Impl] raise
 
 // Type aliases
 
