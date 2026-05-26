@@ -6,7 +6,7 @@ pub type Var = String
 pub(all) enum Expr {
   /// Terminals
   Int(Int)
-  Var(String)
+  Var(Var)
   /// Nonterminals
   Lam(Var, Expr)
   App(Expr, Expr)
@@ -28,11 +28,11 @@ enum TypedExpr {
   True
   False
   Int(Int)
-  Var(String)
+  Var(Var)
   /// Nonterminals
-  If(TypedExpr, TypedExpr)
+  If(cond~ : TypedExpr, TypedExpr, TypedExpr)
   Lam(Var, Type, TypedExpr)
-  App(TypedExpr)
+  App(TypedExpr, TypedExpr)
 } derive(Debug)
 
 ///|

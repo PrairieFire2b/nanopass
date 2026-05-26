@@ -7,7 +7,11 @@ pub fn Language::def(
 ) -> Language raise {
   let repr = loc |> @meta_parser.resolve
   let mbti = @meta_parser.resolve_mbti(repr)
-  let langs = @meta_parser.find_languages(repr)
+  let langs = @meta_parser.find_languages(repr).filter(lang => {
+    // TODO: should use more refined checking, because
+    // when L1 extends L0 and L2 extends L1, they both belong to the L0 group
+    lang.name == name || (lang.extends is Some(name_) && name_ == name)
+  })
   let _tree = gen_tree_def(langs, _mbti=mbti)
   { name, group: langs }
 }

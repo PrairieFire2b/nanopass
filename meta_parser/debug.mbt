@@ -1,21 +1,41 @@
 ///|
+fn constr_to_string(c : @syntax.ConstrDecl) -> String {
+  let name = c.name.name
+  match c.args {
+    Some(args) => {
+      let params = StringBuilder::new()
+      args.eachi(fn(i, p) {
+        if i > 0 {
+          params.write_string(", ")
+        }
+        match p.ty {
+          @syntax.Name(constr_id~, ..) =>
+            match constr_id.id {
+              @syntax.Ident(name~) => params.write_string(name)
+              @syntax.Dot(id~, ..) => params.write_string(id)
+            }
+          _ => params.write_string("_")
+        }
+      })
+      "\{name}(\{params.to_string()})"
+    }
+    None => name
+  }
+}
+
+///|
 pub impl Debug for NonTerminal with fn to_repr(self) -> Repr {
   match self {
-    Constructor(constrs) => {
-      let arr : Array[Repr] = []
-      constrs.each(fn(c) { arr.push(Repr::string(c.name.name)) })
-      Repr::ctor("Constructor", [(None, Repr::array(arr))])
-    }
+    Constructor(c) =>
+      Repr::ctor("Constructor", [(None, Repr::literal(constr_to_string(c)))])
     TypeDecl(td) => Repr::ctor("TypeDecl", [(None, Repr::string(td.tycon))])
   }
 }
 
 ///|
 pub impl Debug for Terminal with fn to_repr(self) -> Repr {
-  let Terminal(constrs) = self
-  let arr : Array[Repr] = []
-  constrs.each(fn(c) { arr.push(Repr::string(c.name.name)) })
-  Repr::record({ "constructors": Repr::array(arr) })
+  let Terminal(c) = self
+  Repr::literal(constr_to_string(c))
 }
 
 ///|
@@ -26,5 +46,19 @@ pub impl Debug for NanoLangDef with fn to_repr(self) -> Repr {
     "nonterminals": @debug.to_repr(self.nonterminals),
     "terminals": @debug.to_repr(self.terminals),
     "tycon": Repr::string(self.type_decl.tycon),
+  })
+}
+
+///|
+pub impl Debug for Diff with fn to_repr(self) -> Repr {
+  Repr::record({
+    "origin": to_repr(self.origin),
+    "deriv": to_repr(self.deriv),
+    "added_nonterminals": @debug.to_repr(self.added_nonterminals),
+    "removed_nonterminals": @debug.to_repr(self.removed_nonterminals),
+    "changed_nonterminals": @debug.to_repr(self.changed_nonterminals),
+    "added_terminals": @debug.to_repr(self.added_terminals),
+    "removed_terminals": @debug.to_repr(self.removed_terminals),
+    "changed_terminals": @debug.to_repr(self.changed_terminals),
   })
 }

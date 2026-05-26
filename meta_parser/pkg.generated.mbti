@@ -9,7 +9,9 @@ import {
 }
 
 // Values
-pub fn find_languages(String) -> Array[LanguageDef] raise
+pub fn find_languages(SourceLocRepr) -> Array[NanoLangDef] raise
+
+pub fn find_languages_by_file(String) -> Array[NanoLangDef] raise
 
 pub fn get_name_from_attr(@attribute.Attribute) -> String raise
 
@@ -24,14 +26,45 @@ pub(all) suberror NanopassParseError {
 } derive(@debug.Debug)
 
 // Types and methods
-pub struct LanguageDef {
-  name : String
-  type_decl : @syntax.TypeDecl
+pub(all) struct Diff {
+  origin : NanoLangDef
+  deriv : NanoLangDef
+  added_nonterminals : Array[NonTerminal]
+  removed_nonterminals : Array[NonTerminal]
+  changed_nonterminals : Array[Modified[NonTerminal]]
+  added_terminals : Array[Terminal]
+  removed_terminals : Array[Terminal]
+  changed_terminals : Array[Modified[Terminal]]
 }
-pub impl @debug.Debug for LanguageDef
+pub impl Show for Diff
+pub impl @debug.Debug for Diff
+
+pub enum Extensible {
+}
 
 pub(all) struct Mbti(@mbti_ast.Mbti)
 pub impl @debug.Debug for Mbti
+
+pub(all) struct Modified[T] {
+  origin : T
+  modified : T
+} derive(@debug.Debug)
+
+pub struct NanoLangDef {
+  name : String
+  extends : String?
+  nonterminals : Array[NonTerminal]
+  terminals : Array[Terminal]
+  type_decl : @syntax.TypeDecl
+}
+pub fn NanoLangDef::diff(Self, Self) -> Diff
+pub impl @debug.Debug for NanoLangDef
+
+pub enum NonTerminal {
+  Constructor(@syntax.ConstrDecl)
+  TypeDecl(@syntax.TypeDecl)
+}
+pub impl @debug.Debug for NonTerminal
 
 pub struct SourceLocRepr {
   filename : String
@@ -43,6 +76,9 @@ pub struct SourceLocRepr {
   pkg : String
 } derive(@debug.Debug)
 pub fn SourceLocRepr::file_path(Self) -> String
+
+pub struct Terminal(@syntax.ConstrDecl)
+pub impl @debug.Debug for Terminal
 
 // Type aliases
 

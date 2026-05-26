@@ -118,19 +118,8 @@ fn parse_languages_from_impls(
                 }
               })
 
-              // NonTerminal::Constructor for self-referencing constructors
-              let self_ref_constrs = constructors.filter(fn(c) {
-                match c.args {
-                  Some(args) => args.any(fn(p) { type_to_name(p.ty) == tycon })
-                  None => false
-                }
-              })
-              if self_ref_constrs.length() > 0 {
-                nonterminals.push(NonTerminal::Constructor(self_ref_constrs))
-              }
-
-              // Terminal constructors: neither self-ref nor nonterminal-type-ref
-              let terminal_constrs = constructors.filter(fn(c) {
+              // Classify each constructor
+              constructors.each(fn(c) {
                 let self_ref = match c.args {
                   Some(args) => args.any(fn(p) { type_to_name(p.ty) == tycon })
                   None => false
@@ -140,11 +129,14 @@ fn parse_languages_from_impls(
                     args.any(fn(p) { nt_names.contains(type_to_name(p.ty)) })
                   None => false
                 }
-                !self_ref && !nt_ref
+                if self_ref {
+                  nonterminals.push(NonTerminal::Constructor(c))
+                } else if nt_ref {
+                  ()
+                } else {
+                  terminals.push(Terminal(c))
+                }
               })
-              if terminal_constrs.length() > 0 {
-                terminals.push(Terminal(terminal_constrs))
-              }
 
               { name, extends, nonterminals, terminals, type_decl }
             })
