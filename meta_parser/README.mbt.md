@@ -7,7 +7,7 @@ Parse MoonBit source files annotated with `#nanopass.language(...)` and `#nanopa
 1. Annotate an enum with `#nanopass.language(name="...")` to declare a language.
 2. Constructors that reference the enum's own type are automatically detected as nonterminals.
 3. Mark external enum types with `#nanopass.nonterminal`; any constructor referencing such a type gets it added as a nonterminal.
-  - **TODO**: Constructors referencing external nonterminals should also be recognized as nonterminals 
+  - **NOTE**: Constructors referencing external nonterminals are also recognized as nonterminals 
 4. Call `find_languages` or `find_languages_by_file` to collect all `NanoLangDef`s from a file.
 5. Use `NanoLangDef::diff` to compare two language definitions and obtain a structured `Diff`.
   - **NOTE**: Only comparisons between languages ​​that share the same base language are expected.
