@@ -27,16 +27,18 @@ A language definition extracted from a single annotated enum.
 ### `NonTerminal`
 
 ```mbt nocheck
+///|
 pub enum NonTerminal {
-  Constructor(@syntax.ConstrDecl)  // a nonterminal constructor
-  TypeDecl(@syntax.TypeDecl)       // an external type marked #nanopass.nonterminal
+  Constructor(@syntax.ConstrDecl) // a nonterminal constructor
+  TypeDecl(@syntax.TypeDecl) // an external type marked #nanopass.nonterminal
 }
 ```
 
 ### `Terminal`
 
 ```mbt nocheck
-pub struct Terminal(@syntax.ConstrDecl)  // a leaf / non-recursive constructor
+///|
+pub struct Terminal(@syntax.ConstrDecl) // a leaf / non-recursive constructor
 ```
 
 ### `Diff`
@@ -87,6 +89,7 @@ Load and parse the `pkg.generated.mbti` interface file for the package containin
 Given a source file `lang_def.mbt`:
 
 ```mbt nocheck
+///|
 #nanopass.language(name="Lambda")
 pub(all) enum Expr {
   Int(Int)
@@ -95,14 +98,21 @@ pub(all) enum Expr {
   App(Expr, Expr)
 }
 
+///|
 #nanopass.nonterminal
 pub enum Type {
-  Bool; Int; Arrow(Type, Type)
+  Bool
+  Int
+  Arrow(Type, Type)
 }
 
+///|
 #nanopass.language(name="STLC", extends="Lambda")
 enum TypedExpr {
-  True; False; Int(Int); Var(String)
+  True
+  False
+  Int(Int)
+  Var(String)
   If(TypedExpr, TypedExpr)
   Lam(Var, Type, TypedExpr)
   App(TypedExpr)
@@ -112,6 +122,7 @@ enum TypedExpr {
 Parse and diff:
 
 ```mbt check
+///|
 test "parse and diff two language definitions" {
   let langs = @meta_parser.find_languages_by_file("poc/lang_def.mbt")
   inspect(langs.length(), content="2")
@@ -147,8 +158,9 @@ test "parse and diff two language definitions" {
 ## Error Handling
 
 ```mbt nocheck
+///|
 pub(all) suberror NanopassParseError {
-  InvalidAttribute(String)  // malformed #nanopass.language attribute
-  InvalidMbti(Json)         // failed to parse .mbti interface file
+  InvalidAttribute(String) // malformed #nanopass.language attribute
+  InvalidMbti(Json) // failed to parse .mbti interface file
 }
 ```

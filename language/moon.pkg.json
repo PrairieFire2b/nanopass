@@ -3,6 +3,7 @@
         "moonbitlang/core/list",
         "moonbitlang/parser/basic",
         "moonbitlang/parser/syntax",
+        "moonbitlang/parser/mbti_ast",
         "moonbitlang/parser/fmt",
         "YumeXi/nanopass/meta_parser"
     ]

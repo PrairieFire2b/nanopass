@@ -1,4 +1,19 @@
 ///|
+#callsite(autofill(loc, _args_loc))
+pub fn Language::def(
+  name? : String = "",
+  loc~ : SourceLoc,
+  _args_loc~ : ArgsLoc,
+) -> Language raise {
+  let repr = loc |> @meta_parser.resolve
+  let mbti = @meta_parser.resolve_mbti(repr)
+  let all_langs = @meta_parser.find_languages(repr)
+  let langs = all_langs.filter(lang => belongs_to(lang, name, all_langs))
+  let (_tree, _ext_enums) = gen_tree_def(langs, _mbti=mbti)
+  { name, group: langs }
+}
+
+///|
 fn find_lang_by_name(
   langs : Array[@meta_parser.NanoLangDef],
   name : String,
@@ -33,21 +48,6 @@ fn belongs_to(
   all_langs : Array[@meta_parser.NanoLangDef],
 ) -> Bool {
   lang.name == target || extends_chain(lang.name, all_langs).contains(target)
-}
-
-///|
-#callsite(autofill(loc, _args_loc))
-pub fn Language::def(
-  name? : String = "",
-  loc~ : SourceLoc,
-  _args_loc~ : ArgsLoc,
-) -> Language raise {
-  let repr = loc |> @meta_parser.resolve
-  let mbti = @meta_parser.resolve_mbti(repr)
-  let all_langs = @meta_parser.find_languages(repr)
-  let langs = all_langs.filter(lang => belongs_to(lang, name, all_langs))
-  let (_tree, _ext_enums) = gen_tree_def(langs, _mbti=mbti)
-  { name, group: langs }
 }
 
 ///|
@@ -129,7 +129,9 @@ fn merge_constr(
 }
 
 ///|
-fn make_base_map(base : @meta_parser.NanoLangDef) -> Map[String, @syntax.ConstrDecl] {
+fn make_base_map(
+  base : @meta_parser.NanoLangDef,
+) -> Map[String, @syntax.ConstrDecl] {
   let m : Map[String, @syntax.ConstrDecl] = {}
   match base.type_decl.components {
     @syntax.Variant(cs) => cs.each(fn(c) { m[c.name.name] = c })
@@ -204,7 +206,9 @@ fn merge_shared_constrs(
     let (dc, deriv_tycon) = pair
     match base_map.get(dc.name.name) {
       Some(bc) => {
-        let (merged, extra_var) = merge_constr(bc, dc, base_tycon, deriv_tycon, loc)
+        let (merged, extra_var) = merge_constr(
+          bc, dc, base_tycon, deriv_tycon, loc,
+        )
         let next_vs = match extra_var {
           Some(v) => if vs.contains(v) { vs } else { [v] + vs }
           None => vs
@@ -271,10 +275,7 @@ fn gen_tree_def(
 
   // Merge constructors shared with base
   let (merged_constrs, extra_vars) = merge_shared_constrs(
-    deriv_pairs,
-    base_map,
-    base_tycon,
-    loc,
+    deriv_pairs, base_map, base_tycon, loc,
   )
 
   // Build ext enums for deriv-only constructors
@@ -310,36 +311,76 @@ fn gen_tree_def(
 }
 
 ///|
-test {
-  let a = @meta_parser.find_languages_by_file("poc/lang_def.mbt")
-  let (tree, ext_enums) = gen_tree_def(a)
-  let impls = @list.from_array(
-    [@syntax.TopTypeDef(tree)] + ext_enums.map(fn(e) { @syntax.TopTypeDef(e) }),
-  )
-  inspect(
-    @fmt.impls_to_string(impls),
-    content=(
-      #|///|
-      #|enum Tree[LamE, TreeExt] {
-      #|  /// Terminals
-      #|  Int(Int)
-      #|  Var(Var)
-      #|  /// Nonterminals
-      #|  Lam(Var, Self_, LamE)
-      #|  App(Self_, Self_)
-      #|  Ext(TreeExt)
-      #|}
-      #|
-      #|///|
-      #|enum TypedExprExt {
-      #|  /// Terminals
-      #|  True
-      #|  False
-      #|  /// Nonterminals
-      #|  If(cond~ : Self_, Self_, Self_)
-      #|}
-      #|
-      #|
-    ),
-  )
+fn builtin_types() -> Array[String] {
+  [
+    "Int", "String", "Bool", "Char", "Double", "Float", "Byte", "Bytes", "Unit",
+    "BigInt", "UInt", "UInt16", "UInt64", "Int16", "Int64",
+  ]
+}
+
+///|
+/// Find types referenced by the generated tree (or the original language definitions)
+/// that are not part of the tree itself, using the mbti to confirm their existence.
+fn find_external_types(
+  langs : Array[@meta_parser.NanoLangDef],
+  tree : @syntax.TypeDecl,
+  mbti : @meta_parser.Mbti,
+) -> Array[@mbti_ast.Sig] {
+  let param_names : Array[String] = []
+  match tree.components {
+    @syntax.Variant(cs) =>
+      cs.each(fn(c) {
+        match c.args {
+          Some(args) =>
+            args.each(fn(p) {
+              let name = type_name(p.ty)
+              if name != "" && !param_names.contains(name) {
+                param_names.push(name)
+              }
+            })
+          None => ()
+        }
+      })
+    _ => ()
+  }
+
+  let nt_td_names = langs.fold(init=[], fn(names, lang) {
+    lang.nonterminals.fold(init=names, fn(ns, nt) {
+      match nt {
+        TypeDecl(td) => if ns.contains(td.tycon) { ns } else { [td.tycon] + ns }
+        _ => ns
+      }
+    })
+  })
+
+  let tree_params : Array[String] = []
+  tree.params.each(fn(p) {
+    match p.name {
+      Some(n) => if !tree_params.contains(n) { tree_params.push(n) }
+      None => ()
+    }
+  })
+
+  let excluded = builtin_types() + tree_params + ["Self_"]
+  let external = (param_names + nt_td_names).filter(fn(name) {
+    !excluded.contains(name)
+  })
+
+  let @meta_parser.Mbti(mbti_ast) = mbti
+  external.filter_map(fn(target) {
+    mbti_ast.sigs
+    .find(fn(pair) {
+      let (sig, _) = pair
+      match sig {
+        Type(type_sig) => type_sig.name.name == target
+        Alias(alias_sig) =>
+          match alias_sig {
+            TypeAlias(name~, ..) => name.name == target
+            _ => false
+          }
+        _ => false
+      }
+    })
+    .map(fn(pair) { pair.0 })
+  })
 }

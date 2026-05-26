@@ -1,6 +1,7 @@
 ///|
 using @meta_parser {type NanoLangDef}
 
+///|
 pub suberror LangError {
   NoLanguageFound
 }

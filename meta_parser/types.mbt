@@ -4,7 +4,7 @@ pub enum Extensible {}
 ///|
 pub(all) suberror NanopassParseError {
   InvalidAttribute(String) // invalid #nanopass.language attribute
-  InvalidMbti(Json)        // failed to parse .mbti interface file
+  InvalidMbti(Json) // failed to parse .mbti interface file
 } derive(Debug)
 
 ///|

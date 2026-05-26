@@ -23,6 +23,20 @@ pub fn SourceLocRepr::file_path(self : SourceLocRepr) -> String {
 }
 
 ///|
+/// Create a minimal SourceLocRepr for a package (useful for resolving mbti).
+pub fn SourceLocRepr::for_pkg(pkg~ : String, mod~ : String) -> SourceLocRepr {
+  {
+    filename: "",
+    line_start: 0,
+    col_start: 0,
+    line_end: 0,
+    col_end: 0,
+    mod,
+    pkg,
+  }
+}
+
+///|
 /// Resolve SourceLoc to SourceLocRepr with module and package information
 /// Parses the SourceLoc.to_string() format and extracts all components.
 pub fn resolve(loc : SourceLoc) -> SourceLocRepr {

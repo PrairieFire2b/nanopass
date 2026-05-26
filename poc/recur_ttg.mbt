@@ -29,7 +29,7 @@ type SourceRange = (SourceLocation, SourceLocation)
 type SourcedLisp = Lisp[SourceRange, SourceRange, Unit]
 
 ///|
-fn main {
+test {
   let base_tree : UnannotatedLisp = List(
     [
       Symbol("lambda", ()),
@@ -38,5 +38,24 @@ fn main {
     ],
     (),
   )
-  debug(base_tree)
+  debug_inspect(
+    base_tree,
+    content=(
+      #|Lisp(
+      #|  List(
+      #|    [
+      #|      Lisp(Symbol("lambda", ())),
+      #|      Lisp(List([Lisp(Symbol("x", ())), Lisp(Symbol("y", ()))], ())),
+      #|      Lisp(
+      #|        List(
+      #|          [Lisp(Symbol("+", ())), Lisp(Symbol("x", ())), Lisp(Symbol("y", ()))],
+      #|          (),
+      #|        ),
+      #|      ),
+      #|    ],
+      #|    (),
+      #|  ),
+      #|)
+    ),
+  )
 }

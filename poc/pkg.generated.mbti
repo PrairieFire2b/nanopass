@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "YumeXi/nanopass/poc"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum Expr {
+  Int(Int)
+  Var(String)
+  Lam(String, Expr)
+  App(Expr, Expr)
+}
+
+pub enum Extensible {
+} derive(@debug.Debug)
+
+type Lisp[SymbolE, ListE, CaseT] derive(@debug.Debug)
+
+type LispT[Self_, SymbolE, ListE, CaseT] derive(@debug.Debug)
+
+type SourceLocation derive(Default, Eq, @debug.Debug)
+
+pub enum Type {
+  Bool
+  Int
+  Arrow(Type, Type)
+} derive(@debug.Debug)
+
+type TypedExpr derive(@debug.Debug)
+
+// Type aliases
+pub type Var = String
+
+// Traits
+
