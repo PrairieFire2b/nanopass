@@ -48,17 +48,3 @@ pub impl Debug for NanoLangDef with fn to_repr(self) -> Repr {
     "tycon": Repr::string(self.type_decl.tycon),
   })
 }
-
-///|
-pub impl Debug for Diff with fn to_repr(self) -> Repr {
-  Repr::record({
-    "origin": to_repr(self.origin),
-    "deriv": to_repr(self.deriv),
-    "added_nonterminals": @debug.to_repr(self.added_nonterminals),
-    "removed_nonterminals": @debug.to_repr(self.removed_nonterminals),
-    "changed_nonterminals": @debug.to_repr(self.changed_nonterminals),
-    "added_terminals": @debug.to_repr(self.added_terminals),
-    "removed_terminals": @debug.to_repr(self.removed_terminals),
-    "changed_terminals": @debug.to_repr(self.changed_terminals),
-  })
-}

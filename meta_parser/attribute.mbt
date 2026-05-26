@@ -1,4 +1,9 @@
 ///|
+/// Extract the `name` parameter from a `#nanopass.language(...)` attribute.
+///
+/// # Raises
+/// `NanopassParseError::InvalidAttribute` if the attribute is malformed
+/// or missing the `name` parameter.
 pub fn get_name_from_attr(attr : @attribute.Attribute) -> String raise {
   match attr.parsed {
     Some(Apply(_, props)) => {
@@ -149,12 +154,16 @@ fn parse_languages_from_impls(
 }
 
 ///|
+/// Parse a source file by path and return all language definitions found in it.
+///
+/// Each enum annotated with `#nanopass.language(name="...")` produces one `NanoLangDef`.
 pub fn find_languages_by_file(src : String) -> Array[NanoLangDef] raise {
   let (impls, _reports) = @parser.parse_file(src)
   parse_languages_from_impls(impls)
 }
 
 ///|
+/// Parse the file referenced by a `SourceLocRepr` and return all language definitions found in it.
 pub fn find_languages(src : SourceLocRepr) -> Array[NanoLangDef] raise {
   let (impls, _reports) = @parser.parse_file(src.file_path())
   parse_languages_from_impls(impls)

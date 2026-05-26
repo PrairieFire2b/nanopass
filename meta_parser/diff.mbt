@@ -123,6 +123,7 @@ fn find_t_by_name(ts : Array[Terminal], name : String) -> Terminal? {
 }
 
 ///|
+/// Compare two language definitions and return a structured `Diff`
 pub fn NanoLangDef::diff(self : NanoLangDef, other : NanoLangDef) -> Diff {
   let self_nt_names : Array[String] = self.nonterminals.map(nt_name)
   let other_nt_names : Array[String] = other.nonterminals.map(nt_name)
