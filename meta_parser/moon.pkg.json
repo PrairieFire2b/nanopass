@@ -1,6 +1,7 @@
 {
     "import": [
         "moonbitlang/core/json",
+        "moonbitlang/core/list",
         "moonbitlang/core/string",
         "moonbitlang/core/debug",
         "moonbitlang/x/path",

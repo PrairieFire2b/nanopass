@@ -1,10 +1,10 @@
 ///|
-enum LispT[SelfT, SymbolE, ListE, CaseT] {
+enum LispT[Self_, SymbolE, ListE, CaseT] {
   True
   False
   Integer(BigInt)
   Symbol(String, SymbolE)
-  List(Array[SelfT], ListE)
+  List(Array[Self_], ListE)
   Cases(CaseT)
 } derive(Debug)
 

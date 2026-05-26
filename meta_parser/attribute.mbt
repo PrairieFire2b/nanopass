@@ -1,12 +1,4 @@
 ///|
-pub impl @debug.Debug for LanguageDef with fn to_repr(self) {
-  @debug.Repr::record({
-    "name": @debug.to_repr(self.name),
-    "tycon": @debug.to_repr(self.type_decl.tycon),
-  })
-}
-
-///|
 pub fn get_name_from_attr(attr : @attribute.Attribute) -> String raise {
   match attr.parsed {
     Some(Apply(_, props)) => {
@@ -32,21 +24,55 @@ pub fn get_name_from_attr(attr : @attribute.Attribute) -> String raise {
 }
 
 ///|
-pub fn find_languages(src : String) -> Array[LanguageDef] raise {
-  let (impls, _reports) = @parser.parse_file(src)
+/// Extract the `extends` parameter from a `#nanopass.language(...)` attribute
+fn get_extends_from_attr(attr : @attribute.Attribute) -> String? {
+  match attr.parsed {
+    Some(Apply(_, props)) =>
+      match
+        props.find(fn(prop) {
+          match prop {
+            Labeled("extends", String(_)) => true
+            _ => false
+          }
+        }) {
+        Some(Labeled(_, String(extends))) => Some(extends)
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+/// Get the simple type name from a Type AST node
+fn type_to_name(ty : @syntax.Type) -> String {
+  match ty {
+    @syntax.Name(constr_id~, ..) =>
+      match constr_id.id {
+        @syntax.Ident(name~) => name
+        @syntax.Dot(id~, ..) => id
+      }
+    _ => ""
+  }
+}
+
+///|
+/// Find all enum type declarations in the file that have `#nanopass.nonterminal` attribute
+fn find_nonterminal_types(
+  impls : @list.List[@syntax.Impl],
+) -> Array[@syntax.TypeDecl] {
   impls
   .filter_map(impl_ => {
     match impl_ {
       @syntax.TopTypeDef(type_decl) =>
         match type_decl.components {
-          @syntax.Variant(_constructors) =>
-            type_decl.attrs
-            .iter()
-            .find_first(attr => attr.raw is [.. "#nanopass.language", ..])
-            .map(
-              // debug(attr.to_repr())
-              attr => { name: get_name_from_attr(attr), type_decl },
-            )
+          @syntax.Variant(_) =>
+            if type_decl.attrs.any(fn(attr) {
+                attr.raw is [.. "#nanopass.nonterminal", ..]
+              }) {
+              Some(type_decl)
+            } else {
+              None
+            }
           _ => None
         }
       _ => None
@@ -56,8 +82,95 @@ pub fn find_languages(src : String) -> Array[LanguageDef] raise {
 }
 
 ///|
+/// Core logic: parse language definitions from already-parsed file impls
+fn parse_languages_from_impls(
+  impls : @list.List[@syntax.Impl],
+) -> Array[NanoLangDef] raise {
+  let nt_types = find_nonterminal_types(impls)
+  let nt_names : Array[String] = nt_types.map(fn(td) { td.tycon })
+
+  impls
+  .filter_map(impl_ => {
+    match impl_ {
+      @syntax.TopTypeDef(type_decl) =>
+        match type_decl.components {
+          @syntax.Variant(constructors) =>
+            type_decl.attrs
+            .find(fn(attr) { attr.raw is [.. "#nanopass.language", ..] })
+            .map(attr => {
+              let name = get_name_from_attr(attr)
+              let extends = get_extends_from_attr(attr)
+              let tycon = type_decl.tycon
+
+              let nonterminals : Array[NonTerminal] = []
+              let terminals : Array[Terminal] = []
+
+              // NonTerminal::TypeDecl for each referenced nonterminal type
+              nt_types.each(fn(nt_td) {
+                if constructors.any(fn(c) {
+                    match c.args {
+                      Some(args) =>
+                        args.any(fn(p) { type_to_name(p.ty) == nt_td.tycon })
+                      None => false
+                    }
+                  }) {
+                  nonterminals.push(NonTerminal::TypeDecl(nt_td))
+                }
+              })
+
+              // NonTerminal::Constructor for self-referencing constructors
+              let self_ref_constrs = constructors.filter(fn(c) {
+                match c.args {
+                  Some(args) => args.any(fn(p) { type_to_name(p.ty) == tycon })
+                  None => false
+                }
+              })
+              if self_ref_constrs.length() > 0 {
+                nonterminals.push(NonTerminal::Constructor(self_ref_constrs))
+              }
+
+              // Terminal constructors: neither self-ref nor nonterminal-type-ref
+              let terminal_constrs = constructors.filter(fn(c) {
+                let self_ref = match c.args {
+                  Some(args) => args.any(fn(p) { type_to_name(p.ty) == tycon })
+                  None => false
+                }
+                let nt_ref = match c.args {
+                  Some(args) =>
+                    args.any(fn(p) { nt_names.contains(type_to_name(p.ty)) })
+                  None => false
+                }
+                !self_ref && !nt_ref
+              })
+              if terminal_constrs.length() > 0 {
+                terminals.push(Terminal(terminal_constrs))
+              }
+
+              { name, extends, nonterminals, terminals, type_decl }
+            })
+          _ => None
+        }
+      _ => None
+    }
+  })
+  .to_array()
+}
+
+///|
+pub fn find_languages_by_file(src : String) -> Array[NanoLangDef] raise {
+  let (impls, _reports) = @parser.parse_file(src)
+  parse_languages_from_impls(impls)
+}
+
+///|
+pub fn find_languages(src : SourceLocRepr) -> Array[NanoLangDef] raise {
+  let (impls, _reports) = @parser.parse_file(src.file_path())
+  parse_languages_from_impls(impls)
+}
+
+///|
 test {
-  let langs = find_languages("poc/lang_def.mbt")
+  let langs = find_languages_by_file("poc/lang_def.mbt")
   inspect(langs.length(), content="2")
   inspect(langs[0].name, content="Lambda")
   inspect(langs[1].name, content="SimplyTypedLambda")

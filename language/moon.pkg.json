@@ -1,3 +1,9 @@
 {
-    "import": ["YumeXi/nanopass/meta_parser"]
+    "import": [
+        "moonbitlang/core/list",
+        "moonbitlang/parser/basic",
+        "moonbitlang/parser/syntax",
+        "moonbitlang/parser/fmt",
+        "YumeXi/nanopass/meta_parser"
+    ]
 }

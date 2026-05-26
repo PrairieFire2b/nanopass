@@ -5,6 +5,7 @@ pub type Var = String
 #nanopass.language(name="Lambda")
 pub(all) enum Expr {
   /// Terminals
+  Int(Int)
   Var(String)
   /// Nonterminals
   Lam(Var, Expr)
@@ -12,6 +13,8 @@ pub(all) enum Expr {
 }
 
 ///|
+/// Nonterminal (should be auto-detected)
+#nanopass.nonterminal
 pub enum Type {
   Bool
   Int
@@ -27,9 +30,10 @@ enum TypedExpr {
   Int(Int)
   Var(String)
   /// Nonterminals
+  If(TypedExpr, TypedExpr)
   Lam(Var, Type, TypedExpr)
   App(TypedExpr)
 } derive(Debug)
 
 ///|
-pub enum Extensible {}
+pub enum Extensible {} derive(Debug)

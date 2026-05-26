@@ -5,8 +5,20 @@ pub(all) suberror NanopassParseError {
 } derive(Debug)
 
 ///|
+pub enum NonTerminal {
+  Constructor(@list.List[@syntax.ConstrDecl])
+  TypeDecl(@syntax.TypeDecl)
+}
+
+///|
+pub struct Terminal(@list.List[@syntax.ConstrDecl])
+
+///|
 /// Result type for language definitions found in a file
-pub struct LanguageDef {
+pub struct NanoLangDef {
   name : String
+  extends : String?
+  nonterminals : Array[NonTerminal]
+  terminals : Array[Terminal]
   type_decl : @syntax.TypeDecl
 }

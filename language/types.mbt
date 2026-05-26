@@ -1,5 +1,8 @@
 ///|
-pub struct Language[L] {
-  language_name : String
-  _ignore : L? // Always `None`, just to make the compiler happy
+using @meta_parser {type NanoLangDef}
+
+///|
+pub struct Language {
+  name : String
+  group : Array[NanoLangDef]
 } derive(Debug)
