@@ -43,7 +43,7 @@ test {
     @fmt.impls_to_string(impls),
     content=(
       #|///|
-      #|enum Tree[LamE, TreeExt] {
+      #|enum Tree[Self_, LamE, TreeExt] {
       #|  /// Terminals
       #|  Int(Int)
       #|  Var(Var)
@@ -54,7 +54,7 @@ test {
       #|}
       #|
       #|///|
-      #|enum TypedExprExt {
+      #|enum TypedExprExt[Self_] {
       #|  /// Terminals
       #|  True
       #|  False
@@ -119,7 +119,7 @@ test "sig_to_impl" {
       #|struct TypedExpr(Tree[TypedExpr, Unit, TypedExprExt])
       #|
       #|///|
-      #|enum TypedExprExt {
+      #|enum TypedExprExt[Self_] {
       #|  /// Terminals
       #|  True
       #|  False

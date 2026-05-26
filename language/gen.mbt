@@ -1,13 +1,9 @@
 ///|
 pub fn Language::gen(self : Language) -> @list.List[@syntax.Impl] raise {
   let (tree, ext_enums) = gen_tree_def(self.group, _mbti=self.interface)
-  let tree_params = tree.params.fold(init=[], fn(acc, p) {
-    match p.name {
-      Some(n) => [n] + acc
-      None => acc
-    }
-  }).rev()
-  let wrappers = struct_wrappers(self.group, tree_params, tree.loc)
+  let tree_params = tree.params
+    .filter_map((p) => p.name)
+  let wrappers = struct_wrappers(self.group, tree_params.to_array(), tree.loc)
   let wrapper_impls = wrappers.map(fn(w) { @syntax.TopTypeDef(w) })
   let ext_impls = ext_enums.map(fn(e) { @syntax.TopTypeDef(e) })
   let external_impls = find_external_types(self.group, tree, self.interface).filter_map(
@@ -209,7 +205,7 @@ fn build_ext_enum(
   }
   if ext_constrs.length() > 0 {
     let ext_name = deriv_tycon + "Ext"
-    let ext_enum = make_type_decl(ext_name, ext_constrs, [], loc)
+    let ext_enum = make_type_decl(ext_name, ext_constrs, ["Self_"], loc)
     Some((ext_enum, ext_name))
   } else {
     None
@@ -312,7 +308,7 @@ fn struct_wrappers(
   loc : @basic.Location,
 ) -> Array[@syntax.TypeDecl] {
   let base = langs[0]
-  let base_map = make_base_map(base)
+  // let base_map = make_base_map(base)
   let ext_names = langs.fold(init={}, fn(m, lang) {
     lang.nonterminals.fold(init=m, fn(m2, nt) {
       match nt {
