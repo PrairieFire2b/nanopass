@@ -1,11 +1,21 @@
 ///|
 pub fn Language::gen(self : Language) -> @list.List[@syntax.Impl] raise {
   let (tree, ext_enums) = gen_tree_def(self.group, _mbti=self.interface)
+  let tree_params = tree.params.fold(init=[], fn(acc, p) {
+    match p.name {
+      Some(n) => [n] + acc
+      None => acc
+    }
+  }).rev()
+  let wrappers = struct_wrappers(self.group, tree_params, tree.loc)
+  let wrapper_impls = wrappers.map(fn(w) { @syntax.TopTypeDef(w) })
   let ext_impls = ext_enums.map(fn(e) { @syntax.TopTypeDef(e) })
   let external_impls = find_external_types(self.group, tree, self.interface).filter_map(
     sig_to_impl,
   )
-  @list.from_array([@syntax.TopTypeDef(tree)] + ext_impls + external_impls)
+  @list.from_array(
+    [@syntax.TopTypeDef(tree)] + wrapper_impls + ext_impls + external_impls,
+  )
 }
 
 ///|
@@ -264,6 +274,7 @@ fn gen_tree_def(
     (merged_constrs, extra_vars)
   }
 
+  let final_type_params = ["Self_"] + final_type_params
   let tree = make_type_decl("Tree", final_constrs, final_type_params, loc)
   (tree, ext_enums)
 }
@@ -274,4 +285,79 @@ fn builtin_types() -> Array[String] {
     "Int", "String", "Bool", "Char", "Double", "Float", "Byte", "Bytes", "Unit",
     "BigInt", "UInt", "UInt16", "UInt64", "Int16", "Int64",
   ]
+}
+
+///|
+fn unit_type(loc : @basic.Location) -> @syntax.Type {
+  @syntax.Name(
+    constr_id={ id: @syntax.LongIdent::Ident(name="Unit"), loc },
+    tys=@list.empty(),
+    loc~,
+  )
+}
+
+///|
+fn type_ref(name : String, loc : @basic.Location) -> @syntax.Type {
+  @syntax.Name(
+    constr_id={ id: @syntax.LongIdent::Ident(name~), loc },
+    tys=@list.empty(),
+    loc~,
+  )
+}
+
+///|
+fn struct_wrappers(
+  langs : Array[@meta_parser.NanoLangDef],
+  tree_type_params : Array[String],
+  loc : @basic.Location,
+) -> Array[@syntax.TypeDecl] {
+  let base = langs[0]
+  let base_map = make_base_map(base)
+  let ext_names = langs.fold(init={}, fn(m, lang) {
+    lang.nonterminals.fold(init=m, fn(m2, nt) {
+      match nt {
+        TypeDecl(td) => {
+          m2[td.tycon + "E"] = td.tycon
+          m2
+        }
+        _ => m2
+      }
+    })
+  })
+
+  langs.map(fn(lang) {
+    let tycon = lang.type_decl.tycon
+    let is_base = lang.name == base.name
+    let tys = tree_type_params.map(fn(p) {
+      if p == "Self_" {
+        type_ref(tycon, loc)
+      } else if is_base {
+        unit_type(loc)
+      } else if p == "TreeExt" {
+        type_ref(tycon + "Ext", loc)
+      } else {
+        match ext_names.get(p) {
+          Some(name) => type_ref(name, loc)
+          None => unit_type(loc)
+        }
+      }
+    })
+    let tree_ty = @syntax.Name(
+      constr_id={ id: @syntax.LongIdent::Ident(name="Tree"), loc },
+      tys=@list.from_array(tys[:]),
+      loc~,
+    )
+    {
+      attrs: @list.empty(),
+      components: @syntax.TupleStruct(@list.from_array([tree_ty])),
+      deriving: @list.empty(),
+      doc: @syntax.DocString::empty(),
+      is_declare: false,
+      loc,
+      params: @list.empty(),
+      tycon,
+      tycon_loc: loc,
+      type_vis: @syntax.Visibility::Default,
+    }
+  })
 }

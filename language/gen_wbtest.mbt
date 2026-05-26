@@ -96,4 +96,48 @@ test "sig_to_impl" {
       #|
     ),
   )
+  let l : Language = { name: "Lambda", group: a, interface: mbti }
+  l.gen()
+  |> @fmt.impls_to_string
+  |> inspect(
+    content=(
+      #|///|
+      #|enum Tree[Self_, LamE, TreeExt] {
+      #|  /// Terminals
+      #|  Int(Int)
+      #|  Var(Var)
+      #|  /// Nonterminals
+      #|  Lam(Var, Self_, LamE)
+      #|  App(Self_, Self_)
+      #|  Ext(TreeExt)
+      #|}
+      #|
+      #|///|
+      #|struct Expr(Tree[Expr, Unit, Unit])
+      #|
+      #|///|
+      #|struct TypedExpr(Tree[TypedExpr, Unit, TypedExprExt])
+      #|
+      #|///|
+      #|enum TypedExprExt {
+      #|  /// Terminals
+      #|  True
+      #|  False
+      #|  /// Nonterminals
+      #|  If(cond~ : Self_, Self_, Self_)
+      #|}
+      #|
+      #|///|
+      #|pub typealias String as Var
+      #|
+      #|///|
+      #|pub enum Type {
+      #|  Bool
+      #|  Int
+      #|  Arrow(Type, Type)
+      #|}
+      #|
+      #|
+    ),
+  )
 }
