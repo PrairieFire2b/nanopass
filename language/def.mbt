@@ -1,4 +1,6 @@
 ///|
+/// Resolve a source location, parse the file for language definitions,
+/// filter by transitive `extends` chain, and resolve the package's `.mbti` interface.
 #callsite(autofill(loc, _args_loc))
 pub fn Language::def(
   name? : String = "",

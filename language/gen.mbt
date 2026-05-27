@@ -1,4 +1,6 @@
 ///|
+/// Generate the complete set of `Impl`s for this language group;
+/// The result can be formatted with `@fmt.impls_to_string`.
 pub fn Language::gen(self : Language) -> @list.List[@syntax.Impl] raise {
   let (tree, ext_enums) = gen_tree_def(self.group, _mbti=self.interface)
   let tree_params = tree.params
