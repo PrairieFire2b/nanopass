@@ -7,6 +7,7 @@ Define and generate Tree-structured ASTs from annotated MoonBit enum definitions
 ### `Language`
 
 ```mbt nocheck
+///|
 pub struct Language {
   name : String
   group : Array[NanoLangDef]
@@ -20,6 +21,7 @@ A language group consisting of a base language and its extensions.
 ### Errors
 
 ```mbt nocheck
+///|
 pub suberror LangError {
   NoLanguageFound
 }
@@ -59,8 +61,13 @@ The result can be formatted with `@fmt.impls_to_string`.
 Given `poc/lang_def.mbt`:
 
 ```mbt check
+///|
 test "define and generate a language" {
-  let l = @language.Language::def(name="Lambda")
+  let l = @language.Language::from_file(
+    name="Lambda",
+    path="poc/lang_def.mbt",
+    mod="YumeXi/nanopass",
+  )
   let impls = l.gen()
   let output = @fmt.impls_to_string(impls)
   inspect(
@@ -68,8 +75,10 @@ test "define and generate a language" {
     content=(
       #|///|
       #|enum Tree[Self_, LamE, TreeExt] {
+      #|  /// Terminals
       #|  Int(Int)
-      #|  Var(String)
+      #|  Var(Var)
+      #|  /// Nonterminals
       #|  Lam(Var, Self_, LamE)
       #|  App(Self_, Self_)
       #|  Ext(TreeExt)
@@ -83,13 +92,24 @@ test "define and generate a language" {
       #|
       #|///|
       #|enum TypedExprExt[Self_] {
+      #|  /// Terminals
       #|  True
       #|  False
-      #|  If(Self_, Self_)
+      #|  /// Nonterminals
+      #|  If(cond~ : Self_, Self_, Self_)
+      #|}
+      #|
+      #|///|
+      #|pub typealias String as Var
+      #|
+      #|///|
+      #|pub enum Type {
+      #|  Bool
+      #|  Int
+      #|  Arrow(Type, Type)
       #|}
       #|
       #|
-
     ),
   )
 }
@@ -98,7 +118,8 @@ test "define and generate a language" {
 ## Error Handling
 
 ```mbt nocheck
+///|
 pub suberror LangError {
-  NoLanguageFound  // no language definitions matched the given name
+  NoLanguageFound // no language definitions matched the given name
 }
 ```

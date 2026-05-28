@@ -15,6 +15,25 @@ pub fn Language::def(
 }
 
 ///|
+/// Load language definitions from a specific source file (without relying on `#callsite`).
+pub fn Language::from_file(
+  name? : String = "",
+  path~ : String,
+  mod~ : String,
+) -> Language raise {
+  let all_langs = @meta_parser.find_languages_by_file(path)
+  let langs = all_langs.filter(lang => belongs_to(lang, name, all_langs))
+  // Resolve mbti for the module
+  let pkg = match path.split("/").collect() {
+    [p, ..] => p.to_owned()
+    _ => path
+  }
+  let repr = @meta_parser.SourceLocRepr::for_pkg(pkg~, mod~)
+  let mbti = @meta_parser.resolve_mbti(repr)
+  { name, group: langs, interface: mbti }
+}
+
+///|
 fn find_lang_by_name(
   langs : Array[@meta_parser.NanoLangDef],
   name : String,

@@ -3,8 +3,7 @@
 /// The result can be formatted with `@fmt.impls_to_string`.
 pub fn Language::gen(self : Language) -> @list.List[@syntax.Impl] raise {
   let (tree, ext_enums) = gen_tree_def(self.group, _mbti=self.interface)
-  let tree_params = tree.params
-    .filter_map((p) => p.name)
+  let tree_params = tree.params.filter_map(p => p.name)
   let wrappers = struct_wrappers(self.group, tree_params.to_array(), tree.loc)
   let wrapper_impls = wrappers.map(fn(w) { @syntax.TopTypeDef(w) })
   let ext_impls = ext_enums.map(fn(e) { @syntax.TopTypeDef(e) })

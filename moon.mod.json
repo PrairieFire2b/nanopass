@@ -1,6 +1,6 @@
 {
-  "name": "YumeXi/nanopass",
-  "version": "0.1.0",
+  "name": "YumeXi/nanocake",
+  "version": "0.2.0",
   "deps": {
     "moonbitlang/parser": "0.3.2",
     "moonbitlang/x": "0.4.43"
