@@ -5,6 +5,6 @@
         "moonbitlang/parser/syntax",
         "moonbitlang/parser/mbti_ast",
         "moonbitlang/parser/fmt",
-        "YumeXi/nanopass/meta_parser"
+        "YumeXi/nanocake/meta_parser"
     ]
 }

@@ -23,6 +23,7 @@ pub struct Language {
 } derive(@debug.Debug)
 #callsite(autofill(_args_loc, loc))
 pub fn Language::def(name? : String, loc~ : SourceLoc, _args_loc~ : ArgsLoc) -> Self raise
+pub fn Language::from_file(name? : String, path~ : String, mod~ : String) -> Self raise
 pub fn Language::gen(Self) -> @list.List[@syntax.Impl] raise
 
 // Type aliases
