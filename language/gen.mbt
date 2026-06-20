@@ -303,13 +303,126 @@ fn type_ref(name : String, loc : @basic.Location) -> @syntax.Type {
 }
 
 ///|
+fn type_ref_with_args(
+  name : String,
+  args : Array[@syntax.Type],
+  loc : @basic.Location,
+) -> @syntax.Type {
+  @syntax.Name(
+    constr_id={ id: @syntax.LongIdent::Ident(name~), loc },
+    tys=@list.from_array(args[:]),
+    loc~,
+  )
+}
+
+///|
+fn first_unused_arg(
+  args : Array[@syntax.ConstrParam],
+  used : Array[Int],
+) -> Int? {
+  for i in 0..<args.length() {
+    if !used.contains(i) {
+      return Some(i)
+    }
+  }
+  None
+}
+
+///|
+fn first_unused_arg_with_type(
+  args : Array[@syntax.ConstrParam],
+  used : Array[Int],
+  tycon : String,
+) -> Int? {
+  for i in 0..<args.length() {
+    if !used.contains(i) && type_name(args[i].ty) == tycon {
+      return Some(i)
+    }
+  }
+  None
+}
+
+///|
+fn shared_extra_type(
+  base_c : @syntax.ConstrDecl,
+  deriv_c : @syntax.ConstrDecl,
+  base_tycon : String,
+  deriv_tycon : String,
+) -> @syntax.Type? {
+  let base_args = match base_c.args {
+    Some(args) => args.to_array()
+    None => []
+  }
+  let deriv_args = match deriv_c.args {
+    Some(args) => args.to_array()
+    None => []
+  }
+  if deriv_args.length() <= base_args.length() {
+    return None
+  }
+  let used : Array[Int] = []
+  base_args.eachi(fn(i, p) {
+    let wanted = type_name(p.ty)
+    let picked = if wanted == base_tycon {
+      first_unused_arg_with_type(deriv_args, used, deriv_tycon)
+    } else {
+      first_unused_arg_with_type(deriv_args, used, wanted)
+    }
+    let picked = match picked {
+      Some(index) => Some(index)
+      None =>
+        if i < deriv_args.length() && !used.contains(i) {
+          Some(i)
+        } else {
+          first_unused_arg(deriv_args, used)
+        }
+    }
+    match picked {
+      Some(index) => used.push(index)
+      None => ()
+    }
+  })
+  for i in 0..<deriv_args.length() {
+    if !used.contains(i) {
+      return Some(deriv_args[i].ty)
+    }
+  }
+  None
+}
+
+///|
+fn extra_type_map(
+  base_map : Map[String, @syntax.ConstrDecl],
+  deriv : @meta_parser.NanoLangDef,
+  base_tycon : String,
+) -> Map[String, @syntax.Type] {
+  let result : Map[String, @syntax.Type] = {}
+  match deriv.type_decl.components {
+    @syntax.Variant(cs) =>
+      cs.each(fn(c) {
+        match base_map.get(c.name.name) {
+          Some(base_c) =>
+            match
+              shared_extra_type(base_c, c, base_tycon, deriv.type_decl.tycon) {
+              Some(ty) => result[c.name.name + "E"] = ty
+              None => ()
+            }
+          None => ()
+        }
+      })
+    _ => ()
+  }
+  result
+}
+
+///|
 fn struct_wrappers(
   langs : Array[@meta_parser.NanoLangDef],
   tree_type_params : Array[String],
   loc : @basic.Location,
 ) -> Array[@syntax.TypeDecl] {
   let base = langs[0]
-  // let base_map = make_base_map(base)
+  let base_map = make_base_map(base)
   let ext_names = langs.fold(init={}, fn(m, lang) {
     lang.nonterminals.fold(init=m, fn(m2, nt) {
       match nt {
@@ -325,17 +438,22 @@ fn struct_wrappers(
   langs.map(fn(lang) {
     let tycon = lang.type_decl.tycon
     let is_base = lang.name == base.name
+    let extras = extra_type_map(base_map, lang, base.type_decl.tycon)
     let tys = tree_type_params.map(fn(p) {
       if p == "Self_" {
         type_ref(tycon, loc)
       } else if is_base {
         unit_type(loc)
       } else if p == "TreeExt" {
-        type_ref(tycon + "Ext", loc)
+        type_ref_with_args(tycon + "Ext", [type_ref(tycon, loc)], loc)
       } else {
-        match ext_names.get(p) {
-          Some(name) => type_ref(name, loc)
-          None => unit_type(loc)
+        match extras.get(p) {
+          Some(ty) => ty
+          None =>
+            match ext_names.get(p) {
+              Some(name) => type_ref(name, loc)
+              None => unit_type(loc)
+            }
         }
       }
     })

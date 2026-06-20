@@ -69,7 +69,7 @@ test "define and generate a language" {
     mod="YumeXi/nanopass",
   )
   let impls = l.gen()
-  let output = @fmt.impls_to_string(impls)
+  let output = @fmt.impls_to_string(impls).trim_end().to_owned() + "\n"
   inspect(
     output,
     content=(
@@ -88,7 +88,7 @@ test "define and generate a language" {
       #|struct Expr(Tree[Expr, Unit, Unit])
       #|
       #|///|
-      #|struct TypedExpr(Tree[TypedExpr, Unit, TypedExprExt])
+      #|struct TypedExpr(Tree[TypedExpr, Type, TypedExprExt[TypedExpr]])
       #|
       #|///|
       #|enum TypedExprExt[Self_] {
@@ -108,7 +108,6 @@ test "define and generate a language" {
       #|  Int
       #|  Arrow(Type, Type)
       #|}
-      #|
       #|
     ),
   )

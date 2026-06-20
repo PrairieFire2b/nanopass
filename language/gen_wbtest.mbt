@@ -11,6 +11,11 @@ let tree_def : (@syntax.TypeDecl, Array[@syntax.TypeDecl]) = gen_tree_def(a) cat
 }
 
 ///|
+fn one_trailing_blank(text : String) -> String {
+  text.trim_end().to_owned() + "\n"
+}
+
+///|
 test {
   let (tree, ext_enums) = tree_def
 
@@ -40,7 +45,7 @@ test {
     [@syntax.TopTypeDef(tree)] + ext_enums.map(fn(e) { @syntax.TopTypeDef(e) }),
   )
   inspect(
-    @fmt.impls_to_string(impls),
+    one_trailing_blank(@fmt.impls_to_string(impls)),
     content=(
       #|///|
       #|enum Tree[Self_, LamE, TreeExt] {
@@ -61,7 +66,6 @@ test {
       #|  /// Nonterminals
       #|  If(cond~ : Self_, Self_, Self_)
       #|}
-      #|
       #|
     ),
   )
@@ -79,7 +83,7 @@ test "sig_to_impl" {
   let impls : @list.List[@syntax.Impl] = @list.from_array(
     ext.filter_map(sig_to_impl),
   )
-  let output = @fmt.impls_to_string(impls)
+  let output = one_trailing_blank(@fmt.impls_to_string(impls))
   inspect(
     output,
     content=(
@@ -93,12 +97,12 @@ test "sig_to_impl" {
       #|  Arrow(Type, Type)
       #|}
       #|
-      #|
     ),
   )
   let l : Language = { name: "Lambda", group: a, interface: mbti }
   l.gen()
   |> @fmt.impls_to_string
+  |> one_trailing_blank
   |> inspect(
     content=(
       #|///|
@@ -116,7 +120,7 @@ test "sig_to_impl" {
       #|struct Expr(Tree[Expr, Unit, Unit])
       #|
       #|///|
-      #|struct TypedExpr(Tree[TypedExpr, Unit, TypedExprExt])
+      #|struct TypedExpr(Tree[TypedExpr, Type, TypedExprExt[TypedExpr]])
       #|
       #|///|
       #|enum TypedExprExt[Self_] {
@@ -136,7 +140,6 @@ test "sig_to_impl" {
       #|  Int
       #|  Arrow(Type, Type)
       #|}
-      #|
       #|
     ),
   )

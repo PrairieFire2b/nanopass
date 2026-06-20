@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "YumeXi/nanopass/poc"
+package "YumeXi/nanocake/poc"
 
 import {
   "moonbitlang/core/debug",

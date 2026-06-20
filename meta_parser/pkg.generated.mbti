@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "YumeXi/nanopass/meta_parser"
+package "YumeXi/nanocake/meta_parser"
 
 import {
   "moonbitlang/core/debug",
