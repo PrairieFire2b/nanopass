@@ -373,8 +373,8 @@ test {
       #|  origin: {
       #|    name: "Lambda",
       #|    extends: None,
-      #|    nonterminals: [Constructor(Lam(Var, Expr)), Constructor(App(Expr, Expr))],
-      #|    terminals: [Int(Int), Var(Var)],
+      #|    nonterminals: [Constructor(Lam(LambdaVar, Expr)), Constructor(App(Expr, Expr))],
+      #|    terminals: [Int(Int), LambdaVar(LambdaVar)],
       #|    tycon: "Expr",
       #|  },
       #|  deriv: {
@@ -383,18 +383,18 @@ test {
       #|    nonterminals: [
       #|      TypeDecl("Type"),
       #|      Constructor(If(TypedExpr, TypedExpr, TypedExpr)),
-      #|      Constructor(Lam(Var, Type, TypedExpr)),
+      #|      Constructor(Lam(LambdaVar, Type, TypedExpr)),
       #|      Constructor(App(TypedExpr, TypedExpr)),
       #|    ],
-      #|    terminals: [True, False, Int(Int), Var(Var)],
+      #|    terminals: [True, False, Int(Int), LambdaVar(LambdaVar)],
       #|    tycon: "TypedExpr",
       #|  },
       #|  added_nonterminals: [TypeDecl("Type"), Constructor(If(TypedExpr, TypedExpr, TypedExpr))],
       #|  removed_nonterminals: [],
       #|  changed_nonterminals: [
       #|    {
-      #|      origin: Constructor(Lam(Var, Expr)),
-      #|      modified: Constructor(Lam(Var, Type, TypedExpr)),
+      #|      origin: Constructor(Lam(LambdaVar, Expr)),
+      #|      modified: Constructor(Lam(LambdaVar, Type, TypedExpr)),
       #|    },
       #|  ],
       #|  added_terminals: [True, False],
@@ -408,12 +408,12 @@ test {
     content=(
       #|enum TypedExpr {
       #|  Int(Int)
-      #|  Var(Var)
+      #|  LambdaVar(LambdaVar)
       #|+ True
       #|+ False
       #|  App(TypedExpr, TypedExpr)
-      #|- Lam(Var, Expr)
-      #|+ Lam(Var, Type, TypedExpr)
+      #|- Lam(LambdaVar, Expr)
+      #|+ Lam(LambdaVar, Type, TypedExpr)
       #|+ If(TypedExpr, TypedExpr, TypedExpr)
       #|}
       #|+ Type { Bool, Int, Arrow(Type, Type) }

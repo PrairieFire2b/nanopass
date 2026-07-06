@@ -1,4 +1,4 @@
-# YumeXi/nanopass/meta_parser
+# YumeXi/nanocake/meta_parser
 
 Parse MoonBit source files annotated with `#nanopass.language(...)` and `#nanopass.nonterminal` attributes to extract language definitions (terminals, nonterminals, type declarations), and diff two language versions.
 
@@ -90,11 +90,14 @@ Given a source file `lang_def.mbt`:
 
 ```mbt nocheck
 ///|
+pub type LambdaVar = String
+
+///|
 #nanopass.language(name="Lambda")
 pub(all) enum Expr {
   Int(Int)
-  Var(String)
-  Lam(Var, Expr)
+  LambdaVar(LambdaVar)
+  Lam(LambdaVar, Expr)
   App(Expr, Expr)
 }
 
@@ -112,9 +115,9 @@ enum TypedExpr {
   True
   False
   Int(Int)
-  Var(String)
+  LambdaVar(LambdaVar)
   If(TypedExpr, TypedExpr)
-  Lam(Var, Type, TypedExpr)
+  Lam(LambdaVar, Type, TypedExpr)
   App(TypedExpr)
 }
 ```
@@ -141,12 +144,12 @@ test "parse and diff two language definitions" {
   let expected =
     #|enum TypedExpr {
     #|  Int(Int)
-    #|  Var(Var)
+    #|  LambdaVar(LambdaVar)
     #|+ True
     #|+ False
     #|  App(TypedExpr, TypedExpr)
-    #|- Lam(Var, Expr)
-    #|+ Lam(Var, Type, TypedExpr)
+    #|- Lam(LambdaVar, Expr)
+    #|+ Lam(LambdaVar, Type, TypedExpr)
     #|+ If(TypedExpr, TypedExpr, TypedExpr)
     #|}
     #|+ Type { Bool, Int, Arrow(Type, Type) }

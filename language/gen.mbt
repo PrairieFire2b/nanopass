@@ -10,7 +10,7 @@ pub fn Language::gen(self : Language) -> @list.List[@syntax.Impl] raise {
   let external_impls = find_external_types(self.group, tree, self.interface).filter_map(
     sig_to_impl,
   )
-  @list.from_array(
+  @list.List(
     [@syntax.TopTypeDef(tree)] + wrapper_impls + ext_impls + external_impls,
   )
 }
@@ -85,7 +85,7 @@ fn merge_constr(
   let merged_c = {
     ..base_c,
     args: if merged_args.length() > 0 {
-      Some(@list.from_array(merged_args[:]))
+      Some(@list.List(merged_args[:]))
     } else {
       None
     },
@@ -122,7 +122,7 @@ fn replace_self_refs(
         }
         params.push({ ..p, ty: new_ty })
       })
-      Some(@list.from_array(params[:]))
+      Some(@list.List(params[:]))
     }
     None => None
   }
@@ -136,14 +136,14 @@ fn make_type_decl(
   type_params : Array[String],
   loc : @basic.Location,
 ) -> @syntax.TypeDecl {
-  let binders = @list.from_array(
+  let binders = @list.List(
     type_params.map(fn(name) {
       @syntax.TypeDeclBinder::{ name: Some(name), loc }
     }),
   )
   {
     attrs: @list.empty(),
-    components: @syntax.Variant(@list.from_array(constrs[:])),
+    components: @syntax.Variant(@list.List(constrs[:])),
     deriving: @list.empty(),
     doc: @syntax.DocString::empty(),
     is_declare: false,
@@ -259,7 +259,7 @@ fn gen_tree_def(
       loc~,
     )
     let ext_constr : @syntax.ConstrDecl = {
-      args: Some(@list.from_array([{ label: None, mut_: false, ty: ext_ty }])),
+      args: Some(@list.List([{ label: None, mut_: false, ty: ext_ty }])),
       attrs: @list.empty(),
       doc: @syntax.DocString::empty(),
       loc,
@@ -310,7 +310,7 @@ fn type_ref_with_args(
 ) -> @syntax.Type {
   @syntax.Name(
     constr_id={ id: @syntax.LongIdent::Ident(name~), loc },
-    tys=@list.from_array(args[:]),
+    tys=@list.List(args[:]),
     loc~,
   )
 }
@@ -459,12 +459,12 @@ fn struct_wrappers(
     })
     let tree_ty = @syntax.Name(
       constr_id={ id: @syntax.LongIdent::Ident(name="Tree"), loc },
-      tys=@list.from_array(tys[:]),
+      tys=@list.List(tys[:]),
       loc~,
     )
     {
       attrs: @list.empty(),
-      components: @syntax.TupleStruct(@list.from_array([tree_ty])),
+      components: @syntax.TupleStruct(@list.List([tree_ty])),
       deriving: @list.empty(),
       doc: @syntax.DocString::empty(),
       is_declare: false,

@@ -1,14 +1,14 @@
 ///|
-pub type Var = String
+pub type LambdaVar = String
 
 ///|
 #nanopass.language(name="Lambda")
 pub(all) enum Expr {
   /// Terminals
   Int(Int)
-  Var(Var)
+  LambdaVar(LambdaVar)
   /// Nonterminals
-  Lam(Var, Expr)
+  Lam(LambdaVar, Expr)
   App(Expr, Expr)
 }
 
@@ -28,10 +28,10 @@ enum TypedExpr {
   True
   False
   Int(Int)
-  Var(Var)
+  LambdaVar(LambdaVar)
   /// Nonterminals
   If(cond~ : TypedExpr, TypedExpr, TypedExpr)
-  Lam(Var, Type, TypedExpr)
+  Lam(LambdaVar, Type, TypedExpr)
   App(TypedExpr, TypedExpr)
 } derive(Debug)
 

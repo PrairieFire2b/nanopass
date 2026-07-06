@@ -2,13 +2,14 @@
   "name": "YumeXi/nanocake",
   "version": "0.2.0",
   "deps": {
-    "moonbitlang/parser": "0.3.2",
-    "moonbitlang/x": "0.4.43"
+    "moonbitlang/parser": "0.3.7",
+    "moonbitlang/lexer": "0.3.7",
+    "moonbitlang/x": "0.4.46"
   },
   "readme": "README.mbt.md",
   "repository": "",
   "license": "BSD-2-Clause",
   "keywords": [],
-  "preferred-target": "wasm",
-  "description": ""
+  "description": "",
+  "preferred-target": "wasm"
 }
