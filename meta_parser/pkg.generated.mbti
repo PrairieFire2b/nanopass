@@ -61,6 +61,11 @@ pub(all) enum FormPattern {
 pub(all) struct Mbti(@mbti_ast.Mbti)
 pub impl @debug.Debug for Mbti
 
+pub(all) struct MetaVarDecl {
+  owner : String
+  name : String
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Modified[T] {
   origin : T
   modified : T
@@ -70,6 +75,7 @@ pub struct NanoLangDef {
   name : String
   extends : String?
   entry : String?
+  meta_vars : Array[MetaVarDecl]
   nonterminals : Array[NonTerminal]
   terminals : Array[Terminal]
   production_defs : Array[ProductionDef]

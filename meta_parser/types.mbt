@@ -46,6 +46,12 @@ pub(all) struct ProductionDef {
 }
 
 ///|
+pub(all) struct MetaVarDecl {
+  owner : String
+  name : String
+} derive(Debug, Eq)
+
+///|
 /// A nonterminal in a language definition.
 ///
 /// # Variants
@@ -66,6 +72,7 @@ pub struct NanoLangDef {
   name : String // from `#nanopass.language(name="...")`
   extends : String? // optional parent language (from `extends="..."`)
   entry : String? // optional entry nonterminal (from `#nano.entry` or `entry="..."`)
+  meta_vars : Array[MetaVarDecl] // declared meta-variable names in this raw language
   nonterminals : Array[NonTerminal] // self-referencing constructors and referenced external types
   terminals : Array[Terminal] // leaf/non-recursive constructors
   production_defs : Array[ProductionDef] // normalized constructor metadata

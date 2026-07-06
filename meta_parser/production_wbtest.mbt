@@ -31,6 +31,15 @@ test "parse constructor form attributes into production defs" {
     ] else {
     fail("unexpected If production pattern")
   }
+  guard defs[2].fields[0].label is Some("x") else {
+    fail("expected labeled x field")
+  }
+  guard defs[2].fields[1].label is Some("t") else {
+    fail("expected labeled t field")
+  }
+  guard defs[2].fields[2].label is Some("body") else {
+    fail("expected labeled body field")
+  }
   guard defs[2].patterns
     is [
       ListPattern(

@@ -123,6 +123,39 @@ fn entry_string_from_attr(attr : @attribute.Attribute) -> String raise {
 }
 
 ///|
+fn meta_string_from_attr(attr : @attribute.Attribute) -> String raise {
+  match attr.parsed {
+    Some(Apply(_, props)) =>
+      match
+        props.find(fn(prop) {
+          match prop {
+            Expr(String(_)) => true
+            _ => false
+          }
+        }) {
+        Some(Expr(String(name))) => name
+        _ =>
+          raise InvalidAttribute("#nano.meta expects a string literal payload")
+      }
+    _ => raise InvalidAttribute("#nano.meta expects a string literal payload")
+  }
+}
+
+///|
+fn meta_vars_from_attrs(
+  owner : String,
+  attrs : @list.List[@attribute.Attribute],
+) -> Array[MetaVarDecl] raise {
+  let vars : Array[MetaVarDecl] = []
+  attrs.each(attr => {
+    if is_nano_attr(attr, "meta") {
+      vars.push({ owner, name: meta_string_from_attr(attr) })
+    }
+  })
+  vars
+}
+
+///|
 fn get_entry_from_attrs(
   lang_name : String,
   lang_attr : @attribute.Attribute,
@@ -256,10 +289,11 @@ fn parse_languages_from_impls(
 
                 let nonterminals : Array[NonTerminal] = []
                 let terminals : Array[Terminal] = []
+                let meta_vars = meta_vars_from_attrs(tycon, type_decl.attrs)
                 let production_defs : Array[ProductionDef] = []
 
                 // NonTerminal::TypeDecl for each referenced nonterminal type
-                nt_types.each(fn(nt_td) {
+                nt_types.each(nt_td => {
                   if constructors.any(fn(c) {
                       match c.args {
                         Some(args) =>
@@ -268,6 +302,9 @@ fn parse_languages_from_impls(
                       }
                     }) {
                     nonterminals.push(NonTerminal::TypeDecl(nt_td))
+                    meta_vars_from_attrs(nt_td.tycon, nt_td.attrs).each(meta_var => {
+                      meta_vars.push(meta_var)
+                    })
                   }
                 })
 
@@ -297,6 +334,7 @@ fn parse_languages_from_impls(
                   name,
                   extends,
                   entry,
+                  meta_vars,
                   nonterminals,
                   terminals,
                   production_defs,

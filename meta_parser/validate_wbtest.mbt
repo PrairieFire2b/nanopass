@@ -100,3 +100,28 @@ test "validate production attrs rejects invalid infix arity" {
     _ => fail("expected infix arity error")
   }
 }
+
+///|
+test "validate meta vars rejects duplicate owner declarations" {
+  try find_languages_by_file("meta_parser/fixtures/duplicate_meta.mbt") catch {
+    InvalidLanguage(message) =>
+      inspect(message, content="Duplicate meta-var 'e' for owner 'Expr'")
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected duplicate meta-var error")
+  }
+}
+
+///|
+test "validate form patterns rejects undeclared meta vars" {
+  try find_languages_by_file("meta_parser/fixtures/unknown_meta.mbt") catch {
+    InvalidLanguage(message) =>
+      inspect(
+        message,
+        content="Production 'BadMeta.Bad' references undeclared meta-var '$e0'",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected unknown meta-var error")
+  }
+}

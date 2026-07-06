@@ -6,5 +6,5 @@ enum Expr {
   #nano.form("(if $0 $1 $2)")
   If(Expr, Expr, Expr)
   #nano.form("(lambda ($x : $t) $body)")
-  Lam(String, String, Expr)
+  Lam(x~ : String, t~ : String, body~ : Expr)
 }
