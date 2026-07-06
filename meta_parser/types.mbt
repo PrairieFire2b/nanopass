@@ -5,7 +5,45 @@ pub enum Extensible {}
 pub(all) suberror NanopassParseError {
   InvalidAttribute(String) // invalid #nanopass.language attribute
   InvalidMbti(Json) // failed to parse .mbti interface file
+  InvalidLanguage(String) // invalid language definition
 } derive(Debug)
+
+///|
+/// A compiled S-expression form pattern from `#nano.form("...")`.
+///
+/// The initial IR is intentionally small: it captures atoms, list structure,
+/// positional fields, and named fields. Later phases can extend it with repeat,
+/// optional, dotted-list, vector, and datum-literal forms without changing the
+/// parser/unparser contract.
+pub(all) enum FormPattern {
+  AtomPattern(String)
+  FieldPattern(index~ : Int, prefix~ : String, suffix~ : String)
+  NamedFieldPattern(name~ : String, prefix~ : String, suffix~ : String)
+  ListPattern(Array[FormPattern])
+} derive(Debug, Eq)
+
+///|
+pub(all) enum CanonicalPolicy {
+  Canonical
+  FormOnly
+} derive(Debug, Eq)
+
+///|
+pub(all) struct ProductionField {
+  index : Int
+  label : String?
+  type_name : String
+} derive(Debug, Eq)
+
+///|
+pub(all) struct ProductionDef {
+  owner : String
+  constr_name : String
+  fields : Array[ProductionField]
+  patterns : Array[FormPattern]
+  canonical_policy : CanonicalPolicy
+  source_constr : @syntax.ConstrDecl
+}
 
 ///|
 /// A nonterminal in a language definition.
@@ -27,8 +65,10 @@ pub struct Terminal(@syntax.ConstrDecl)
 pub struct NanoLangDef {
   name : String // from `#nanopass.language(name="...")`
   extends : String? // optional parent language (from `extends="..."`)
+  entry : String? // optional entry nonterminal (from `#nano.entry` or `entry="..."`)
   nonterminals : Array[NonTerminal] // self-referencing constructors and referenced external types
   terminals : Array[Terminal] // leaf/non-recursive constructors
+  production_defs : Array[ProductionDef] // normalized constructor metadata
   type_decl : @syntax.TypeDecl // the raw parsed enum AST node
 }
 

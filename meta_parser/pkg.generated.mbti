@@ -9,6 +9,8 @@ import {
 }
 
 // Values
+pub fn compile_form_pattern(String) -> FormPattern raise
+
 pub fn find_languages(SourceLocRepr) -> Array[NanoLangDef] raise
 
 pub fn find_languages_by_file(String) -> Array[NanoLangDef] raise
@@ -19,13 +21,21 @@ pub fn resolve(SourceLoc) -> SourceLocRepr
 
 pub fn resolve_mbti(SourceLocRepr) -> Mbti raise
 
+pub fn validate_language_defs(Array[NanoLangDef]) -> Unit raise
+
 // Errors
 pub(all) suberror NanopassParseError {
   InvalidAttribute(String)
   InvalidMbti(Json)
+  InvalidLanguage(String)
 } derive(@debug.Debug)
 
 // Types and methods
+pub(all) enum CanonicalPolicy {
+  Canonical
+  FormOnly
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Diff {
   origin : NanoLangDef
   deriv : NanoLangDef
@@ -41,6 +51,13 @@ pub impl Show for Diff
 pub enum Extensible {
 }
 
+pub(all) enum FormPattern {
+  AtomPattern(String)
+  FieldPattern(index~ : Int, prefix~ : String, suffix~ : String)
+  NamedFieldPattern(name~ : String, prefix~ : String, suffix~ : String)
+  ListPattern(Array[FormPattern])
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Mbti(@mbti_ast.Mbti)
 pub impl @debug.Debug for Mbti
 
@@ -52,8 +69,10 @@ pub(all) struct Modified[T] {
 pub struct NanoLangDef {
   name : String
   extends : String?
+  entry : String?
   nonterminals : Array[NonTerminal]
   terminals : Array[Terminal]
+  production_defs : Array[ProductionDef]
   type_decl : @syntax.TypeDecl
 }
 pub fn NanoLangDef::diff(Self, Self) -> Diff
@@ -64,6 +83,21 @@ pub enum NonTerminal {
   TypeDecl(@syntax.TypeDecl)
 }
 pub impl @debug.Debug for NonTerminal
+
+pub(all) struct ProductionDef {
+  owner : String
+  constr_name : String
+  fields : Array[ProductionField]
+  patterns : Array[FormPattern]
+  canonical_policy : CanonicalPolicy
+  source_constr : @syntax.ConstrDecl
+}
+
+pub(all) struct ProductionField {
+  index : Int
+  label : String?
+  type_name : String
+} derive(Eq, @debug.Debug)
 
 pub struct SourceLocRepr {
   filename : String
