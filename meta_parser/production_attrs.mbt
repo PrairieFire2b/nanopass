@@ -81,7 +81,6 @@ fn production_def_from_constr(
     patterns: form_patterns_from_attrs(c.attrs),
     canonical_policy: canonical_policy_from_attrs(c.attrs),
     infix_operator: infix_operator_from_attrs(owner, c.name.name, c.attrs),
-    contexts: context_specs_from_attrs(owner, c.name.name, c.attrs),
     source_constr: c,
   }
 }
