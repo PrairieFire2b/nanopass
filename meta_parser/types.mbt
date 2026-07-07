@@ -43,6 +43,7 @@ pub(all) struct ProductionDef {
   fields : Array[ProductionField]
   patterns : Array[FormPattern]
   canonical_policy : CanonicalPolicy
+  infix_operator : String?
   source_constr : @syntax.ConstrDecl
 }
 

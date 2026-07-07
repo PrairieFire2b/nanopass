@@ -102,6 +102,20 @@ test "validate production attrs rejects invalid infix arity" {
 }
 
 ///|
+test "validate production attrs rejects empty infix payload" {
+  try find_languages_by_file("meta_parser/fixtures/infix_empty.mbt") catch {
+    InvalidAttribute(message) =>
+      inspect(
+        message,
+        content="#nano.infix expects a non-empty string literal payload",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected empty infix payload error")
+  }
+}
+
+///|
 test "validate meta vars rejects duplicate owner declarations" {
   try find_languages_by_file("meta_parser/fixtures/duplicate_meta.mbt") catch {
     InvalidLanguage(message) =>

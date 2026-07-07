@@ -93,3 +93,14 @@ test "parse ellipsis form attributes into repeat patterns" {
     fail("unexpected Tuple repeat pattern")
   }
 }
+
+///|
+test "parse infix attributes into production defs" {
+  let langs = find_languages_by_file("meta_parser/fixtures/infix_attrs.mbt")
+  assert_eq(langs.length(), 1)
+  let defs = langs[0].production_defs
+  assert_eq(defs.length(), 1)
+  guard defs[0].infix_operator is Some("+") else {
+    fail("expected infix operator")
+  }
+}

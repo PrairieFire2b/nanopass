@@ -250,12 +250,12 @@ fn validate_production_attrs(
   lang_name : String,
   prod : ProductionDef,
 ) -> Unit raise {
-  if production_has_attr(prod, "inline") && production_has_attr(prod, "infix") {
+  if production_has_attr(prod, "inline") && prod.infix_operator is Some(_) {
     raise InvalidLanguage(
       "Production '\{lang_name}.\{prod.constr_name}' cannot combine #nano.inline and #nano.infix",
     )
   }
-  if production_has_attr(prod, "infix") && prod.fields.length() != 2 {
+  if prod.infix_operator is Some(_) && prod.fields.length() != 2 {
     raise InvalidLanguage(
       "Production '\{lang_name}.\{prod.constr_name}' uses #nano.infix but has \{prod.fields.length()} fields",
     )
