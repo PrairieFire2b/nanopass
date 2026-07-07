@@ -59,3 +59,37 @@ test "parse constructor form attributes into production defs" {
     fail("unexpected Lam production pattern")
   }
 }
+
+///|
+test "parse ellipsis form attributes into repeat patterns" {
+  let langs = find_languages_by_file("meta_parser/fixtures/repeat_attrs.mbt")
+  assert_eq(langs.length(), 1)
+  let defs = langs[0].production_defs
+  assert_eq(defs.length(), 2)
+  guard defs[0].fields[0].label is Some("items") else {
+    fail("expected items field label")
+  }
+  assert_eq(defs[0].fields[0].type_name, "Array")
+  guard defs[0].patterns
+    is [
+      ListPattern(
+        [
+          AtomPattern("begin"),
+          RepeatPattern(NamedFieldPattern(name="items", prefix="", suffix="")),
+        ]
+      ),
+    ] else {
+    fail("unexpected Begin repeat pattern")
+  }
+  guard defs[1].patterns
+    is [
+      ListPattern(
+        [
+          AtomPattern("tuple"),
+          RepeatPattern(FieldPattern(index=0, prefix="", suffix="")),
+        ]
+      ),
+    ] else {
+    fail("unexpected Tuple repeat pattern")
+  }
+}

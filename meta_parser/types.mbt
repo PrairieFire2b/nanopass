@@ -19,6 +19,7 @@ pub(all) enum FormPattern {
   AtomPattern(String)
   FieldPattern(index~ : Int, prefix~ : String, suffix~ : String)
   NamedFieldPattern(name~ : String, prefix~ : String, suffix~ : String)
+  RepeatPattern(FormPattern)
   ListPattern(Array[FormPattern])
 } derive(Debug, Eq)
 

@@ -36,11 +36,39 @@ test "compile #nano.form nested list" {
 }
 
 ///|
+test "compile #nano.form ellipsis repeat" {
+  let pattern = compile_form_pattern("(begin $items ...)")
+  guard pattern
+    is ListPattern(
+      [
+        AtomPattern("begin"),
+        RepeatPattern(NamedFieldPattern(name="items", prefix="", suffix="")),
+      ]
+    ) else {
+    fail("unexpected repeated form pattern")
+  }
+}
+
+///|
 test "compile #nano.form rejects trailing tokens" {
   try compile_form_pattern("$0 $1") catch {
     InvalidAttribute(_) => ()
     _ => fail("unexpected error kind")
   } noraise {
     _ => fail("expected invalid form pattern")
+  }
+}
+
+///|
+test "compile #nano.form rejects bare ellipsis" {
+  try compile_form_pattern("(...)") catch {
+    InvalidAttribute(message) =>
+      inspect(
+        message,
+        content="Ellipsis must follow a pattern in #nano.form pattern",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected invalid ellipsis")
   }
 }

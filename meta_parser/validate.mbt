@@ -90,6 +90,98 @@ fn language_has_meta_var(lang : NanoLangDef, name : String) -> Bool {
 }
 
 ///|
+fn production_field_by_index(
+  prod : ProductionDef,
+  index : Int,
+) -> ProductionField? {
+  for field in prod.fields {
+    if field.index == index {
+      return Some(field)
+    }
+  }
+  None
+}
+
+///|
+fn production_field_by_label(
+  prod : ProductionDef,
+  name : String,
+) -> ProductionField? {
+  for field in prod.fields {
+    match field.label {
+      Some(label) => if label == name { return Some(field) }
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+fn field_placeholder_name(pattern : FormPattern) -> String {
+  match pattern {
+    FieldPattern(index~, ..) => "$\{index}"
+    NamedFieldPattern(name~, ..) => "$\{name}"
+    _ => "<pattern>"
+  }
+}
+
+///|
+fn repeat_field(
+  lang_name : String,
+  prod : ProductionDef,
+  pattern : FormPattern,
+) -> ProductionField raise {
+  match pattern {
+    FieldPattern(index~, prefix~, suffix~) =>
+      if !prefix.is_empty() || !suffix.is_empty() {
+        raise InvalidLanguage(
+          "Production '\{lang_name}.\{prod.constr_name}' repeats '$\{index}' with affix; repeated fields must be bare placeholders",
+        )
+      } else {
+        match production_field_by_index(prod, index) {
+          Some(field) => field
+          None =>
+            raise InvalidLanguage(
+              "Production '\{lang_name}.\{prod.constr_name}' references field $\{index} but only has \{prod.fields.length()} fields",
+            )
+        }
+      }
+    NamedFieldPattern(name~, prefix~, suffix~) =>
+      if !prefix.is_empty() || !suffix.is_empty() {
+        raise InvalidLanguage(
+          "Production '\{lang_name}.\{prod.constr_name}' repeats '$\{name}' with affix; repeated fields must be bare placeholders",
+        )
+      } else {
+        match production_field_by_label(prod, name) {
+          Some(field) => field
+          None =>
+            raise InvalidLanguage(
+              "Production '\{lang_name}.\{prod.constr_name}' repeats '$\{name}' but it is not a constructor field label",
+            )
+        }
+      }
+    _ =>
+      raise InvalidLanguage(
+        "Production '\{lang_name}.\{prod.constr_name}' repeats \{field_placeholder_name(pattern)} but only constructor fields can use ellipsis",
+      )
+  }
+}
+
+///|
+fn validate_repeat_pattern_field(
+  lang : NanoLangDef,
+  prod : ProductionDef,
+  pattern : FormPattern,
+) -> Unit raise {
+  let field = repeat_field(lang.name, prod, pattern)
+  if field.type_name != "Array" {
+    raise InvalidLanguage(
+      "Production '\{lang.name}.\{prod.constr_name}' repeats \{field_placeholder_name(pattern)} but field type is '\{field.type_name}', expected Array",
+    )
+  }
+}
+
+///|
 fn validate_form_pattern_fields(
   lang : NanoLangDef,
   prod : ProductionDef,
@@ -110,6 +202,10 @@ fn validate_form_pattern_fields(
           "Production '\{lang.name}.\{prod.constr_name}' references field $\{index} but only has \{prod.fields.length()} fields",
         )
       }
+    RepeatPattern(item) => {
+      validate_form_pattern_fields(lang, prod, item)
+      validate_repeat_pattern_field(lang, prod, item)
+    }
     ListPattern(items) =>
       items.each(item => validate_form_pattern_fields(lang, prod, item))
   }

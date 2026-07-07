@@ -125,3 +125,49 @@ test "validate form patterns rejects undeclared meta vars" {
     _ => fail("expected unknown meta-var error")
   }
 }
+
+///|
+test "validate form patterns rejects repeated non array fields" {
+  try
+    find_languages_by_file("meta_parser/fixtures/repeat_non_array.mbt")
+  catch {
+    InvalidLanguage(message) =>
+      inspect(
+        message,
+        content="Production 'BadRepeat.Bad' repeats $item but field type is 'Expr', expected Array",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected repeated non-array field error")
+  }
+}
+
+///|
+test "validate form patterns rejects repeated unbound named placeholders" {
+  try
+    find_languages_by_file("meta_parser/fixtures/repeat_unknown_label.mbt")
+  catch {
+    InvalidLanguage(message) =>
+      inspect(
+        message,
+        content="Production 'BadRepeatLabel.Bad' repeats '$e' but it is not a constructor field label",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected repeated unknown label error")
+  }
+}
+
+///|
+test "validate form patterns rejects repeated non field patterns" {
+  try find_languages_by_file("meta_parser/fixtures/repeat_atom.mbt") catch {
+    InvalidLanguage(message) =>
+      inspect(
+        message,
+        content="Production 'BadRepeatAtom.Bad' repeats <pattern> but only constructor fields can use ellipsis",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected repeated non-field pattern error")
+  }
+}

@@ -79,7 +79,27 @@ fn FormPatternParser::parse_list(self : FormPatternParser) -> FormPattern raise 
         ignore(self.advance())
         break
       }
-      Some(_) => items.push(self.parse_one())
+      Some(_) => {
+        let item = self.parse_one()
+        match item {
+          AtomPattern("...") =>
+            match items.pop() {
+              Some(prev) =>
+                match prev {
+                  RepeatPattern(_) =>
+                    raise InvalidAttribute(
+                      "Ellipsis cannot follow another ellipsis in #nano.form pattern",
+                    )
+                  _ => items.push(RepeatPattern(prev))
+                }
+              None =>
+                raise InvalidAttribute(
+                  "Ellipsis must follow a pattern in #nano.form pattern",
+                )
+            }
+          _ => items.push(item)
+        }
+      }
       None => raise InvalidAttribute("Unclosed list in #nano.form pattern")
     }
   }
