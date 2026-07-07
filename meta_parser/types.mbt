@@ -30,6 +30,12 @@ pub(all) enum CanonicalPolicy {
 } derive(Debug, Eq)
 
 ///|
+pub(all) struct NanoHooks {
+  parse_by : String?
+  unparse_by : String?
+} derive(Debug, Eq)
+
+///|
 pub(all) struct ProductionField {
   index : Int
   label : String?
@@ -43,6 +49,9 @@ pub(all) struct ProductionDef {
   fields : Array[ProductionField]
   patterns : Array[FormPattern]
   canonical_policy : CanonicalPolicy
+  hooks : NanoHooks
+  name_alias : String?
+  inline : Bool
   infix_operator : String?
   source_constr : @syntax.ConstrDecl
 }

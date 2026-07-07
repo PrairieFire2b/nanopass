@@ -23,31 +23,72 @@ fn canonical_policy_from_attrs(
 }
 
 ///|
+fn single_attr_payload(
+  owner : String,
+  constr_name : String,
+  attrs : @list.List[@attribute.Attribute],
+  attr_name : String,
+  read_payload : (@attribute.Attribute) -> String raise,
+) -> String? raise {
+  let values : Array[String] = []
+  attrs.each(attr => {
+    if is_nano_attr(attr, attr_name) {
+      let value = read_payload(attr)
+      if value.is_empty() {
+        let message = if attr_name == "infix" || attr_name == "name" {
+          "#nano.\{attr_name} expects a non-empty string literal payload"
+        } else {
+          "#nano.\{attr_name} expects a non-empty payload"
+        }
+        raise InvalidAttribute(message)
+      }
+      values.push(value)
+    }
+  })
+  match values.length() {
+    0 => None
+    1 => Some(values[0])
+    _ =>
+      raise InvalidLanguage(
+        "Production '\{owner}.\{constr_name}' declares #nano.\{attr_name} more than once",
+      )
+  }
+}
+
+///|
+fn hooks_from_attrs(
+  owner : String,
+  constr_name : String,
+  attrs : @list.List[@attribute.Attribute],
+) -> NanoHooks raise {
+  {
+    parse_by: single_attr_payload(
+      owner, constr_name, attrs, "parse_by", parse_by_payload_from_attr,
+    ),
+    unparse_by: single_attr_payload(
+      owner, constr_name, attrs, "unparse_by", unparse_by_payload_from_attr,
+    ),
+  }
+}
+
+///|
+fn name_alias_from_attrs(
+  owner : String,
+  constr_name : String,
+  attrs : @list.List[@attribute.Attribute],
+) -> String? raise {
+  single_attr_payload(owner, constr_name, attrs, "name", name_string_from_attr)
+}
+
+///|
 fn infix_operator_from_attrs(
   owner : String,
   constr_name : String,
   attrs : @list.List[@attribute.Attribute],
 ) -> String? raise {
-  let operators : Array[String] = []
-  attrs.each(attr => {
-    if is_nano_attr(attr, "infix") {
-      let op = infix_string_from_attr(attr)
-      if op.is_empty() {
-        raise InvalidAttribute(
-          "#nano.infix expects a non-empty string literal payload",
-        )
-      }
-      operators.push(op)
-    }
-  })
-  match operators.length() {
-    0 => None
-    1 => Some(operators[0])
-    _ =>
-      raise InvalidLanguage(
-        "Production '\{owner}.\{constr_name}' declares #nano.infix more than once",
-      )
-  }
+  single_attr_payload(
+    owner, constr_name, attrs, "infix", infix_string_from_attr,
+  )
 }
 
 ///|
@@ -80,6 +121,9 @@ fn production_def_from_constr(
     fields: production_fields_from_constr(c),
     patterns: form_patterns_from_attrs(c.attrs),
     canonical_policy: canonical_policy_from_attrs(c.attrs),
+    hooks: hooks_from_attrs(owner, c.name.name, c.attrs),
+    name_alias: name_alias_from_attrs(owner, c.name.name, c.attrs),
+    inline: c.attrs.any(attr => is_nano_attr(attr, "inline")),
     infix_operator: infix_operator_from_attrs(owner, c.name.name, c.attrs),
     source_constr: c,
   }

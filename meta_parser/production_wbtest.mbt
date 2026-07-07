@@ -104,3 +104,23 @@ test "parse infix attributes into production defs" {
     fail("expected infix operator")
   }
 }
+
+///|
+test "parse structural production metadata" {
+  let langs = find_languages_by_file(
+    "meta_parser/fixtures/structural_metadata.mbt",
+  )
+  assert_eq(langs.length(), 1)
+  let defs = langs[0].production_defs
+  assert_eq(defs.length(), 1)
+  guard defs[0].name_alias is Some("lambda") else {
+    fail("expected name alias")
+  }
+  guard defs[0].hooks.parse_by is Some("parse_lambda") else {
+    fail("expected parse hook")
+  }
+  guard defs[0].hooks.unparse_by is Some("unparse_lambda") else {
+    fail("expected unparse hook")
+  }
+  assert_true(defs[0].inline)
+}

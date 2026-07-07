@@ -241,8 +241,11 @@ fn validate_meta_vars(lang : NanoLangDef) -> Unit raise {
 }
 
 ///|
-fn production_has_attr(prod : ProductionDef, name : String) -> Bool {
-  prod.source_constr.attrs.any(attr => is_nano_attr(attr, name))
+fn hooks_empty(hooks : NanoHooks) -> Bool {
+  match (hooks.parse_by, hooks.unparse_by) {
+    (None, None) => true
+    _ => false
+  }
 }
 
 ///|
@@ -250,7 +253,7 @@ fn validate_production_attrs(
   lang_name : String,
   prod : ProductionDef,
 ) -> Unit raise {
-  if production_has_attr(prod, "inline") && prod.infix_operator is Some(_) {
+  if prod.inline && prod.infix_operator is Some(_) {
     raise InvalidLanguage(
       "Production '\{lang_name}.\{prod.constr_name}' cannot combine #nano.inline and #nano.infix",
     )
@@ -262,8 +265,7 @@ fn validate_production_attrs(
   }
   if prod.canonical_policy is FormOnly &&
     prod.patterns.length() == 0 &&
-    !production_has_attr(prod, "parse_by") &&
-    !production_has_attr(prod, "unparse_by") {
+    hooks_empty(prod.hooks) {
     raise InvalidLanguage(
       "Production '\{lang_name}.\{prod.constr_name}' uses #nano.form_only but has no #nano.form or hook",
     )

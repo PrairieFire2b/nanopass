@@ -72,6 +72,11 @@ pub(all) struct Modified[T] {
   modified : T
 } derive(@debug.Debug)
 
+pub(all) struct NanoHooks {
+  parse_by : String?
+  unparse_by : String?
+} derive(Eq, @debug.Debug)
+
 pub struct NanoLangDef {
   name : String
   extends : String?
@@ -97,6 +102,9 @@ pub(all) struct ProductionDef {
   fields : Array[ProductionField]
   patterns : Array[FormPattern]
   canonical_policy : CanonicalPolicy
+  hooks : NanoHooks
+  name_alias : String?
+  inline : Bool
   infix_operator : String?
   source_constr : @syntax.ConstrDecl
 }
