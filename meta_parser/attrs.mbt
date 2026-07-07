@@ -57,3 +57,13 @@ fn meta_string_from_attr(attr : @attribute.Attribute) -> String raise {
 fn infix_string_from_attr(attr : @attribute.Attribute) -> String raise {
   nano_string_payload_from_attr(attr, "infix")
 }
+
+///|
+fn layer_string_from_attr(attr : @attribute.Attribute) -> String raise {
+  nano_string_payload_from_attr(attr, "layer")
+}
+
+///|
+fn context_string_from_attr(attr : @attribute.Attribute) -> String raise {
+  nano_string_payload_from_attr(attr, "context")
+}

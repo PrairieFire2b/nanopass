@@ -30,6 +30,24 @@ pub(all) enum CanonicalPolicy {
 } derive(Debug, Eq)
 
 ///|
+/// A coarse syntax layer for plan_5-style language metadata.
+///
+/// Layers classify AST definitions such as datum, surface, expanded core, or
+/// typed core. They do not describe pass transitions or name-resolution state.
+pub(all) enum SyntaxLayer {
+  LexemeLayer
+  DatumLayer
+  SurfaceLayer
+  ExpandedCoreLayer
+  TypedCoreLayer
+} derive(Debug, Eq)
+
+///|
+pub(all) struct ContextSpec {
+  name : String
+} derive(Debug, Eq)
+
+///|
 pub(all) struct ProductionField {
   index : Int
   label : String?
@@ -44,6 +62,7 @@ pub(all) struct ProductionDef {
   patterns : Array[FormPattern]
   canonical_policy : CanonicalPolicy
   infix_operator : String?
+  contexts : Array[ContextSpec]
   source_constr : @syntax.ConstrDecl
 }
 
@@ -74,6 +93,7 @@ pub struct NanoLangDef {
   name : String // from `#nanopass.language(name="...")`
   extends : String? // optional parent language (from `extends="..."`)
   entry : String? // optional entry nonterminal (from `#nano.entry` or `entry="..."`)
+  layer : SyntaxLayer? // optional syntax layer such as datum/surface/typed-core
   meta_vars : Array[MetaVarDecl] // declared meta-variable names in this raw language
   nonterminals : Array[NonTerminal] // self-referencing constructors and referenced external types
   terminals : Array[Terminal] // leaf/non-recursive constructors

@@ -36,6 +36,10 @@ pub(all) enum CanonicalPolicy {
   FormOnly
 } derive(Eq, @debug.Debug)
 
+pub(all) struct ContextSpec {
+  name : String
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Diff {
   origin : NanoLangDef
   deriv : NanoLangDef
@@ -76,6 +80,7 @@ pub struct NanoLangDef {
   name : String
   extends : String?
   entry : String?
+  layer : SyntaxLayer?
   meta_vars : Array[MetaVarDecl]
   nonterminals : Array[NonTerminal]
   terminals : Array[Terminal]
@@ -98,6 +103,7 @@ pub(all) struct ProductionDef {
   patterns : Array[FormPattern]
   canonical_policy : CanonicalPolicy
   infix_operator : String?
+  contexts : Array[ContextSpec]
   source_constr : @syntax.ConstrDecl
 }
 
@@ -118,6 +124,14 @@ pub struct SourceLocRepr {
 } derive(@debug.Debug)
 pub fn SourceLocRepr::file_path(Self) -> String
 pub fn SourceLocRepr::for_pkg(pkg~ : String, mod~ : String) -> Self
+
+pub(all) enum SyntaxLayer {
+  LexemeLayer
+  DatumLayer
+  SurfaceLayer
+  ExpandedCoreLayer
+  TypedCoreLayer
+} derive(Eq, @debug.Debug)
 
 pub struct Terminal(@syntax.ConstrDecl)
 pub impl @debug.Debug for Terminal

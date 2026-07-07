@@ -152,6 +152,7 @@ fn parse_languages_from_impls(
                 let name = get_name_from_attr(attr)
                 let extends = get_extends_from_attr(attr)
                 let entry = get_entry_from_attrs(name, attr, type_decl.attrs)
+                let layer = syntax_layer_from_attrs(name, type_decl.attrs)
                 let tycon = type_decl.tycon
 
                 let nonterminals : Array[NonTerminal] = []
@@ -201,6 +202,7 @@ fn parse_languages_from_impls(
                   name,
                   extends,
                   entry,
+                  layer,
                   meta_vars,
                   nonterminals,
                   terminals,
