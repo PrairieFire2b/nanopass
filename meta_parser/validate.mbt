@@ -214,10 +214,10 @@ fn validate_form_pattern_fields(
 ///|
 fn validate_production_defs(lang : NanoLangDef) -> Unit raise {
   lang.production_defs.each(prod => {
-    prod.patterns.each(pattern => {
-      validate_form_pattern_fields(lang, prod, pattern)
-    })
     validate_production_attrs(lang.name, prod)
+    prod.surface_forms.each(rule => {
+      validate_form_pattern_fields(lang, prod, rule.pattern)
+    })
   })
 }
 
@@ -264,7 +264,7 @@ fn validate_production_attrs(
     )
   }
   if prod.canonical_policy is FormOnly &&
-    prod.patterns.length() == 0 &&
+    prod.surface_forms.length() == 0 &&
     hooks_empty(prod.hooks) {
     raise InvalidLanguage(
       "Production '\{lang_name}.\{prod.constr_name}' uses #nano.form_only but has no #nano.form or hook",

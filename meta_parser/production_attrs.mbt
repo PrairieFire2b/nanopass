@@ -111,20 +111,140 @@ fn production_fields_from_constr(
 }
 
 ///|
+fn field_pattern_from_index(index : Int) -> FormPattern {
+  FieldPattern(index~, prefix="", suffix="")
+}
+
+///|
+fn field_patterns_from_fields(
+  fields : Array[ProductionField],
+) -> Array[FormPattern] {
+  let patterns : Array[FormPattern] = []
+  fields.each(field => patterns.push(field_pattern_from_index(field.index)))
+  patterns
+}
+
+///|
+fn constructor_form_pattern(
+  head : String,
+  fields : Array[ProductionField],
+) -> FormPattern {
+  let items : Array[FormPattern] = [AtomPattern(head)]
+  fields.each(field => items.push(field_pattern_from_index(field.index)))
+  ListPattern(items)
+}
+
+///|
+fn add_declared_form_rules(
+  rules : Array[ProductionFormRule],
+  patterns : Array[FormPattern],
+) -> Unit {
+  patterns.each(pattern => rules.push({ origin: DeclaredForm, pattern }))
+}
+
+///|
+fn add_canonical_form_rules(
+  rules : Array[ProductionFormRule],
+  constr_name : String,
+  fields : Array[ProductionField],
+  canonical_policy : CanonicalPolicy,
+  name_alias : String?,
+) -> Unit {
+  if canonical_policy is Canonical {
+    match name_alias {
+      Some(alias_name) =>
+        rules.push({
+          origin: NameAliasForm,
+          pattern: constructor_form_pattern(alias_name, fields),
+        })
+      None => ()
+    }
+    rules.push({
+      origin: CanonicalForm,
+      pattern: constructor_form_pattern(constr_name, fields),
+    })
+  }
+}
+
+///|
+fn add_inline_form_rule(
+  rules : Array[ProductionFormRule],
+  fields : Array[ProductionField],
+  inline : Bool,
+) -> Unit {
+  if inline {
+    rules.push({
+      origin: InlineForm,
+      pattern: ListPattern(field_patterns_from_fields(fields)),
+    })
+  }
+}
+
+///|
+fn add_infix_form_rule(
+  rules : Array[ProductionFormRule],
+  infix_operator : String?,
+) -> Unit {
+  match infix_operator {
+    Some(operator) =>
+      rules.push({
+        origin: InfixForm,
+        pattern: ListPattern([
+          field_pattern_from_index(0),
+          AtomPattern(operator),
+          field_pattern_from_index(1),
+        ]),
+      })
+    None => ()
+  }
+}
+
+///|
+fn surface_form_rules_from_metadata(
+  constr_name : String,
+  fields : Array[ProductionField],
+  patterns : Array[FormPattern],
+  canonical_policy : CanonicalPolicy,
+  name_alias : String?,
+  inline : Bool,
+  infix_operator : String?,
+) -> Array[ProductionFormRule] {
+  let rules : Array[ProductionFormRule] = []
+  add_declared_form_rules(rules, patterns)
+  add_canonical_form_rules(
+    rules, constr_name, fields, canonical_policy, name_alias,
+  )
+  add_inline_form_rule(rules, fields, inline)
+  add_infix_form_rule(rules, infix_operator)
+  rules
+}
+
+///|
 fn production_def_from_constr(
   owner : String,
   c : @syntax.ConstrDecl,
 ) -> ProductionDef raise {
+  let constr_name = c.name.name
+  let fields = production_fields_from_constr(c)
+  let patterns = form_patterns_from_attrs(c.attrs)
+  let canonical_policy = canonical_policy_from_attrs(c.attrs)
+  let hooks = hooks_from_attrs(owner, constr_name, c.attrs)
+  let name_alias = name_alias_from_attrs(owner, constr_name, c.attrs)
+  let inline = c.attrs.any(attr => is_nano_attr(attr, "inline"))
+  let infix_operator = infix_operator_from_attrs(owner, constr_name, c.attrs)
   {
     owner,
-    constr_name: c.name.name,
-    fields: production_fields_from_constr(c),
-    patterns: form_patterns_from_attrs(c.attrs),
-    canonical_policy: canonical_policy_from_attrs(c.attrs),
-    hooks: hooks_from_attrs(owner, c.name.name, c.attrs),
-    name_alias: name_alias_from_attrs(owner, c.name.name, c.attrs),
-    inline: c.attrs.any(attr => is_nano_attr(attr, "inline")),
-    infix_operator: infix_operator_from_attrs(owner, c.name.name, c.attrs),
+    constr_name,
+    fields,
+    patterns,
+    surface_forms: surface_form_rules_from_metadata(
+      constr_name, fields, patterns, canonical_policy, name_alias, inline, infix_operator,
+    ),
+    canonical_policy,
+    hooks,
+    name_alias,
+    inline,
+    infix_operator,
     source_constr: c,
   }
 }

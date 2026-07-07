@@ -61,6 +61,29 @@ test "parse constructor form attributes into production defs" {
 }
 
 ///|
+test "normalize declared and canonical surface form rules" {
+  let langs = find_languages_by_file("meta_parser/fixtures/form_attrs.mbt")
+  assert_eq(langs.length(), 1)
+  let defs = langs[0].production_defs
+  let forms = defs[0].surface_forms
+  assert_eq(forms.length(), 2)
+  assert_true(forms[0].origin is DeclaredForm)
+  guard forms[0].pattern
+    is ListPattern(
+      [AtomPattern("lit"), FieldPattern(index=0, prefix="", suffix="")]
+    ) else {
+    fail("unexpected declared Lit surface form")
+  }
+  assert_true(forms[1].origin is CanonicalForm)
+  guard forms[1].pattern
+    is ListPattern(
+      [AtomPattern("Lit"), FieldPattern(index=0, prefix="", suffix="")]
+    ) else {
+    fail("unexpected canonical Lit surface form")
+  }
+}
+
+///|
 test "parse ellipsis form attributes into repeat patterns" {
   let langs = find_languages_by_file("meta_parser/fixtures/repeat_attrs.mbt")
   assert_eq(langs.length(), 1)
@@ -103,6 +126,20 @@ test "parse infix attributes into production defs" {
   guard defs[0].infix_operator is Some("+") else {
     fail("expected infix operator")
   }
+  let forms = defs[0].surface_forms
+  assert_eq(forms.length(), 2)
+  assert_true(forms[0].origin is CanonicalForm)
+  assert_true(forms[1].origin is InfixForm)
+  guard forms[1].pattern
+    is ListPattern(
+      [
+        FieldPattern(index=0, prefix="", suffix=""),
+        AtomPattern("+"),
+        FieldPattern(index=1, prefix="", suffix=""),
+      ]
+    ) else {
+    fail("unexpected infix surface form")
+  }
 }
 
 ///|
@@ -123,4 +160,38 @@ test "parse structural production metadata" {
     fail("expected unparse hook")
   }
   assert_true(defs[0].inline)
+  let forms = defs[0].surface_forms
+  assert_eq(forms.length(), 3)
+  assert_true(forms[0].origin is NameAliasForm)
+  guard forms[0].pattern
+    is ListPattern(
+      [
+        AtomPattern("lambda"),
+        FieldPattern(index=0, prefix="", suffix=""),
+        FieldPattern(index=1, prefix="", suffix=""),
+      ]
+    ) else {
+    fail("unexpected name alias surface form")
+  }
+  assert_true(forms[1].origin is CanonicalForm)
+  guard forms[1].pattern
+    is ListPattern(
+      [
+        AtomPattern("Lambda"),
+        FieldPattern(index=0, prefix="", suffix=""),
+        FieldPattern(index=1, prefix="", suffix=""),
+      ]
+    ) else {
+    fail("unexpected canonical Lambda surface form")
+  }
+  assert_true(forms[2].origin is InlineForm)
+  guard forms[2].pattern
+    is ListPattern(
+      [
+        FieldPattern(index=0, prefix="", suffix=""),
+        FieldPattern(index=1, prefix="", suffix=""),
+      ]
+    ) else {
+    fail("unexpected inline surface form")
+  }
 }

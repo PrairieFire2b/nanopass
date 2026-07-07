@@ -72,6 +72,17 @@ test "validate production attrs rejects form_only without form or hook" {
 }
 
 ///|
+test "validate production attrs accepts form_only inline surface form" {
+  let langs = find_languages_by_file(
+    "meta_parser/fixtures/form_only_inline.mbt",
+  )
+  assert_eq(langs.length(), 1)
+  let forms = langs[0].production_defs[0].surface_forms
+  assert_eq(forms.length(), 1)
+  assert_true(forms[0].origin is InlineForm)
+}
+
+///|
 test "validate production attrs rejects inline infix conflict" {
   try
     find_languages_by_file("meta_parser/fixtures/inline_infix_conflict.mbt")

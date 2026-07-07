@@ -30,6 +30,21 @@ pub(all) enum CanonicalPolicy {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum ProductionFormOrigin {
+  DeclaredForm
+  NameAliasForm
+  CanonicalForm
+  InlineForm
+  InfixForm
+} derive(Debug, Eq)
+
+///|
+pub(all) struct ProductionFormRule {
+  origin : ProductionFormOrigin
+  pattern : FormPattern
+} derive(Debug, Eq)
+
+///|
 pub(all) struct NanoHooks {
   parse_by : String?
   unparse_by : String?
@@ -48,6 +63,7 @@ pub(all) struct ProductionDef {
   constr_name : String
   fields : Array[ProductionField]
   patterns : Array[FormPattern]
+  surface_forms : Array[ProductionFormRule]
   canonical_policy : CanonicalPolicy
   hooks : NanoHooks
   name_alias : String?
