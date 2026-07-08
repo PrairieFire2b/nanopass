@@ -152,6 +152,54 @@ test "validate form patterns rejects undeclared meta vars" {
 }
 
 ///|
+test "validate form patterns rejects ambiguous named placeholders" {
+  try
+    find_languages_by_file("meta_parser/fixtures/ambiguous_placeholder.mbt")
+  catch {
+    InvalidLanguage(message) =>
+      inspect(
+        message,
+        content="Production 'BadPlaceholder.Bad' references '$x' ambiguously as both constructor field and meta-var '$x'",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected ambiguous placeholder error")
+  }
+}
+
+///|
+test "validate generated names reject hook collisions" {
+  try
+    find_languages_by_file("meta_parser/fixtures/generated_name_collision.mbt")
+  catch {
+    InvalidLanguage(message) =>
+      inspect(
+        message,
+        content="Production 'Collision.Bad' parse hook 'parse_Collision' collides with generated name for language 'Collision'",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected generated name collision error")
+  }
+}
+
+///|
+test "validate field types rejects unknown nested type references" {
+  try
+    find_languages_by_file("meta_parser/fixtures/unknown_field_type.mbt")
+  catch {
+    InvalidLanguage(message) =>
+      inspect(
+        message,
+        content="Production 'BadFieldType.Bad' field $0 has unknown type 'Missing'",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected unknown field type error")
+  }
+}
+
+///|
 test "validate form patterns rejects repeated non array fields" {
   try
     find_languages_by_file("meta_parser/fixtures/repeat_non_array.mbt")

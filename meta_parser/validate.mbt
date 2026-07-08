@@ -74,19 +74,13 @@ fn meta_placeholder_base(name : String) -> String {
 }
 
 ///|
-fn production_has_field_label(prod : ProductionDef, name : String) -> Bool {
-  prod.fields.any(field => {
-    match field.label {
-      Some(label) => label == name
-      None => false
-    }
-  })
-}
-
-///|
-fn language_has_meta_var(lang : NanoLangDef, name : String) -> Bool {
+fn meta_var_base_for_placeholder(lang : NanoLangDef, name : String) -> String? {
   let base = meta_placeholder_base(name)
-  lang.meta_vars.any(meta_var => meta_var.name == base)
+  if lang.meta_vars.any(meta_var => meta_var.name == base) {
+    Some(base)
+  } else {
+    None
+  }
 }
 
 ///|
@@ -114,6 +108,28 @@ fn production_field_by_label(
     }
   }
   None
+}
+
+///|
+fn named_placeholder_target_key(
+  lang : NanoLangDef,
+  prod : ProductionDef,
+  name : String,
+) -> String raise {
+  let field = production_field_by_label(prod, name)
+  let meta_base = meta_var_base_for_placeholder(lang, name)
+  match (field, meta_base) {
+    (Some(_), Some(base)) =>
+      raise InvalidLanguage(
+        "Production '\{lang.name}.\{prod.constr_name}' references '$\{name}' ambiguously as both constructor field and meta-var '$\{base}'",
+      )
+    (Some(_), None) => "field:\{name}"
+    (None, Some(base)) => "meta:\{base}"
+    (None, None) =>
+      raise InvalidLanguage(
+        "Production '\{lang.name}.\{prod.constr_name}' references undeclared meta-var '$\{name}'",
+      )
+  }
 }
 
 ///|
@@ -190,12 +206,7 @@ fn validate_form_pattern_fields(
   match pattern {
     AtomPattern(_) => ()
     NamedFieldPattern(name~, ..) =>
-      if !production_has_field_label(prod, name) &&
-        !language_has_meta_var(lang, name) {
-        raise InvalidLanguage(
-          "Production '\{lang.name}.\{prod.constr_name}' references undeclared meta-var '$\{name}'",
-        )
-      }
+      ignore(named_placeholder_target_key(lang, prod, name))
     FieldPattern(index~, ..) =>
       if index < 0 || index >= prod.fields.length() {
         raise InvalidLanguage(
@@ -212,12 +223,147 @@ fn validate_form_pattern_fields(
 }
 
 ///|
+fn record_named_placeholder(
+  seen : Array[(String, String)],
+  name : String,
+  target_key : String,
+) -> Bool {
+  for pair in seen {
+    let (seen_name, seen_target) = pair
+    if seen_name == name {
+      return seen_target == target_key
+    }
+  }
+  seen.push((name, target_key))
+  true
+}
+
+///|
+fn validate_named_placeholder_consistency(
+  lang : NanoLangDef,
+  prod : ProductionDef,
+  pattern : FormPattern,
+  seen : Array[(String, String)],
+) -> Unit raise {
+  match pattern {
+    AtomPattern(_) | FieldPattern(_) => ()
+    NamedFieldPattern(name~, ..) => {
+      let target_key = named_placeholder_target_key(lang, prod, name)
+      if !record_named_placeholder(seen, name, target_key) {
+        raise InvalidLanguage(
+          "Production '\{lang.name}.\{prod.constr_name}' references '$\{name}' inconsistently within one form",
+        )
+      }
+    }
+    RepeatPattern(item) =>
+      validate_named_placeholder_consistency(lang, prod, item, seen)
+    ListPattern(items) =>
+      items.each(item => {
+        validate_named_placeholder_consistency(lang, prod, item, seen)
+      })
+  }
+}
+
+///|
+fn validate_form_pattern(
+  lang : NanoLangDef,
+  prod : ProductionDef,
+  pattern : FormPattern,
+) -> Unit raise {
+  validate_form_pattern_fields(lang, prod, pattern)
+  validate_named_placeholder_consistency(lang, prod, pattern, [])
+}
+
+///|
 fn validate_production_defs(lang : NanoLangDef) -> Unit raise {
   lang.production_defs.each(prod => {
     validate_production_attrs(lang.name, prod)
     prod.surface_forms.each(rule => {
-      validate_form_pattern_fields(lang, prod, rule.pattern)
+      validate_form_pattern(lang, prod, rule.pattern)
     })
+  })
+}
+
+///|
+fn builtin_field_types() -> Array[String] {
+  [
+    "Int", "String", "Bool", "Char", "Double", "Float", "Byte", "Bytes", "Unit",
+    "BigInt", "UInt", "UInt16", "UInt64", "Int16", "Int64", "Array", "FixedArray",
+    "Map", "Option", "Result",
+  ]
+}
+
+///|
+fn add_known_type_name(names : Array[String], name : String) -> Unit {
+  if !name.is_empty() && !names.contains(name) {
+    names.push(name)
+  }
+}
+
+///|
+fn known_field_type_names(
+  langs : Array[NanoLangDef],
+  extra_known_types : Array[String],
+) -> Array[String] {
+  let names = builtin_field_types()
+  extra_known_types.each(name => add_known_type_name(names, name))
+  langs.each(lang => {
+    add_known_type_name(names, lang.type_decl.tycon)
+    lang.nonterminals.each(nt => {
+      match nt {
+        TypeDecl(td) => add_known_type_name(names, td.tycon)
+        Constructor(_) => ()
+      }
+    })
+  })
+  names
+}
+
+///|
+fn validate_type_ref(
+  lang : NanoLangDef,
+  prod : ProductionDef,
+  field_index : Int,
+  ty : @syntax.Type,
+  known : Array[String],
+) -> Unit raise {
+  match ty {
+    @syntax.Name(tys~, ..) => {
+      let name = type_to_name(ty)
+      if !known.contains(name) {
+        raise InvalidLanguage(
+          "Production '\{lang.name}.\{prod.constr_name}' field $\{field_index} has unknown type '\{name}'",
+        )
+      }
+      tys.each(arg => validate_type_ref(lang, prod, field_index, arg, known))
+    }
+    @syntax.Option(ty~, ..) =>
+      validate_type_ref(lang, prod, field_index, ty, known)
+    @syntax.Tuple(tys~, ..) =>
+      tys.each(ty => validate_type_ref(lang, prod, field_index, ty, known))
+    @syntax.Any(_) => ()
+    _ =>
+      raise InvalidLanguage(
+        "Production '\{lang.name}.\{prod.constr_name}' field $\{field_index} has unsupported field type",
+      )
+  }
+}
+
+///|
+fn validate_field_type_refs(
+  langs : Array[NanoLangDef],
+  lang : NanoLangDef,
+  extra_known_types : Array[String],
+) -> Unit raise {
+  let known = known_field_type_names(langs, extra_known_types)
+  lang.production_defs.each(prod => {
+    match prod.source_constr.args {
+      Some(args) =>
+        args.eachi((index, param) => {
+          validate_type_ref(lang, prod, index, param.ty, known)
+        })
+      None => ()
+    }
   })
 }
 
@@ -273,6 +419,85 @@ fn validate_production_attrs(
 }
 
 ///|
+fn generated_language_names(lang : NanoLangDef) -> Array[String] {
+  ["parse_\{lang.name}", "unparse_\{lang.name}"]
+}
+
+///|
+fn generated_name_owner(
+  generated : Array[(String, String)],
+  name : String,
+) -> String? {
+  for pair in generated {
+    let (generated_name, owner) = pair
+    if generated_name == name {
+      return Some(owner)
+    }
+  }
+  None
+}
+
+///|
+fn validate_unique_generated_names(langs : Array[NanoLangDef]) -> Unit raise {
+  let seen : Array[(String, String)] = []
+  langs.each(lang => {
+    generated_language_names(lang).each(name => {
+      match generated_name_owner(seen, name) {
+        Some(owner) =>
+          raise InvalidLanguage(
+            "Generated name '\{name}' for language '\{lang.name}' collides with language '\{owner}'",
+          )
+        None => seen.push((name, lang.name))
+      }
+    })
+  })
+}
+
+///|
+fn validate_hook_generated_name_collisions(
+  langs : Array[NanoLangDef],
+) -> Unit raise {
+  let generated : Array[(String, String)] = []
+  langs.each(lang => {
+    generated_language_names(lang).each(name => {
+      generated.push((name, lang.name))
+    })
+  })
+  langs.each(lang => {
+    lang.production_defs.each(prod => {
+      match prod.hooks.parse_by {
+        Some(hook) =>
+          match generated_name_owner(generated, hook) {
+            Some(owner) =>
+              raise InvalidLanguage(
+                "Production '\{lang.name}.\{prod.constr_name}' parse hook '\{hook}' collides with generated name for language '\{owner}'",
+              )
+            None => ()
+          }
+        None => ()
+      }
+      match prod.hooks.unparse_by {
+        Some(hook) =>
+          match generated_name_owner(generated, hook) {
+            Some(owner) =>
+              raise InvalidLanguage(
+                "Production '\{lang.name}.\{prod.constr_name}' unparse hook '\{hook}' collides with generated name for language '\{owner}'",
+              )
+            None => ()
+          }
+        None => ()
+      }
+    })
+  })
+}
+
+///|
+fn validate_generated_name_collisions(langs : Array[NanoLangDef]) -> Unit raise {
+  validate_unique_generated_names(langs)
+  validate_hook_generated_name_collisions(langs)
+}
+
+///|
 fn entry_candidates(lang : NanoLangDef) -> Array[String] {
   let candidates : Array[String] = [lang.type_decl.tycon]
   lang.nonterminals.each(nt => {
@@ -303,15 +528,25 @@ fn validate_language_entry(lang : NanoLangDef) -> Unit raise {
 }
 
 ///|
-/// Validate the raw language definitions collected from a source file.
-///
-/// This is intentionally a small first slice of the plan_4 validator: it checks
-/// language identity, inheritance shape, and positional form field references
-/// before later phases add meta-var and generated-name diagnostics.
-pub fn validate_language_defs(langs : Array[NanoLangDef]) -> Unit raise {
+fn validate_language_defs_with_known_types(
+  langs : Array[NanoLangDef],
+  extra_known_types : Array[String],
+) -> Unit raise {
   validate_unique_language_names(langs)
   langs.each(lang => validate_extends_chain(lang, langs, [lang.name]))
+  validate_generated_name_collisions(langs)
   langs.each(validate_language_entry)
   langs.each(validate_meta_vars)
   langs.each(validate_production_defs)
+  langs.each(lang => validate_field_type_refs(langs, lang, extra_known_types))
+}
+
+///|
+/// Validate the raw language definitions collected from a source file.
+///
+/// This is intentionally a small first slice of the plan_4 validator: it checks
+/// language identity, inheritance shape, generated names, field references, and
+/// form placeholder consistency before later phases add entry inheritance.
+pub fn validate_language_defs(langs : Array[NanoLangDef]) -> Unit raise {
+  validate_language_defs_with_known_types(langs, [])
 }

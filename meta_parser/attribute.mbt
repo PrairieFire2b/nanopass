@@ -133,12 +133,28 @@ fn find_nonterminal_types(
 }
 
 ///|
+fn find_source_type_names(impls : @list.List[@syntax.Impl]) -> Array[String] {
+  let names : Array[String] = []
+  impls.each(impl_ => {
+    match impl_ {
+      @syntax.TopTypeDef(type_decl) =>
+        if !names.contains(type_decl.tycon) {
+          names.push(type_decl.tycon)
+        }
+      _ => ()
+    }
+  })
+  names
+}
+
+///|
 /// Core logic: parse language definitions from already-parsed file impls
 fn parse_languages_from_impls(
   impls : @list.List[@syntax.Impl],
 ) -> Array[NanoLangDef] raise {
   let nt_types = find_nonterminal_types(impls)
   let nt_names : Array[String] = nt_types.map(fn(td) { td.tycon })
+  let source_type_names = find_source_type_names(impls)
 
   let langs = impls
     .filter_map(impl_ => {
@@ -214,7 +230,7 @@ fn parse_languages_from_impls(
       }
     })
     .to_array()
-  validate_language_defs(langs)
+  validate_language_defs_with_known_types(langs, source_type_names)
   langs
 }
 
