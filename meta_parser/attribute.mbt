@@ -217,6 +217,7 @@ fn parse_languages_from_impls(
                   name,
                   extends,
                   entry,
+                  resolved_entry: None,
                   meta_vars,
                   nonterminals,
                   terminals,
@@ -230,8 +231,7 @@ fn parse_languages_from_impls(
       }
     })
     .to_array()
-  validate_language_defs_with_known_types(langs, source_type_names)
-  langs
+  normalize_language_defs_with_known_types(langs, source_type_names)
 }
 
 ///|

@@ -48,6 +48,12 @@ pub(all) struct Diff {
 } derive(@debug.Debug)
 pub impl Show for Diff
 
+pub(all) enum EntryOrigin {
+  DefaultEntry
+  ExplicitEntry
+  InheritedEntry(String)
+} derive(Eq, @debug.Debug)
+
 pub enum Extensible {
 }
 
@@ -81,6 +87,7 @@ pub struct NanoLangDef {
   name : String
   extends : String?
   entry : String?
+  resolved_entry : ResolvedEntry?
   meta_vars : Array[MetaVarDecl]
   nonterminals : Array[NonTerminal]
   terminals : Array[Terminal]
@@ -95,6 +102,18 @@ pub enum NonTerminal {
   TypeDecl(@syntax.TypeDecl)
 }
 pub impl @debug.Debug for NonTerminal
+
+pub(all) struct NonTerminalPosition {
+  name : String
+  introduced_by : String
+  kind : NonTerminalPositionKind
+} derive(Eq, @debug.Debug)
+
+pub(all) enum NonTerminalPositionKind {
+  RootNonTerminal
+  ExternalNonTerminal
+  InheritedNonTerminal
+} derive(Eq, @debug.Debug)
 
 pub(all) struct ProductionDef {
   owner : String
@@ -127,6 +146,11 @@ pub(all) enum ProductionFormOrigin {
 pub(all) struct ProductionFormRule {
   origin : ProductionFormOrigin
   pattern : FormPattern
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ResolvedEntry {
+  origin : EntryOrigin
+  target : NonTerminalPosition
 } derive(Eq, @debug.Debug)
 
 pub struct SourceLocRepr {

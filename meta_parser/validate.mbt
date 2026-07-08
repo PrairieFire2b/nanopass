@@ -498,33 +498,203 @@ fn validate_generated_name_collisions(langs : Array[NanoLangDef]) -> Unit raise 
 }
 
 ///|
-fn entry_candidates(lang : NanoLangDef) -> Array[String] {
-  let candidates : Array[String] = [lang.type_decl.tycon]
+fn raw_nonterminal_positions(lang : NanoLangDef) -> Array[NonTerminalPosition] {
+  let positions : Array[NonTerminalPosition] = [
+    {
+      name: lang.type_decl.tycon,
+      introduced_by: lang.name,
+      kind: RootNonTerminal,
+    },
+  ]
   lang.nonterminals.each(nt => {
     match nt {
       TypeDecl(td) =>
-        if !candidates.contains(td.tycon) {
-          candidates.push(td.tycon)
-        }
+        positions.push({
+          name: td.tycon,
+          introduced_by: lang.name,
+          kind: ExternalNonTerminal,
+        })
       Constructor(_) => ()
+    }
+  })
+  positions
+}
+
+///|
+fn inherited_nonterminal_position(
+  pos : NonTerminalPosition,
+) -> NonTerminalPosition {
+  {
+    name: pos.name,
+    introduced_by: pos.introduced_by,
+    kind: InheritedNonTerminal,
+  }
+}
+
+///|
+fn effective_nonterminal_positions(
+  lang : NanoLangDef,
+  langs : Array[NanoLangDef],
+) -> Array[NonTerminalPosition] raise {
+  let positions : Array[NonTerminalPosition] = []
+  match lang.extends {
+    Some(parent_name) =>
+      match find_language_by_name(langs, parent_name) {
+        Some(parent) =>
+          effective_nonterminal_positions(parent, langs).each(pos => {
+            positions.push(inherited_nonterminal_position(pos))
+          })
+        None =>
+          raise InvalidLanguage(
+            "Language '\{lang.name}' extends unknown language '\{parent_name}'",
+          )
+      }
+    None => ()
+  }
+  raw_nonterminal_positions(lang).each(pos => positions.push(pos))
+  positions
+}
+
+///|
+fn entry_position_candidates(
+  positions : Array[NonTerminalPosition],
+) -> Array[String] {
+  let candidates : Array[String] = []
+  positions.each(pos => {
+    if !candidates.contains(pos.name) {
+      candidates.push(pos.name)
     }
   })
   candidates
 }
 
 ///|
-fn validate_language_entry(lang : NanoLangDef) -> Unit raise {
-  match lang.entry {
-    None => ()
-    Some(entry) => {
-      let candidates = entry_candidates(lang)
-      if !candidates.contains(entry) {
-        raise InvalidLanguage(
-          "Language '\{lang.name}' entry '\{entry}' is not a known nonterminal (candidates: \{candidates.join(", ")})",
-        )
-      }
+fn entry_position_sources(positions : Array[NonTerminalPosition]) -> String {
+  positions
+  .map(pos => "\{pos.name} from language '\{pos.introduced_by}'")
+  .join(", ")
+}
+
+///|
+fn resolve_entry_position(
+  lang : NanoLangDef,
+  entry : String,
+  positions : Array[NonTerminalPosition],
+) -> NonTerminalPosition raise {
+  let matches : Array[NonTerminalPosition] = []
+  positions.each(pos => if pos.name == entry { matches.push(pos) })
+  match matches.length() {
+    1 => matches[0]
+    0 => {
+      let candidates = entry_position_candidates(positions)
+      raise InvalidLanguage(
+        "Language '\{lang.name}' entry '\{entry}' is not a known nonterminal (candidates: \{candidates.join(", ")})",
+      )
     }
+    _ =>
+      raise InvalidLanguage(
+        "Language '\{lang.name}' entry '\{entry}' is ambiguous across nonterminal positions: \{entry_position_sources(matches)}",
+      )
   }
+}
+
+///|
+fn resolve_language_entry(
+  lang : NanoLangDef,
+  langs : Array[NanoLangDef],
+) -> ResolvedEntry raise {
+  let positions = effective_nonterminal_positions(lang, langs)
+  match lang.entry {
+    Some(entry) =>
+      {
+        origin: ExplicitEntry,
+        target: resolve_entry_position(lang, entry, positions),
+      }
+    None =>
+      match lang.extends {
+        Some(parent_name) =>
+          match find_language_by_name(langs, parent_name) {
+            Some(parent) => {
+              let parent_entry = resolve_language_entry(parent, langs)
+              {
+                origin: InheritedEntry(parent_name),
+                target: resolve_entry_position(
+                  lang,
+                  parent_entry.target.name,
+                  positions,
+                ),
+              }
+            }
+            None =>
+              raise InvalidLanguage(
+                "Language '\{lang.name}' extends unknown language '\{parent_name}'",
+              )
+          }
+        None =>
+          {
+            origin: DefaultEntry,
+            target: resolve_entry_position(
+              lang,
+              lang.type_decl.tycon,
+              positions,
+            ),
+          }
+      }
+  }
+}
+
+///|
+fn with_resolved_entry(
+  lang : NanoLangDef,
+  resolved_entry : ResolvedEntry,
+) -> NanoLangDef {
+  {
+    name: lang.name,
+    extends: lang.extends,
+    entry: lang.entry,
+    resolved_entry: Some(resolved_entry),
+    meta_vars: lang.meta_vars,
+    nonterminals: lang.nonterminals,
+    terminals: lang.terminals,
+    production_defs: lang.production_defs,
+    type_decl: lang.type_decl,
+  }
+}
+
+///|
+fn resolve_language_entries(
+  langs : Array[NanoLangDef],
+) -> Array[NanoLangDef] raise {
+  langs.map(lang => {
+    with_resolved_entry(lang, resolve_language_entry(lang, langs))
+  })
+}
+
+///|
+fn validate_resolved_language_entry(lang : NanoLangDef) -> Unit raise {
+  match lang.resolved_entry {
+    Some(_) => ()
+    None =>
+      raise InvalidLanguage("Language '\{lang.name}' entry was not resolved")
+  }
+}
+
+///|
+fn normalize_language_defs_with_known_types(
+  langs : Array[NanoLangDef],
+  extra_known_types : Array[String],
+) -> Array[NanoLangDef] raise {
+  validate_unique_language_names(langs)
+  langs.each(lang => validate_extends_chain(lang, langs, [lang.name]))
+  let resolved_langs = resolve_language_entries(langs)
+  validate_generated_name_collisions(resolved_langs)
+  resolved_langs.each(validate_resolved_language_entry)
+  resolved_langs.each(validate_meta_vars)
+  resolved_langs.each(validate_production_defs)
+  resolved_langs.each(lang => {
+    validate_field_type_refs(resolved_langs, lang, extra_known_types)
+  })
+  resolved_langs
 }
 
 ///|
@@ -532,21 +702,14 @@ fn validate_language_defs_with_known_types(
   langs : Array[NanoLangDef],
   extra_known_types : Array[String],
 ) -> Unit raise {
-  validate_unique_language_names(langs)
-  langs.each(lang => validate_extends_chain(lang, langs, [lang.name]))
-  validate_generated_name_collisions(langs)
-  langs.each(validate_language_entry)
-  langs.each(validate_meta_vars)
-  langs.each(validate_production_defs)
-  langs.each(lang => validate_field_type_refs(langs, lang, extra_known_types))
+  ignore(normalize_language_defs_with_known_types(langs, extra_known_types))
 }
 
 ///|
 /// Validate the raw language definitions collected from a source file.
 ///
-/// This is intentionally a small first slice of the plan_4 validator: it checks
-/// language identity, inheritance shape, generated names, field references, and
-/// form placeholder consistency before later phases add entry inheritance.
+/// This checks language identity, inheritance shape, effective entry resolution,
+/// generated names, field references, and form placeholder consistency.
 pub fn validate_language_defs(langs : Array[NanoLangDef]) -> Unit raise {
   validate_language_defs_with_known_types(langs, [])
 }

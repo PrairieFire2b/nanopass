@@ -79,6 +79,33 @@ pub(all) struct MetaVarDecl {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum NonTerminalPositionKind {
+  RootNonTerminal
+  ExternalNonTerminal
+  InheritedNonTerminal
+} derive(Debug, Eq)
+
+///|
+pub(all) struct NonTerminalPosition {
+  name : String
+  introduced_by : String
+  kind : NonTerminalPositionKind
+} derive(Debug, Eq)
+
+///|
+pub(all) enum EntryOrigin {
+  DefaultEntry
+  ExplicitEntry
+  InheritedEntry(String)
+} derive(Debug, Eq)
+
+///|
+pub(all) struct ResolvedEntry {
+  origin : EntryOrigin
+  target : NonTerminalPosition
+} derive(Debug, Eq)
+
+///|
 /// A nonterminal in a language definition.
 ///
 /// # Variants
@@ -99,6 +126,7 @@ pub struct NanoLangDef {
   name : String // from `#nanopass.language(name="...")`
   extends : String? // optional parent language (from `extends="..."`)
   entry : String? // optional entry nonterminal (from `#nano.entry` or `entry="..."`)
+  resolved_entry : ResolvedEntry? // effective entry after inheritance resolution
   meta_vars : Array[MetaVarDecl] // declared meta-variable names in this raw language
   nonterminals : Array[NonTerminal] // self-referencing constructors and referenced external types
   terminals : Array[Terminal] // leaf/non-recursive constructors
