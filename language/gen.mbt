@@ -2,16 +2,15 @@
 /// Generate the complete set of `Impl`s for this language group;
 /// The result can be formatted with `@fmt.impls_to_string`.
 pub fn Language::gen(self : Language) -> @list.List[@syntax.Impl] raise {
-  let (tree, ext_enums) = gen_tree_def(self.group, _mbti=self.interface)
-  let tree_params = tree.params.filter_map(p => p.name)
-  let wrappers = struct_wrappers(self.group, tree_params.to_array(), tree.loc)
-  let wrapper_impls = wrappers.map(fn(w) { @syntax.TopTypeDef(w) })
-  let ext_impls = ext_enums.map(fn(e) { @syntax.TopTypeDef(e) })
-  let external_impls = find_external_types(self.group, tree, self.interface).filter_map(
-    sig_to_impl,
-  )
+  let layout = self.layout()
+  let wrapper_impls = layout.wrappers.map(fn(w) { @syntax.TopTypeDef(w.decl) })
+  let ext_impls = layout.ext_enums.map(fn(e) { @syntax.TopTypeDef(e.decl) })
+  let external_impls = layout.external_types.filter_map(sig_to_impl)
   @list.List(
-    [@syntax.TopTypeDef(tree)] + wrapper_impls + ext_impls + external_impls,
+    [@syntax.TopTypeDef(layout.tree.decl)] +
+    wrapper_impls +
+    ext_impls +
+    external_impls,
   )
 }
 
