@@ -125,6 +125,7 @@ pub struct Terminal(@syntax.ConstrDecl)
 pub struct NanoLangDef {
   name : String // from `#nanopass.language(name="...")`
   extends : String? // optional parent language (from `extends="..."`)
+  layer : String? // optional syntax layer (from `layer="..."`)
   entry : String? // optional entry nonterminal (from `#nano.entry` or `entry="..."`)
   resolved_entry : ResolvedEntry? // effective entry after inheritance resolution
   meta_vars : Array[MetaVarDecl] // declared meta-variable names in this raw language

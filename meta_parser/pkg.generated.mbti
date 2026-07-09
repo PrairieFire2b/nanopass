@@ -86,6 +86,7 @@ pub(all) struct NanoHooks {
 pub struct NanoLangDef {
   name : String
   extends : String?
+  layer : String?
   entry : String?
   resolved_entry : ResolvedEntry?
   meta_vars : Array[MetaVarDecl]

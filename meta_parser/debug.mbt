@@ -43,6 +43,7 @@ pub impl Debug for NanoLangDef with fn to_repr(self) -> Repr {
   Repr::record({
     "name": Repr::string(self.name),
     "extends": @debug.to_repr(self.extends),
+    "layer": @debug.to_repr(self.layer),
     "nonterminals": @debug.to_repr(self.nonterminals),
     "terminals": @debug.to_repr(self.terminals),
     "tycon": Repr::string(self.type_decl.tycon),

@@ -26,6 +26,46 @@ test "validate language definitions rejects unknown parent" {
 }
 
 ///|
+test "parse language layer parameters" {
+  let langs = find_languages_by_file("meta_parser/fixtures/layer_attrs.mbt")
+  assert_eq(langs.length(), 2)
+  guard langs[0].layer is Some("surface") else { fail("unexpected base layer") }
+  guard langs[1].extends is Some("LayerBase") else {
+    fail("unexpected derived parent")
+  }
+  guard langs[1].layer is Some("typed-core") else {
+    fail("unexpected derived layer")
+  }
+}
+
+///|
+test "parse #nano.lang layer parameter" {
+  let langs = find_languages_by_file("meta_parser/fixtures/nano_lang_attr.mbt")
+  assert_eq(langs.length(), 2)
+  assert_eq(langs[0].name, "NanoLayer")
+  guard langs[0].layer is Some("datum") else {
+    fail("unexpected nano lang layer")
+  }
+  guard langs[1].extends is Some("NanoLayer") else {
+    fail("unexpected nano lang parent")
+  }
+  guard langs[1].layer is Some("surface") else {
+    fail("unexpected nano lang child layer")
+  }
+}
+
+///|
+test "validate language definitions rejects empty layer" {
+  try find_languages_by_file("meta_parser/fixtures/empty_layer.mbt") catch {
+    InvalidLanguage(message) =>
+      inspect(message, content="Language 'BadLayer' layer cannot be empty")
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected empty layer error")
+  }
+}
+
+///|
 test "validate form patterns rejects out of range field references" {
   try
     find_languages_by_file("meta_parser/fixtures/form_field_out_of_range.mbt")

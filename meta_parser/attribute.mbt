@@ -1,4 +1,30 @@
 ///|
+fn is_language_attr(attr : @attribute.Attribute) -> Bool {
+  attr.raw is [.. "#nanopass.language", ..] || attr.raw is [.. "#nano.lang", ..]
+}
+
+///|
+fn string_param_from_attr(
+  attr : @attribute.Attribute,
+  param_name : String,
+) -> String? {
+  match attr.parsed {
+    Some(Apply(_, props)) =>
+      match
+        props.find(fn(prop) {
+          match prop {
+            Labeled(label, String(_)) => label == param_name
+            _ => false
+          }
+        }) {
+        Some(Labeled(_, String(value))) => Some(value)
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
 /// Extract the `name` parameter from a `#nanopass.language(...)` attribute.
 ///
 /// # Raises
@@ -6,21 +32,14 @@
 /// or missing the `name` parameter.
 pub fn get_name_from_attr(attr : @attribute.Attribute) -> String raise {
   match attr.parsed {
-    Some(Apply(_, props)) => {
-      let name_prop = props.find(fn(prop) {
-        match prop {
-          Labeled("name", String(_)) => true
-          _ => false
-        }
-      })
-      match name_prop {
-        Some(Labeled(_, String(name))) => name
+    Some(Apply(_, _)) =>
+      match string_param_from_attr(attr, "name") {
+        Some(name) => name
         _ =>
           raise NanopassParseError::InvalidAttribute(
             "Missing `name` parameter in `#nanopass.language` attribute",
           )
       }
-    }
     _ =>
       raise NanopassParseError::InvalidAttribute(
         "Invalid `#nanopass.language` attribute format",
@@ -31,39 +50,19 @@ pub fn get_name_from_attr(attr : @attribute.Attribute) -> String raise {
 ///|
 /// Extract the `extends` parameter from a `#nanopass.language(...)` attribute
 fn get_extends_from_attr(attr : @attribute.Attribute) -> String? {
-  match attr.parsed {
-    Some(Apply(_, props)) =>
-      match
-        props.find(fn(prop) {
-          match prop {
-            Labeled("extends", String(_)) => true
-            _ => false
-          }
-        }) {
-        Some(Labeled(_, String(extends))) => Some(extends)
-        _ => None
-      }
-    _ => None
-  }
+  string_param_from_attr(attr, "extends")
+}
+
+///|
+/// Extract the optional `layer` parameter from `#nanopass.language(...)`.
+fn get_layer_from_attr(attr : @attribute.Attribute) -> String? {
+  string_param_from_attr(attr, "layer")
 }
 
 ///|
 /// Extract the optional `entry` parameter from `#nanopass.language(...)`.
 fn get_entry_from_language_attr(attr : @attribute.Attribute) -> String? {
-  match attr.parsed {
-    Some(Apply(_, props)) =>
-      match
-        props.find(fn(prop) {
-          match prop {
-            Labeled("entry", String(_)) => true
-            _ => false
-          }
-        }) {
-        Some(Labeled(_, String(entry))) => Some(entry)
-        _ => None
-      }
-    _ => None
-  }
+  string_param_from_attr(attr, "entry")
 }
 
 ///|
@@ -163,10 +162,11 @@ fn parse_languages_from_impls(
           match type_decl.components {
             @syntax.Variant(constructors) =>
               type_decl.attrs
-              .find(fn(attr) { attr.raw is [.. "#nanopass.language", ..] })
+              .find(is_language_attr)
               .map(attr => {
                 let name = get_name_from_attr(attr)
                 let extends = get_extends_from_attr(attr)
+                let layer = get_layer_from_attr(attr)
                 let entry = get_entry_from_attrs(name, attr, type_decl.attrs)
                 let tycon = type_decl.tycon
 
@@ -216,6 +216,7 @@ fn parse_languages_from_impls(
                 {
                   name,
                   extends,
+                  layer,
                   entry,
                   resolved_entry: None,
                   meta_vars,

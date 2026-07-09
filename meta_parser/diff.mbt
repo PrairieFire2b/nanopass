@@ -373,6 +373,7 @@ test {
       #|  origin: {
       #|    name: "Lambda",
       #|    extends: None,
+      #|    layer: None,
       #|    nonterminals: [Constructor(Lam(LambdaVar, Expr)), Constructor(App(Expr, Expr))],
       #|    terminals: [Int(Int), LambdaVar(LambdaVar)],
       #|    tycon: "Expr",
@@ -380,6 +381,7 @@ test {
       #|  deriv: {
       #|    name: "SimplyTypedLambda",
       #|    extends: Some("Lambda"),
+      #|    layer: None,
       #|    nonterminals: [
       #|      TypeDecl("Type"),
       #|      Constructor(If(TypedExpr, TypedExpr, TypedExpr)),

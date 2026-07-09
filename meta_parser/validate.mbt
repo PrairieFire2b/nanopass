@@ -23,6 +23,17 @@ fn validate_unique_language_names(langs : Array[NanoLangDef]) -> Unit raise {
 }
 
 ///|
+fn validate_language_layer(lang : NanoLangDef) -> Unit raise {
+  match lang.layer {
+    None => ()
+    Some(layer) =>
+      if layer.is_empty() {
+        raise InvalidLanguage("Language '\{lang.name}' layer cannot be empty")
+      }
+  }
+}
+
+///|
 fn validate_extends_chain(
   lang : NanoLangDef,
   langs : Array[NanoLangDef],
@@ -651,6 +662,7 @@ fn with_resolved_entry(
   {
     name: lang.name,
     extends: lang.extends,
+    layer: lang.layer,
     entry: lang.entry,
     resolved_entry: Some(resolved_entry),
     meta_vars: lang.meta_vars,
@@ -685,6 +697,7 @@ fn normalize_language_defs_with_known_types(
   extra_known_types : Array[String],
 ) -> Array[NanoLangDef] raise {
   validate_unique_language_names(langs)
+  langs.each(validate_language_layer)
   langs.each(lang => validate_extends_chain(lang, langs, [lang.name]))
   let resolved_langs = resolve_language_entries(langs)
   validate_generated_name_collisions(resolved_langs)
