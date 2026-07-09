@@ -69,6 +69,7 @@ pub(all) struct ProductionDef {
   name_alias : String?
   inline : Bool
   infix_operator : String?
+  contexts : Array[String]
   source_constr : @syntax.ConstrDecl
 }
 

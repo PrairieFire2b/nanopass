@@ -12,6 +12,25 @@ fn form_patterns_from_attrs(
 }
 
 ///|
+fn contexts_from_attrs(
+  attrs : @list.List[@attribute.Attribute],
+) -> Array[String] raise {
+  let contexts : Array[String] = []
+  attrs.each(attr => {
+    if is_nano_attr(attr, "context") {
+      let context = context_string_from_attr(attr)
+      if context.is_empty() {
+        raise InvalidAttribute(
+          "#nano.context expects a non-empty string literal payload",
+        )
+      }
+      contexts.push(context)
+    }
+  })
+  contexts
+}
+
+///|
 fn canonical_policy_from_attrs(
   attrs : @list.List[@attribute.Attribute],
 ) -> CanonicalPolicy {
@@ -232,6 +251,7 @@ fn production_def_from_constr(
   let name_alias = name_alias_from_attrs(owner, constr_name, c.attrs)
   let inline = c.attrs.any(attr => is_nano_attr(attr, "inline"))
   let infix_operator = infix_operator_from_attrs(owner, constr_name, c.attrs)
+  let contexts = contexts_from_attrs(c.attrs)
   {
     owner,
     constr_name,
@@ -245,6 +265,7 @@ fn production_def_from_constr(
     name_alias,
     inline,
     infix_operator,
+    contexts,
     source_constr: c,
   }
 }

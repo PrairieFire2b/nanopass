@@ -167,6 +167,20 @@ test "validate production attrs rejects empty infix payload" {
 }
 
 ///|
+test "validate production attrs rejects empty context payload" {
+  try find_languages_by_file("meta_parser/fixtures/context_empty.mbt") catch {
+    InvalidAttribute(message) =>
+      inspect(
+        message,
+        content="#nano.context expects a non-empty string literal payload",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected empty context payload error")
+  }
+}
+
+///|
 test "validate meta vars rejects duplicate owner declarations" {
   try find_languages_by_file("meta_parser/fixtures/duplicate_meta.mbt") catch {
     InvalidLanguage(message) =>

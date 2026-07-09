@@ -195,3 +195,20 @@ test "parse structural production metadata" {
     fail("unexpected inline surface form")
   }
 }
+
+///|
+test "parse production context attributes" {
+  let langs = find_languages_by_file("meta_parser/fixtures/context_attrs.mbt")
+  assert_eq(langs.length(), 1)
+  guard langs[0].layer is Some("surface") else {
+    fail("unexpected language layer")
+  }
+  let defs = langs[0].production_defs
+  assert_eq(defs.length(), 2)
+  debug_inspect(
+    defs.map(def => "\{def.constr_name}:\{def.contexts.join(",")}"),
+    content=(
+      #|["Quote:expression", "Begin:expression,body"]
+    ),
+  )
+}

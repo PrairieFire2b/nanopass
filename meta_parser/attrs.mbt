@@ -84,6 +84,11 @@ fn name_string_from_attr(attr : @attribute.Attribute) -> String raise {
 }
 
 ///|
+fn context_string_from_attr(attr : @attribute.Attribute) -> String raise {
+  nano_string_payload_from_attr(attr, "context")
+}
+
+///|
 fn parse_by_payload_from_attr(attr : @attribute.Attribute) -> String raise {
   nano_raw_payload_from_attr(attr, "parse_by")
 }
