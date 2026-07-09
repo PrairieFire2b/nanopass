@@ -1,0 +1,9 @@
+{
+    "import": [
+        "moonbitlang/core/debug",
+        "moonbitlang/core/string"
+    ],
+    "wbtest-import": [
+        "moonbitlang/core/test"
+    ]
+}
