@@ -1,61 +1,4 @@
 ///|
-pub(all) enum ConstructorTarget {
-  TreeTarget
-  ExtTarget(String)
-} derive(Debug, Eq)
-
-///|
-pub(all) struct ConstructorLayout {
-  lang_name : String
-  source_tycon : String
-  constr_name : String
-  source_constr : @syntax.ConstrDecl
-  target : ConstructorTarget
-  field_order : Array[Int]
-  tree_extra_type : @syntax.Type?
-}
-
-///|
-pub(all) struct TreeConstructorLayout {
-  constr_name : String
-  field_types : Array[String]
-}
-
-///|
-pub(all) struct TreeLayout {
-  tycon : String
-  params : Array[String]
-  constructors : Array[TreeConstructorLayout]
-  decl : @syntax.TypeDecl
-}
-
-///|
-pub(all) struct WrapperLayout {
-  lang_name : String
-  tycon : String
-  tree_args : Array[String]
-  decl : @syntax.TypeDecl
-}
-
-///|
-pub(all) struct ExtEnumLayout {
-  lang_name : String
-  tycon : String
-  constructors : Array[String]
-  decl : @syntax.TypeDecl
-}
-
-///|
-pub(all) struct GeneratedLanguageLayout {
-  group : Array[@meta_parser.NanoLangDef]
-  tree : TreeLayout
-  wrappers : Array[WrapperLayout]
-  ext_enums : Array[ExtEnumLayout]
-  constructors : Array[ConstructorLayout]
-  external_types : Array[@mbti_ast.Sig]
-}
-
-///|
 fn type_decl_params(decl : @syntax.TypeDecl) -> Array[String] {
   decl.params.filter_map(param => param.name).to_array()
 }
@@ -90,8 +33,8 @@ fn constr_field_types(constr : @syntax.ConstrDecl) -> Array[String] {
 ///|
 fn tree_constructor_layouts(
   tree : @syntax.TypeDecl,
-) -> Array[TreeConstructorLayout] {
-  let constructors : Array[TreeConstructorLayout] = []
+) -> Array[@layout.TreeConstructorLayout] {
+  let constructors : Array[@layout.TreeConstructorLayout] = []
   match tree.components {
     @syntax.Variant(cs) =>
       cs.each(constr => {
@@ -157,7 +100,7 @@ fn find_lang_by_ext_tycon(
 fn wrapper_layouts(
   langs : Array[@meta_parser.NanoLangDef],
   wrappers : Array[@syntax.TypeDecl],
-) -> Array[WrapperLayout] {
+) -> Array[@layout.WrapperLayout] {
   wrappers.map(wrapper => {
     let lang_name = match find_lang_by_tycon(langs, wrapper.tycon) {
       Some(lang) => lang.name
@@ -176,7 +119,7 @@ fn wrapper_layouts(
 fn ext_enum_layouts(
   langs : Array[@meta_parser.NanoLangDef],
   ext_enums : Array[@syntax.TypeDecl],
-) -> Array[ExtEnumLayout] {
+) -> Array[@layout.ExtEnumLayout] {
   ext_enums.map(ext_enum => {
     let lang_name = match find_lang_by_ext_tycon(langs, ext_enum.tycon) {
       Some(lang) => lang.name
@@ -246,7 +189,7 @@ fn shared_field_order(
 fn constructor_layouts(
   langs : Array[@meta_parser.NanoLangDef],
   tree : @syntax.TypeDecl,
-) -> Array[ConstructorLayout] raise {
+) -> Array[@layout.ConstructorLayout] raise {
   if langs.length() == 0 {
     raise NoLanguageFound
   }
@@ -254,7 +197,7 @@ fn constructor_layouts(
   let base = langs[0]
   let base_tycon = base.type_decl.tycon
   let base_map = make_base_map(base)
-  let layouts : Array[ConstructorLayout] = []
+  let layouts : Array[@layout.ConstructorLayout] = []
 
   match base.type_decl.components {
     @syntax.Variant(cs) =>
@@ -265,7 +208,7 @@ fn constructor_layouts(
             source_tycon: base_tycon,
             constr_name: constr.name.name,
             source_constr: constr,
-            target: TreeTarget,
+            target: @layout.TreeTarget,
             field_order: identity_field_order(constr),
             tree_extra_type: None,
           })
@@ -288,7 +231,7 @@ fn constructor_layouts(
                   source_tycon: tycon,
                   constr_name: constr.name.name,
                   source_constr: constr,
-                  target: TreeTarget,
+                  target: @layout.TreeTarget,
                   field_order: shared_field_order(
                     base_constr, constr, base_tycon, tycon,
                   ),
@@ -303,7 +246,7 @@ fn constructor_layouts(
                 source_tycon: tycon,
                 constr_name: constr.name.name,
                 source_constr: constr,
-                target: ExtTarget(tycon + "Ext"),
+                target: @layout.ExtTarget(tycon + "Ext"),
                 field_order: identity_field_order(constr),
                 tree_extra_type: None,
               })
@@ -316,7 +259,9 @@ fn constructor_layouts(
 }
 
 ///|
-pub fn Language::layout(self : Language) -> GeneratedLanguageLayout raise {
+pub fn Language::layout(
+  self : Language,
+) -> @layout.GeneratedLanguageLayout raise {
   let (tree_decl, ext_enum_decls) = gen_tree_def(
     self.group,
     _mbti=self.interface,

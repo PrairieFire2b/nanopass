@@ -21,15 +21,15 @@ fn field_order_to_string(order : Array[Int]) -> String {
 }
 
 ///|
-fn layout_target_to_string(layout : ConstructorLayout) -> String {
+fn layout_target_to_string(layout : @layout.ConstructorLayout) -> String {
   let extra = match layout.tree_extra_type {
     Some(ty) => type_name(ty)
     None => "-"
   }
   match layout.target {
-    TreeTarget =>
+    @layout.TreeTarget =>
       "TreeTarget(order=[\{field_order_to_string(layout.field_order)}], extra=\{extra})"
-    ExtTarget(ext) =>
+    @layout.ExtTarget(ext) =>
       "ExtTarget(\{ext}, order=[\{field_order_to_string(layout.field_order)}])"
   }
 }

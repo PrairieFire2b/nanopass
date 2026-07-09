@@ -4,7 +4,8 @@
         "moonbitlang/lexer/basic",
         "moonbitlang/parser/syntax",
         "moonbitlang/parser/mbti_ast",
-        "YumeXi/nanocake/meta_parser"
+        "YumeXi/nanocake/meta_parser",
+        "YumeXi/nanocake/language/layout"
     ],
     "test-import": [
         "moonbitlang/parser/fmt"
