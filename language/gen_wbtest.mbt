@@ -100,9 +100,29 @@ test "generated language layout records tree wrapper and constructor targets" {
   let lang : Language = { name: "Lambda", group: a, interface: mbti }
   let layout = lang.layout()
   debug_inspect(
+    layout.group.map(lang => "\{lang.name}:\{lang.type_decl.tycon}"),
+    content=(
+      #|["Lambda:Expr", "SimplyTypedLambda:TypedExpr"]
+    ),
+  )
+  debug_inspect(
     layout.tree.params,
     content=(
       #|["Self_", "LamE", "TreeExt"]
+    ),
+  )
+  debug_inspect(
+    layout.tree.constructors.map(constr => {
+      "\{constr.constr_name}(\{constr.field_types.join(",")})"
+    }),
+    content=(
+      #|[
+      #|  "Int(Int)",
+      #|  "LambdaVar(LambdaVar)",
+      #|  "Lam(LambdaVar,Self_,LamE)",
+      #|  "App(Self_,Self_)",
+      #|  "Ext(TreeExt)",
+      #|]
     ),
   )
   debug_inspect(
@@ -125,22 +145,38 @@ test "generated language layout records tree wrapper and constructor targets" {
     ),
   )
   debug_inspect(
+    layout.external_types.map(fn(sig) {
+      match sig {
+        Type(type_sig) => type_sig.name.name
+        Alias(alias_sig) =>
+          match alias_sig {
+            TypeAlias(name~, ..) => name.name
+            _ => "?"
+          }
+        _ => "?"
+      }
+    }),
+    content=(
+      #|["LambdaVar", "Type"]
+    ),
+  )
+  debug_inspect(
     layout.constructors.map(constr => {
-      "\{constr.lang_name}.\{constr.constr_name}->\{layout_target_to_string(constr)}"
+      "\{constr.lang_name}.\{constr.source_tycon}.\{constr.constr_name}->\{layout_target_to_string(constr)}"
     }),
     content=(
       #|[
-      #|  "Lambda.Int->TreeTarget(order=[0], extra=-)",
-      #|  "Lambda.LambdaVar->TreeTarget(order=[0], extra=-)",
-      #|  "Lambda.Lam->TreeTarget(order=[0,1], extra=-)",
-      #|  "Lambda.App->TreeTarget(order=[0,1], extra=-)",
-      #|  "SimplyTypedLambda.True->ExtTarget(TypedExprExt, order=[])",
-      #|  "SimplyTypedLambda.False->ExtTarget(TypedExprExt, order=[])",
-      #|  "SimplyTypedLambda.Int->TreeTarget(order=[0], extra=-)",
-      #|  "SimplyTypedLambda.LambdaVar->TreeTarget(order=[0], extra=-)",
-      #|  "SimplyTypedLambda.If->ExtTarget(TypedExprExt, order=[0,1,2])",
-      #|  "SimplyTypedLambda.Lam->TreeTarget(order=[0,2,1], extra=Type)",
-      #|  "SimplyTypedLambda.App->TreeTarget(order=[0,1], extra=-)",
+      #|  "Lambda.Expr.Int->TreeTarget(order=[0], extra=-)",
+      #|  "Lambda.Expr.LambdaVar->TreeTarget(order=[0], extra=-)",
+      #|  "Lambda.Expr.Lam->TreeTarget(order=[0,1], extra=-)",
+      #|  "Lambda.Expr.App->TreeTarget(order=[0,1], extra=-)",
+      #|  "SimplyTypedLambda.TypedExpr.True->ExtTarget(TypedExprExt, order=[])",
+      #|  "SimplyTypedLambda.TypedExpr.False->ExtTarget(TypedExprExt, order=[])",
+      #|  "SimplyTypedLambda.TypedExpr.Int->TreeTarget(order=[0], extra=-)",
+      #|  "SimplyTypedLambda.TypedExpr.LambdaVar->TreeTarget(order=[0], extra=-)",
+      #|  "SimplyTypedLambda.TypedExpr.If->ExtTarget(TypedExprExt, order=[0,1,2])",
+      #|  "SimplyTypedLambda.TypedExpr.Lam->TreeTarget(order=[0,2,1], extra=Type)",
+      #|  "SimplyTypedLambda.TypedExpr.App->TreeTarget(order=[0,1], extra=-)",
       #|]
     ),
   )
