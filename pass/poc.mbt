@@ -21,9 +21,6 @@ test "gen_semantics - Semantics struct, identity, and cata method" {
       #|  LambdaVar_ : (LambdaVar) -> Repr
       #|  Lam_ : (LambdaVar, Repr, Unit) -> Repr
       #|  App_ : (Repr, Repr) -> Repr
-      #|  True_ : () -> Repr
-      #|  False_ : () -> Repr
-      #|  If_ : (Repr, Repr, Repr) -> Repr
       #|}
       #|
       #|///|
@@ -33,9 +30,6 @@ test "gen_semantics - Semantics struct, identity, and cata method" {
       #|    LambdaVar_: fn(arg0) -> raise { Expr(LambdaVar(arg0)) },
       #|    Lam_: fn(arg0, arg1, arg2) -> raise { Expr(Lam(arg0, arg1, arg2)) },
       #|    App_: fn(arg0, arg1) -> raise { Expr(App(arg0, arg1)) },
-      #|    True_: fn() -> raise { Expr(Ext(True)) },
-      #|    False_: fn() -> raise { Expr(Ext(False)) },
-      #|    If_: fn(arg0, arg1, arg2) -> raise { Expr(Ext(If(arg0, arg1, arg2))) },
       #|  }
       #|}
       #|
@@ -47,14 +41,7 @@ test "gen_semantics - Semantics struct, identity, and cata method" {
       #|    LambdaVar(arg0) => s.LambdaVar_(arg0)
       #|    Lam(arg0, arg1, arg2) => s.Lam_(arg0, arg1.cata(s), arg2)
       #|    App(arg0, arg1) => s.App_(arg0.cata(s), arg1.cata(s))
-      #|    Ext(te) => {
-      #|      match te {
-      #|        True => s.True_()
-      #|        False => s.False_()
-      #|        If(cond=cond, arg1, arg2) => 
-      #|          s.If_(cond.cata(s), arg1.cata(s), arg2.cata(s))
-      #|      }
-      #|    }
+      #|    Ext(_) => abort("this language has no ext constructors")
       #|  }
       #|}
       #|
@@ -102,6 +89,7 @@ test "gen_semantics - Semantics struct, identity, and cata method" {
       #|}
       #|
       #|
+
 
 
 
@@ -157,29 +145,11 @@ test "gen_surface - smart constructors and view for each language" {
     #|}
     #|
     #|///|
-    #|fn Expr::true_() -> Expr {
-    #|  Expr(Ext(True))
-    #|}
-    #|
-    #|///|
-    #|fn Expr::false_() -> Expr {
-    #|  Expr(Ext(False))
-    #|}
-    #|
-    #|///|
-    #|fn Expr::if_(arg0 : Expr, arg1 : Expr, arg2 : Expr) -> Expr {
-    #|  Expr(Ext(If(arg0, arg1, arg2)))
-    #|}
-    #|
-    #|///|
     #|enum ExprView {
     #|  VInt(Int)
     #|  VLambdaVar(LambdaVar)
     #|  VLam(LambdaVar, Expr, Unit)
     #|  VApp(Expr, Expr)
-    #|  VTrue
-    #|  VFalse
-    #|  VIf(Expr, Expr, Expr)
     #|}
     #|
     #|///|
@@ -190,13 +160,7 @@ test "gen_surface - smart constructors and view for each language" {
     #|    LambdaVar(arg0) => VLambdaVar(arg0)
     #|    Lam(arg0, arg1, arg2) => VLam(arg0, arg1, arg2)
     #|    App(arg0, arg1) => VApp(arg0, arg1)
-    #|    Ext(te) => {
-    #|      match te {
-    #|        True => VTrue
-    #|        False => VFalse
-    #|        If(cond=cond, arg1, arg2) => VIf(cond, arg1, arg2)
-    #|      }
-    #|    }
+    #|    Ext(_) => abort("this language has no ext constructors")
     #|  }
     #|}
     #|
@@ -266,6 +230,7 @@ test "gen_surface - smart constructors and view for each language" {
     #|
     #|
 
+
   ))
 }
 
@@ -315,3 +280,146 @@ test "fixpoint - apply pass until stable" {
   let result = fixpoint(halve, 100, 10)
   inspect(result, content="0") // 100 → 50 → 25 → 12 → 6 → 3 → 1 → 0
 }
+
+///|
+test "gen_rewrite - RewriteAlg struct, identity, and rewrite_m driver" {
+  let impls = gen_rewrite(lang)
+  let output = @fmt.impls_to_string(impls)
+  inspect(output, content=(
+    #|///|
+    #|struct ExprRewriteAlg[Env, St, Log, Err] {
+    #|  Int_ : (Int) -> @pass.PassM[Env, St, Log, Err, Expr]
+    #|  LambdaVar_ : (LambdaVar) -> @pass.PassM[Env, St, Log, Err, Expr]
+    #|  Lam_ : (LambdaVar, @pass.PassM[Env, St, Log, Err, Expr], Unit) -> @pass.PassM[
+    #|    Env,
+    #|    St,
+    #|    Log,
+    #|    Err,
+    #|    Expr,
+    #|  ]
+    #|  App_ : (
+    #|    @pass.PassM[Env, St, Log, Err, Expr],
+    #|    @pass.PassM[Env, St, Log, Err, Expr],
+    #|  ) -> @pass.PassM[Env, St, Log, Err, Expr]
+    #|}
+    #|
+    #|///|
+    #|fn[Env, St, Log, Err] ExprRewriteAlg::identity() -> ExprRewriteAlg[
+    #|  Env,
+    #|  St,
+    #|  Log,
+    #|  Err,
+    #|] {
+    #|  {
+    #|    Int_: fn(arg0) { @pass.PassM::pure(Expr::int(arg0)) },
+    #|    LambdaVar_: fn(arg0) { @pass.PassM::pure(Expr::lambdaVar(arg0)) },
+    #|    Lam_: fn(arg0, arg1, arg2) {
+    #|      arg1.map(fn(arg1_v) { Expr::lam(arg0, arg1_v, arg2) })
+    #|    },
+    #|    App_: fn(arg0, arg1) {
+    #|      arg0.flat_map(fn(arg0_v) {
+    #|        arg1.map(fn(arg1_v) { Expr::app(arg0_v, arg1_v) })
+    #|      })
+    #|    },
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn[Env, St, Log, Err] Expr::rewrite_m(
+    #|  self : Expr,
+    #|  alg : ExprRewriteAlg[Env, St, Log, Err],
+    #|) -> @pass.PassM[Env, St, Log, Err, Expr] {
+    #|  let Expr(t) = self
+    #|  match t {
+    #|    Int(arg0) => (alg.Int_)(arg0)
+    #|    LambdaVar(arg0) => (alg.LambdaVar_)(arg0)
+    #|    Lam(arg0, arg1, arg2) => (alg.Lam_)(arg0, arg1.rewrite_m(alg), arg2)
+    #|    App(arg0, arg1) => (alg.App_)(arg0.rewrite_m(alg), arg1.rewrite_m(alg))
+    #|    Ext(_) => abort("this language has no ext constructors")
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|struct TypedExprRewriteAlg[Env, St, Log, Err] {
+    #|  Int_ : (Int) -> @pass.PassM[Env, St, Log, Err, TypedExpr]
+    #|  LambdaVar_ : (LambdaVar) -> @pass.PassM[Env, St, Log, Err, TypedExpr]
+    #|  Lam_ : (LambdaVar, @pass.PassM[Env, St, Log, Err, TypedExpr], Unit) -> @pass.PassM[
+    #|    Env,
+    #|    St,
+    #|    Log,
+    #|    Err,
+    #|    TypedExpr,
+    #|  ]
+    #|  App_ : (
+    #|    @pass.PassM[Env, St, Log, Err, TypedExpr],
+    #|    @pass.PassM[Env, St, Log, Err, TypedExpr],
+    #|  ) -> @pass.PassM[Env, St, Log, Err, TypedExpr]
+    #|  True_ : () -> @pass.PassM[Env, St, Log, Err, TypedExpr]
+    #|  False_ : () -> @pass.PassM[Env, St, Log, Err, TypedExpr]
+    #|  If_ : (
+    #|    @pass.PassM[Env, St, Log, Err, TypedExpr],
+    #|    @pass.PassM[Env, St, Log, Err, TypedExpr],
+    #|    @pass.PassM[Env, St, Log, Err, TypedExpr],
+    #|  ) -> @pass.PassM[Env, St, Log, Err, TypedExpr]
+    #|}
+    #|
+    #|///|
+    #|fn[Env, St, Log, Err] TypedExprRewriteAlg::identity() -> TypedExprRewriteAlg[
+    #|  Env,
+    #|  St,
+    #|  Log,
+    #|  Err,
+    #|] {
+    #|  {
+    #|    Int_: fn(arg0) { @pass.PassM::pure(TypedExpr::int(arg0)) },
+    #|    LambdaVar_: fn(arg0) { @pass.PassM::pure(TypedExpr::lambdaVar(arg0)) },
+    #|    Lam_: fn(arg0, arg1, arg2) {
+    #|      arg1.map(fn(arg1_v) { TypedExpr::lam(arg0, arg1_v, arg2) })
+    #|    },
+    #|    App_: fn(arg0, arg1) {
+    #|      arg0.flat_map(fn(arg0_v) {
+    #|        arg1.map(fn(arg1_v) { TypedExpr::app(arg0_v, arg1_v) })
+    #|      })
+    #|    },
+    #|    True_: fn() { @pass.PassM::pure(TypedExpr::true_()) },
+    #|    False_: fn() { @pass.PassM::pure(TypedExpr::false_()) },
+    #|    If_: fn(arg0, arg1, arg2) {
+    #|      arg0.flat_map(fn(arg0_v) {
+    #|        arg1.flat_map(fn(arg1_v) {
+    #|          arg2.map(fn(arg2_v) { TypedExpr::if_(arg0_v, arg1_v, arg2_v) })
+    #|        })
+    #|      })
+    #|    },
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn[Env, St, Log, Err] TypedExpr::rewrite_m(
+    #|  self : TypedExpr,
+    #|  alg : TypedExprRewriteAlg[Env, St, Log, Err],
+    #|) -> @pass.PassM[Env, St, Log, Err, TypedExpr] {
+    #|  let TypedExpr(t) = self
+    #|  match t {
+    #|    Int(arg0) => (alg.Int_)(arg0)
+    #|    LambdaVar(arg0) => (alg.LambdaVar_)(arg0)
+    #|    Lam(arg0, arg1, arg2) => (alg.Lam_)(arg0, arg1.rewrite_m(alg), arg2)
+    #|    App(arg0, arg1) => (alg.App_)(arg0.rewrite_m(alg), arg1.rewrite_m(alg))
+    #|    Ext(te) => {
+    #|      match te {
+    #|        True => (alg.True_)()
+    #|        False => (alg.False_)()
+    #|        If(cond=cond, arg1, arg2) => {
+    #|          (
+    #|            alg.If_
+    #|          )(cond.rewrite_m(alg), arg1.rewrite_m(alg), arg2.rewrite_m(alg))
+    #|        }
+    #|      }
+    #|    }
+    #|  }
+    #|}
+    #|
+    #|
+
+  ))
+}
+

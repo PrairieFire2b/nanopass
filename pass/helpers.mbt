@@ -261,10 +261,17 @@ fn collect_descriptors(
     }
   })
 
-  // Extension enum constructors
-  match tree_info.ext_enum {
-    Some(ee) =>
-      ee.constrs.each(fn(c) {
+  // Extension enum constructors.
+  //
+  // Only languages that actually own the ext enum carry ext descriptors. The
+  // base language's wrapper is `Tree[Base, Unit, Unit]` (TreeExt = Unit), so it
+  // has NO real ext constructors; emitting `True`/`If`/... matches against its
+  // `Ext(Unit)` payload would not type-check. Derived languages whose wrapper
+  // fills `TreeExt` with a real ext enum do carry them.
+  if not(is_base) {
+    match tree_info.ext_enum {
+      Some(ee) =>
+        ee.constrs.each(fn(c) {
         let params = build_params(
           c,
           tycon,
@@ -281,7 +288,8 @@ fn collect_descriptors(
           ext_enum_name: Some(ee.name),
         })
       })
-    None => ()
+      None => ()
+    }
   }
   descs
 }

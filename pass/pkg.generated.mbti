@@ -20,6 +20,8 @@ pub fn[In : Eq] fixpoint(NamedPass[In, In], In, Int) -> In
 
 pub fn gen_identity(@language.Language) -> @list.List[@syntax.Impl]
 
+pub fn gen_rewrite(@language.Language) -> @list.List[@syntax.Impl] raise
+
 pub fn gen_semantics(@language.Language) -> @list.List[@syntax.Impl] raise
 
 pub fn gen_surface(@language.Language) -> @list.List[@syntax.Impl] raise

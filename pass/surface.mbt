@@ -20,6 +20,7 @@ pub fn gen_surface(
     Some(ee) => Some(ee.name)
     None => None
   }
+  let has_ext_constr = tree_info.ext_constr_index >= 0
   lang.group.eachi(fn(i, nl) {
     let tycon = nl.type_decl.tycon
     let is_base = i == 0
@@ -30,7 +31,7 @@ pub fn gen_surface(
     })
     // View enum + accessor
     impls.push(gen_view_enum(tycon, descs, loc))
-    impls.push(gen_view_impl(tycon, descs, loc))
+    impls.push(gen_view_impl(tycon, descs, has_ext_constr, loc))
   })
   @list.List(impls[:])
 }
@@ -203,6 +204,7 @@ fn gen_view_enum(
 fn gen_view_impl(
   tycon : String,
   descs : Array[ConstrDescriptor],
+  has_ext_constr : Bool,
   loc : @basic.Location,
 ) -> @syntax.Impl {
   let regular = descs.filter(fn(d) { not(d.is_ext) })
@@ -210,8 +212,13 @@ fn gen_view_impl(
 
   let cases : Array[@syntax.Case] = []
   regular.each(fn(d) { cases.push(view_case(d, loc)) })
-  if ext.length() > 0 {
-    cases.push(view_ext_case(ext, loc))
+  if has_ext_constr {
+    if ext.length() > 0 {
+      cases.push(view_ext_case(ext, loc))
+    } else {
+      // Tree has `Ext(Unit)` but no real ext variants (base language).
+      cases.push(ext_unreachable_case(loc))
+    }
   }
 
   let match_expr = @syntax.Expr::Match(

@@ -302,7 +302,12 @@ fn build_cata_match(
   regular.each(fn(d) { cases.push(cata_case_from_desc(d, tycon, loc)) })
 
   if tree_info.ext_constr_index >= 0 {
-    cases.push(cata_ext_case(ext, tree_info, tycon, loc))
+    if ext.length() > 0 {
+      cases.push(cata_ext_case(ext, tree_info, tycon, loc))
+    } else {
+      // Base language: Tree has `Ext(Unit)` but no real ext variants.
+      cases.push(ext_unreachable_case(loc))
+    }
   }
 
   @syntax.Expr::Match(
