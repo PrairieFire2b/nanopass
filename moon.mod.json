@@ -2,6 +2,7 @@
   "name": "YumeXi/nanocake",
   "version": "0.2.0",
   "deps": {
+    "moonbit-community/prettyprinter": "0.4.10",
     "moonbitlang/parser": "0.3.7",
     "moonbitlang/lexer": "0.3.7",
     "moonbitlang/x": "0.4.46"

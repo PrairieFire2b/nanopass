@@ -39,28 +39,32 @@ pub fn string_to_doc(value : String) -> SexpDoc {
 }
 
 ///|
-fn render_doc(doc : SexpDoc, sb : StringBuilder) -> Unit {
-  match doc {
-    AtomDoc(text) => sb.write_string(text)
+pub fn SexpDoc::to_pretty(self : SexpDoc) -> @prettyprinter.Document {
+  match self {
+    AtomDoc(text) => @prettyprinter.text(text)
     ListDoc(items) => {
-      sb.write_char('(')
-      items.eachi(fn(i, item) {
-        if i > 0 {
-          sb.write_char(' ')
-        }
-        render_doc(item, sb)
-      })
-      sb.write_char(')')
+      let body = @prettyprinter.separate(
+        @prettyprinter.line,
+        items.map(fn(item) { item.to_pretty() }),
+      )
+      @prettyprinter.group(
+        @prettyprinter.parens(
+          @prettyprinter.nest(@prettyprinter.softline + body) +
+          @prettyprinter.softline,
+        ),
+      )
     }
   }
 }
 
 ///|
+pub impl @prettyprinter.Pretty for SexpDoc with fn pretty(self) {
+  self.to_pretty()
+}
+
+///|
 pub fn SexpDoc::render(self : SexpDoc, width? : Int = 80) -> String {
-  ignore(width)
-  let sb = StringBuilder::new()
-  render_doc(self, sb)
-  sb.to_string()
+  @prettyprinter.render(self, width~)
 }
 
 ///|
@@ -75,4 +79,3 @@ pub fn Sexp::to_doc(self : Sexp) -> SexpDoc {
     List(items, loc=_) => SexpDoc::list(items.map(fn(item) { item.to_doc() }))
   }
 }
-

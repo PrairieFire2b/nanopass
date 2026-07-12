@@ -2,6 +2,7 @@
 package "YumeXi/nanocake/unparser/sexp"
 
 import {
+  "moonbit-community/prettyprinter",
   "moonbitlang/core/debug",
 }
 
@@ -70,6 +71,8 @@ pub fn SexpDoc::int(Int) -> Self
 pub fn SexpDoc::list(Array[Self]) -> Self
 pub fn SexpDoc::render(Self, width? : Int) -> String
 pub fn SexpDoc::string(String) -> Self
+pub fn SexpDoc::to_pretty(Self) -> @prettyprinter.Document
+pub impl @prettyprinter.Pretty for SexpDoc
 
 pub struct SexpForm {
   // private fields
