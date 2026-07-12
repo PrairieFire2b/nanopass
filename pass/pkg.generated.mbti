@@ -1,0 +1,82 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "YumeXi/nanocake/pass"
+
+import {
+  "YumeXi/nanocake/language",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/list",
+  "moonbitlang/parser/attribute",
+  "moonbitlang/parser/syntax",
+}
+
+// Values
+pub fn[Env, St, Log, Err] ask_env() -> PassM[Env, St, Log, Err, Env]
+
+pub fn[A, B, C] compose((A) -> B, (B) -> C) -> (A) -> C
+
+pub fn[Env, St, Log, Err] emit(Log) -> PassM[Env, St, Log, Err, Unit]
+
+pub fn[In : Eq] fixpoint(NamedPass[In, In], In, Int) -> In
+
+pub fn gen_identity(@language.Language) -> @list.List[@syntax.Impl]
+
+pub fn gen_semantics(@language.Language) -> @list.List[@syntax.Impl] raise
+
+pub fn gen_syntax_kind(@language.Language) -> @list.List[@syntax.Impl] raise
+
+pub fn[Env, St, Log, Err] get_st() -> PassM[Env, St, Log, Err, St]
+
+pub fn[Env, St, Log, Err, A] local_env((Env) -> Env, PassM[Env, St, Log, Err, A]) -> PassM[Env, St, Log, Err, A]
+
+pub fn[Env, St, Log, Err] modify_st((St) -> St) -> PassM[Env, St, Log, Err, Unit]
+
+pub fn parse_pass_meta(@attribute.Attribute) -> PassMeta raise
+
+pub fn[In] pipeline(Array[NamedPass[In, In]], In) -> In
+
+pub fn[Env, St, Log, Err] put_st(St) -> PassM[Env, St, Log, Err, Unit]
+
+pub fn[In] when((In) -> Bool, NamedPass[In, In]) -> NamedPass[In, In]
+
+// Errors
+
+// Types and methods
+pub enum ExtStrategy {
+  Keep
+  Fail
+} derive(Eq, @debug.Debug)
+
+pub struct NamedPass[In, Out] {
+  meta : PassMeta
+  run : (In) -> Out
+}
+
+pub enum PassDirection {
+  BottomUp
+  TopDown
+} derive(Eq, @debug.Debug)
+
+pub(all) struct PassM[Env, St, Log, Err, A] {
+  _run : (Env, St) -> Result[(A, St, Array[Log]), Err]
+}
+pub fn[Env, St, Log, Err, A] PassM::exec(Self[Env, St, Log, Err, A], Env, St) -> Result[(A, St, Array[Log]), Err]
+pub fn[Log, Err, A] PassM::exec_empty(Self[Unit, Unit, Log, Err, A]) -> Result[(A, Unit, Array[Log]), Err]
+pub fn[Env, Log, Err, A] PassM::exec_env(Self[Env, Unit, Log, Err, A], Env) -> Result[(A, Unit, Array[Log]), Err]
+pub fn[Env, St, Log, Err, A, B] PassM::flat_map(Self[Env, St, Log, Err, A], (A) -> Self[Env, St, Log, Err, B]) -> Self[Env, St, Log, Err, B]
+pub fn[Env, St, Log, Err, A] PassM::from_result(Result[A, Err]) -> Self[Env, St, Log, Err, A]
+pub fn[Env, St, Log, Err, A, B] PassM::map(Self[Env, St, Log, Err, A], (A) -> B) -> Self[Env, St, Log, Err, B]
+pub fn[Env, St, Log, Err1, Err2, A] PassM::map_err(Self[Env, St, Log, Err1, A], (Err1) -> Err2) -> Self[Env, St, Log, Err2, A]
+pub fn[Env, St, Log, Err, A] PassM::on_err(Self[Env, St, Log, Err, A], (Err) -> Self[Env, St, Log, Err, A]) -> Self[Env, St, Log, Err, A]
+pub fn[Env, St, Log, Err, A] PassM::pure(A) -> Self[Env, St, Log, Err, A]
+
+pub struct PassMeta {
+  name : String
+  from_lang : String
+  to_lang : String
+  direction : PassDirection
+}
+
+// Type aliases
+
+// Traits
+

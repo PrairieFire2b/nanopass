@@ -1,0 +1,11 @@
+{
+    "import": [
+        "moonbitlang/core/list",
+        "moonbitlang/lexer/basic",
+        "moonbitlang/parser/syntax",
+        "moonbitlang/parser/fmt",
+        "moonbitlang/parser/attribute",
+        "YumeXi/nanocake/meta_parser",
+        "YumeXi/nanocake/language"
+    ]
+}
