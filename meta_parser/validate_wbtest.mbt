@@ -26,6 +26,34 @@ test "validate language definitions rejects unknown parent" {
 }
 
 ///|
+test "validate rejects #nano.remove of unknown constructor" {
+  try find_languages_by_file("meta_parser/fixtures/remove_unknown.mbt") catch {
+    InvalidLanguage(message) =>
+      inspect(
+        message,
+        content="Language 'RmMissingChild' removes constructor 'Nope' that does not exist in parent 'RmMissingBase'",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected remove-unknown error")
+  }
+}
+
+///|
+test "validate rejects #nano.remove that conflicts with a re-declaration" {
+  try find_languages_by_file("meta_parser/fixtures/remove_conflict.mbt") catch {
+    InvalidLanguage(message) =>
+      inspect(
+        message,
+        content="Language 'RmConflictChild' both removes and re-declares constructor 'Add'",
+      )
+    _ => fail("unexpected error kind")
+  } noraise {
+    _ => fail("expected remove-conflict error")
+  }
+}
+
+///|
 test "parse language layer parameters" {
   let langs = find_languages_by_file("meta_parser/fixtures/layer_attrs.mbt")
   assert_eq(langs.length(), 2)

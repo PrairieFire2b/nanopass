@@ -106,6 +106,25 @@ fn get_entry_from_attrs(
 }
 
 ///|
+/// Collect all constructor names listed in top-level `#nano.remove(...)`
+/// attributes on a language type declaration.
+fn removed_from_attrs(
+  attrs : @list.List[@attribute.Attribute],
+) -> Array[String] raise {
+  let removed : Array[String] = []
+  attrs.each(attr => {
+    if is_nano_attr(attr, "remove") {
+      remove_names_from_attr(attr).each(name => {
+        if !removed.contains(name) {
+          removed.push(name)
+        }
+      })
+    }
+  })
+  removed
+}
+
+///|
 /// Find all enum type declarations in the file that have `#nanopass.nonterminal` attribute
 fn find_nonterminal_types(
   impls : @list.List[@syntax.Impl],
@@ -174,6 +193,7 @@ fn parse_languages_from_impls(
                 let terminals : Array[Terminal] = []
                 let meta_vars = meta_vars_from_attrs(tycon, type_decl.attrs)
                 let production_defs : Array[ProductionDef] = []
+                let removed = removed_from_attrs(type_decl.attrs)
 
                 // NonTerminal::TypeDecl for each referenced nonterminal type
                 nt_types.each(nt_td => {
@@ -223,6 +243,7 @@ fn parse_languages_from_impls(
                   nonterminals,
                   terminals,
                   production_defs,
+                  removed,
                   type_decl,
                 }
               })

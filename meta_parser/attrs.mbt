@@ -89,6 +89,29 @@ fn context_string_from_attr(attr : @attribute.Attribute) -> String raise {
 }
 
 ///|
+/// Collect all string-literal payloads of a `#nano.remove("A", "B", ...)`
+/// attribute.
+fn remove_names_from_attr(attr : @attribute.Attribute) -> Array[String] raise {
+  let names : Array[String] = []
+  match attr.parsed {
+    Some(Apply(_, props)) =>
+      props.each(fn(prop) {
+        match prop {
+          Expr(String(name)) => names.push(name)
+          _ => ()
+        }
+      })
+    _ => ()
+  }
+  if names.length() == 0 {
+    raise InvalidAttribute(
+      "#nano.remove expects at least one string literal payload",
+    )
+  }
+  names
+}
+
+///|
 fn parse_by_payload_from_attr(attr : @attribute.Attribute) -> String raise {
   nano_raw_payload_from_attr(attr, "parse_by")
 }

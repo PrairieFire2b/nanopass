@@ -60,6 +60,59 @@ fn validate_extends_chain(
 }
 
 ///|
+/// The constructor names declared directly in a language's enum body.
+fn declared_constructor_names(lang : NanoLangDef) -> Array[String] {
+  let names : Array[String] = []
+  match lang.type_decl.components {
+    @syntax.Variant(cs) => cs.each(c => names.push(c.name.name))
+    _ => ()
+  }
+  names
+}
+
+///|
+/// Validate `#nano.remove(...)`:
+///   - removals require a parent language,
+///   - each removed name must exist in the parent's constructors,
+///   - a removed name must not also be re-declared in this language's body.
+fn validate_removed_constructors(
+  lang : NanoLangDef,
+  langs : Array[NanoLangDef],
+) -> Unit raise {
+  if lang.removed.length() == 0 {
+    return
+  }
+  let parent = match lang.extends {
+    Some(parent_name) =>
+      match find_language_by_name(langs, parent_name) {
+        Some(p) => p
+        None =>
+          raise InvalidLanguage(
+            "Language '\{lang.name}' extends unknown language '\{parent_name}'",
+          )
+      }
+    None =>
+      raise InvalidLanguage(
+        "Language '\{lang.name}' uses #nano.remove but does not extend a parent language",
+      )
+  }
+  let parent_names = declared_constructor_names(parent)
+  let own_names = declared_constructor_names(lang)
+  lang.removed.each(name => {
+    if !parent_names.contains(name) {
+      raise InvalidLanguage(
+        "Language '\{lang.name}' removes constructor '\{name}' that does not exist in parent '\{parent.name}'",
+      )
+    }
+    if own_names.contains(name) {
+      raise InvalidLanguage(
+        "Language '\{lang.name}' both removes and re-declares constructor '\{name}'",
+      )
+    }
+  })
+}
+
+///|
 fn meta_placeholder_end(chars : Array[Char], end : Int) -> Int {
   if end <= 0 {
     0
@@ -669,6 +722,7 @@ fn with_resolved_entry(
     nonterminals: lang.nonterminals,
     terminals: lang.terminals,
     production_defs: lang.production_defs,
+    removed: lang.removed,
     type_decl: lang.type_decl,
   }
 }
@@ -699,6 +753,7 @@ fn normalize_language_defs_with_known_types(
   validate_unique_language_names(langs)
   langs.each(validate_language_layer)
   langs.each(lang => validate_extends_chain(lang, langs, [lang.name]))
+  langs.each(lang => validate_removed_constructors(lang, langs))
   let resolved_langs = resolve_language_entries(langs)
   validate_generated_name_collisions(resolved_langs)
   resolved_langs.each(validate_resolved_language_entry)
@@ -719,10 +774,44 @@ fn validate_language_defs_with_known_types(
 }
 
 ///|
+/// Return a copy of this language whose enum body (`type_decl.components`) is
+/// replaced with the given constructors. The `production_defs` are rebuilt from
+/// those constructors so downstream surface-form/hook metadata stays in sync.
+/// Used by downstream packages to feed an expanded constructor set back through
+/// the raw-language pipeline without re-implementing `NanoLangDef` construction.
+pub fn NanoLangDef::with_constructors(
+  self : NanoLangDef,
+  constrs : Array[@syntax.ConstrDecl],
+) -> NanoLangDef raise {
+  let td : @syntax.TypeDecl = {
+    ..self.type_decl,
+    components: @syntax.Variant(@list.List(constrs[:])),
+  }
+  let production_defs = constrs.map(c => production_def_from_constr(
+    self.type_decl.tycon,
+    c,
+  ))
+  { ..self, type_decl: td, production_defs }
+}
+
+///|
 /// Validate the raw language definitions collected from a source file.
 ///
 /// This checks language identity, inheritance shape, effective entry resolution,
 /// generated names, field references, and form placeholder consistency.
 pub fn validate_language_defs(langs : Array[NanoLangDef]) -> Unit raise {
   validate_language_defs_with_known_types(langs, [])
+}
+
+///|
+/// Validate and normalize the raw language definitions, returning the same
+/// languages with `resolved_entry` populated (explicit / inherited / default).
+///
+/// Downstream packages (e.g. `language`) use this to expand a group without
+/// re-implementing entry inheritance.
+pub fn normalize_language_defs(
+  langs : Array[NanoLangDef],
+  extra_known_types~ : Array[String] = [],
+) -> Array[NanoLangDef] raise {
+  normalize_language_defs_with_known_types(langs, extra_known_types)
 }

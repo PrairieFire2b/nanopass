@@ -133,6 +133,7 @@ pub struct NanoLangDef {
   nonterminals : Array[NonTerminal] // self-referencing constructors and referenced external types
   terminals : Array[Terminal] // leaf/non-recursive constructors
   production_defs : Array[ProductionDef] // normalized constructor metadata
+  removed : Array[String] // constructor names removed from the parent (from `#nano.remove(...)`)
   type_decl : @syntax.TypeDecl // the raw parsed enum AST node
 }
 

@@ -17,6 +17,8 @@ pub fn find_languages_by_file(String) -> Array[NanoLangDef] raise
 
 pub fn get_name_from_attr(@attribute.Attribute) -> String raise
 
+pub fn normalize_language_defs(Array[NanoLangDef], extra_known_types? : Array[String]) -> Array[NanoLangDef] raise
+
 pub fn resolve(SourceLoc) -> SourceLocRepr
 
 pub fn resolve_mbti(SourceLocRepr) -> Mbti raise
@@ -93,9 +95,11 @@ pub struct NanoLangDef {
   nonterminals : Array[NonTerminal]
   terminals : Array[Terminal]
   production_defs : Array[ProductionDef]
+  removed : Array[String]
   type_decl : @syntax.TypeDecl
 }
 pub fn NanoLangDef::diff(Self, Self) -> Diff
+pub fn NanoLangDef::with_constructors(Self, Array[@syntax.ConstrDecl]) -> Self raise
 pub impl @debug.Debug for NanoLangDef
 
 pub enum NonTerminal {
