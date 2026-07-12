@@ -1,0 +1,21 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "YumeXi/nanocake/unparser/gen"
+
+import {
+  "YumeXi/nanocake/language",
+  "moonbitlang/parser/syntax",
+}
+
+// Values
+pub fn gen(@language.Language) -> Array[@syntax.Impl] raise
+
+pub fn gen_source(@language.Language) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

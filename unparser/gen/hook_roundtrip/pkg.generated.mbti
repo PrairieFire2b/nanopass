@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "YumeXi/nanocake/unparser/gen/hook_roundtrip"
+
+import {
+  "YumeXi/nanocake/unparser/sexp",
+}
+
+// Values
+pub fn parse_sym(@sexp.Sexp) -> HExpr? raise @sexp.SexpError
+
+pub fn unparse_sym(HExpr) -> @sexp.SexpDoc raise @sexp.SexpError
+
+// Errors
+
+// Types and methods
+type HExpr derive(Eq, Show)
+pub fn HExpr::from_sexp(@sexp.Sexp) -> Self raise @sexp.SexpError
+pub fn HExpr::from_sexp_without_hooks(@sexp.Sexp) -> Self raise @sexp.SexpError
+pub fn HExpr::parse_sexp(StringView) -> Self raise @sexp.SexpError
+pub fn HExpr::to_sexp_doc(Self) -> @sexp.SexpDoc raise @sexp.SexpError
+pub fn HExpr::unparse_sexp(Self, width? : Int) -> String raise @sexp.SexpError
+
+type HExpr2 derive(Eq, Show)
+
+type Tree[Self_] derive(Eq, Show)
+
+// Type aliases
+
+// Traits
+
