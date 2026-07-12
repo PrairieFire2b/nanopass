@@ -5,7 +5,8 @@
     "moonbit-community/prettyprinter": "0.4.10",
     "moonbitlang/parser": "0.3.7",
     "moonbitlang/lexer": "0.3.7",
-    "moonbitlang/x": "0.4.46"
+    "moonbitlang/x": "0.4.46",
+    "YumeXi/error": "0.2.2"
   },
   "readme": "README.mbt.md",
   "repository": "",

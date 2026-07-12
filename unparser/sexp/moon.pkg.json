@@ -2,7 +2,8 @@
     "import": [
         "moonbitlang/core/debug",
         "moonbitlang/core/string",
-        "moonbit-community/prettyprinter"
+        "moonbit-community/prettyprinter",
+        "YumeXi/error"
     ],
     "wbtest-import": [
         "moonbitlang/core/test"

@@ -2,6 +2,7 @@
 package "YumeXi/nanocake/unparser/sexp"
 
 import {
+  "YumeXi/error/cause",
   "moonbit-community/prettyprinter",
   "moonbitlang/core/debug",
 }
@@ -47,6 +48,9 @@ pub fn string_to_doc(String) -> SexpDoc
 
 pub fn[A] unknown_head(String, path~ : String) -> A raise SexpError
 
+#callsite(autofill(loc))
+pub fn[A] with_context(String, () -> A raise, loc~ : SourceLoc) -> A raise @cause.Cause
+
 // Errors
 pub(all) suberror SexpError {
   Syntax(path~ : String, message~ : String)
@@ -54,6 +58,7 @@ pub(all) suberror SexpError {
   HookError(path~ : String, hook~ : String, message~ : String)
   GeneratedCode(message~ : String)
 } derive(@debug.Debug)
+pub impl Show for SexpError
 
 // Types and methods
 pub(all) enum Sexp {
@@ -87,6 +92,7 @@ pub(all) struct Span {
 } derive(Eq, @debug.Debug)
 
 // Type aliases
+pub using @cause {type Cause}
 
 // Traits
 

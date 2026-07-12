@@ -75,3 +75,55 @@ test "runtime helpers report structured errors" {
     ),
   )
 }
+
+///|
+fn assert_string_contains(text : String, needle : String) -> Unit raise {
+  if text.find(needle) is None {
+    fail("expected `\{text}` to contain `\{needle}`")
+  }
+}
+
+///|
+test "with_context wraps structured sexp errors" {
+  try {
+    let _ : Unit = with_context("parse Expr", () => {
+      decode_error(path="Expr", message="expected atom")
+    })
+  } catch {
+    cause => {
+      let chain = cause.errors().map(fn(err) { err.to_string() }).to_array()
+      assert_eq(chain.length(), 1)
+      assert_string_contains(chain[0], "parse Expr")
+      assert_string_contains(
+        chain[0],
+        "Decode(path=\"Expr\", message=\"expected atom\")",
+      )
+    }
+  } noraise {
+    _ => fail("expected cause-wrapped decode error")
+  }
+}
+
+///|
+test "with_context preserves nested cause chain" {
+  try {
+    let _ : Unit = with_context("parse Program", () => {
+      with_context("parse Expr", () => {
+        hook_error(path="Expr.Lam", hook="parse_lam", message="boom")
+      })
+    })
+  } catch {
+    cause => {
+      let chain = cause.errors().map(fn(err) { err.to_string() }).to_array()
+      assert_eq(chain.length(), 2)
+      assert_string_contains(chain[0], "parse Program")
+      assert_string_contains(chain[1], "parse Expr")
+      assert_string_contains(
+        chain[1],
+        "HookError(path=\"Expr.Lam\", hook=\"parse_lam\", message=\"boom\")",
+      )
+    }
+  } noraise {
+    _ => fail("expected nested cause-wrapped hook error")
+  }
+}

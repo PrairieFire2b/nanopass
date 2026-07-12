@@ -25,6 +25,24 @@ pub(all) suberror SexpError {
 } derive(Debug)
 
 ///|
+pub impl Show for SexpError with output(self, logger) {
+  logger.write_string(@debug.to_string(self))
+}
+
+///|
+pub using @error { type Cause }
+
+///|
+#callsite(autofill(loc))
+pub fn[A] with_context(
+  msg : String,
+  f : () -> A raise Error,
+  loc~ : SourceLoc,
+) -> A raise Cause {
+  @error.passby(f, msg~, loc~)
+}
+
+///|
 pub fn[A] decode_error(path~ : String, message~ : String) -> A raise SexpError {
   raise Decode(path~, message~)
 }
