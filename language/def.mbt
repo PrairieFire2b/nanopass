@@ -71,6 +71,27 @@ fn belongs_to(
 }
 
 ///|
+/// All type/alias names declared in the package interface. Used to feed the
+/// normalization step (field-type reference checks) when expanding a group.
+fn mbti_type_names(mbti : @meta_parser.Mbti) -> Array[String] {
+  let @meta_parser.Mbti(mbti_ast) = mbti
+  let names : Array[String] = []
+  mbti_ast.sigs.each(pair => {
+    let (sig, _) = pair
+    match sig {
+      Type(type_sig) => names.push(type_sig.name.name)
+      Alias(alias_sig) =>
+        match alias_sig {
+          TypeAlias(name~, ..) => names.push(name.name)
+          _ => ()
+        }
+      _ => ()
+    }
+  })
+  names
+}
+
+///|
 /// Find types referenced by the generated tree (or the original language definitions)
 /// that are not part of the tree itself, using the mbti to confirm their existence.
 fn find_external_types(

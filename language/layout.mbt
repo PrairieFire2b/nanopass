@@ -186,6 +186,53 @@ fn shared_field_order(
 }
 
 ///|
+/// Classify every constructor into a `ConstructorLayout`.
+///
+/// Note: the shared/own decision here (base constructor present => `TreeTarget`,
+/// derived-only => `ExtTarget`) is the same distinction that `expand` records as
+/// `ConstructorOrigin` (`Shared` / `Own`). This duplication is intentional:
+/// layout additionally needs the field reorder and tree padding, which are
+/// derived by comparing against the base constructor and the tree shape and
+/// cannot live in `expand` without coupling it to the tree layout. The invariant
+/// "layout target kind agrees with expand origin" is locked by
+/// `layout_expand_consistency_wbtest.mbt`.
+fn surface_forms_for(
+  langs : Array[@meta_parser.NanoLangDef],
+  tycon : String,
+  constr_name : String,
+) -> Array[@meta_parser.ProductionFormRule] {
+  for lang in langs {
+    if lang.type_decl.tycon == tycon {
+      for pd in lang.production_defs {
+        if pd.constr_name == constr_name {
+          return pd.surface_forms
+        }
+      }
+    }
+  }
+  []
+}
+
+///|
+/// Find the constructor-level hooks for a constructor by (tycon, name).
+fn hooks_for(
+  langs : Array[@meta_parser.NanoLangDef],
+  tycon : String,
+  constr_name : String,
+) -> @meta_parser.NanoHooks {
+  for lang in langs {
+    if lang.type_decl.tycon == tycon {
+      for pd in lang.production_defs {
+        if pd.constr_name == constr_name {
+          return pd.hooks
+        }
+      }
+    }
+  }
+  { parse_by: None, unparse_by: None }
+}
+
+///|
 fn constructor_layouts(
   langs : Array[@meta_parser.NanoLangDef],
   tree : @syntax.TypeDecl,
@@ -211,6 +258,8 @@ fn constructor_layouts(
             target: @layout.TreeTarget,
             field_order: identity_field_order(constr),
             tree_extra_type: None,
+            surface_forms: surface_forms_for(langs, base_tycon, constr.name.name),
+            hooks: hooks_for(langs, base_tycon, constr.name.name),
           })
         }
       })
@@ -238,6 +287,8 @@ fn constructor_layouts(
                   tree_extra_type: shared_extra_type(
                     base_constr, constr, base_tycon, tycon,
                   ),
+                  surface_forms: surface_forms_for(langs, tycon, constr.name.name),
+                  hooks: hooks_for(langs, tycon, constr.name.name),
                 })
               }
             None =>
@@ -249,41 +300,94 @@ fn constructor_layouts(
                 target: @layout.ExtTarget(tycon + "Ext"),
                 field_order: identity_field_order(constr),
                 tree_extra_type: None,
+                surface_forms: surface_forms_for(langs, tycon, constr.name.name),
+                hooks: hooks_for(langs, tycon, constr.name.name),
               })
           }
         })
       _ => ()
     }
   }
+
+  // External nonterminals (e.g. an enum tagged `#nanopass.nonterminal` such as
+  // `Type`) are plain enums, not merged into the shared `Tree`. Each of their
+  // constructors is a `RawTarget`. They may be referenced by several languages
+  // in the group, so deduplicate by (source_tycon, constr_name).
+  let seen_raw : Map[String, Unit] = {}
+  langs.each(lang => {
+    lang.nonterminals.each(nt => {
+      match nt {
+        TypeDecl(td) =>
+          match td.components {
+            @syntax.Variant(cs) =>
+              cs.each(constr => {
+                let key = td.tycon + "." + constr.name.name
+                if !seen_raw.contains(key) {
+                  seen_raw[key] = ()
+                  layouts.push({
+                    lang_name: lang.name,
+                    source_tycon: td.tycon,
+                    constr_name: constr.name.name,
+                    source_constr: constr,
+                    target: @layout.RawTarget,
+                    field_order: identity_field_order(constr),
+                    tree_extra_type: None,
+                    surface_forms: [],
+                    hooks: { parse_by: None, unparse_by: None },
+                  })
+                }
+              })
+            _ => ()
+          }
+        _ => ()
+      }
+    })
+  })
   layouts
+}
+
+///|
+/// Rebuild each language's `type_decl` so its enum body reflects the expanded
+/// constructor set: inherited-but-not-declared constructors are pulled in from
+/// the parent, `#nano.remove(...)` constructors are dropped, and same-name
+/// declarations override. Self-references in inherited constructors are rewritten
+/// to the deriving language's tycon (e.g. `Add(Expr, Expr)` -> `Add(Expr2, Expr2)`).
+///
+/// Downstream layout/tree/wrapper generation consumes this expanded group, so it
+/// automatically honors inheritance and removal without re-implementing them.
+fn Language::expanded_group(
+  self : Language,
+) -> Array[@meta_parser.NanoLangDef] raise {
+  let group = expand_language_group(
+    self.group,
+    extra_known_types=mbti_type_names(self.interface),
+  )
+  group.languages.map(el => {
+    let constrs = el.constructors.map(ec => ec.constr)
+    el.def.with_constructors(constrs)
+  })
 }
 
 ///|
 pub fn Language::layout(
   self : Language,
 ) -> @layout.GeneratedLanguageLayout raise {
-  let (tree_decl, ext_enum_decls) = gen_tree_def(
-    self.group,
-    _mbti=self.interface,
-  )
+  let group = self.expanded_group()
+  let (tree_decl, ext_enum_decls) = gen_tree_def(group, _mbti=self.interface)
   let tree_params = type_decl_params(tree_decl)
-  let wrapper_decls = struct_wrappers(self.group, tree_params, tree_decl.loc)
-  let external_types = find_external_types(
-    self.group,
-    tree_decl,
-    self.interface,
-  )
+  let wrapper_decls = struct_wrappers(group, tree_params, tree_decl.loc)
+  let external_types = find_external_types(group, tree_decl, self.interface)
   {
-    group: self.group,
+    group,
     tree: {
       tycon: tree_decl.tycon,
       params: tree_params,
       constructors: tree_constructor_layouts(tree_decl),
       decl: tree_decl,
     },
-    wrappers: wrapper_layouts(self.group, wrapper_decls),
-    ext_enums: ext_enum_layouts(self.group, ext_enum_decls),
-    constructors: constructor_layouts(self.group, tree_decl),
+    wrappers: wrapper_layouts(group, wrapper_decls),
+    ext_enums: ext_enum_layouts(group, ext_enum_decls),
+    constructors: constructor_layouts(group, tree_decl),
     external_types,
   }
 }

@@ -21,9 +21,12 @@ pub(all) struct ConstructorLayout {
   target : ConstructorTarget
   field_order : Array[Int]
   tree_extra_type : @syntax.Type?
+  surface_forms : Array[@meta_parser.ProductionFormRule]
+  hooks : @meta_parser.NanoHooks
 }
 
 pub(all) enum ConstructorTarget {
+  RawTarget
   TreeTarget
   ExtTarget(String)
 } derive(Eq, @debug.Debug)
@@ -66,3 +69,4 @@ pub(all) struct WrapperLayout {
 // Type aliases
 
 // Traits
+

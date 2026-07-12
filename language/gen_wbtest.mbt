@@ -27,6 +27,8 @@ fn layout_target_to_string(layout : @layout.ConstructorLayout) -> String {
     None => "-"
   }
   match layout.target {
+    @layout.RawTarget =>
+      "RawTarget(order=[\{field_order_to_string(layout.field_order)}])"
     @layout.TreeTarget =>
       "TreeTarget(order=[\{field_order_to_string(layout.field_order)}], extra=\{extra})"
     @layout.ExtTarget(ext) =>
@@ -177,6 +179,9 @@ test "generated language layout records tree wrapper and constructor targets" {
       #|  "SimplyTypedLambda.TypedExpr.If->ExtTarget(TypedExprExt, order=[0,1,2])",
       #|  "SimplyTypedLambda.TypedExpr.Lam->TreeTarget(order=[0,2,1], extra=Type)",
       #|  "SimplyTypedLambda.TypedExpr.App->TreeTarget(order=[0,1], extra=-)",
+      #|  "SimplyTypedLambda.Type.Bool->RawTarget(order=[])",
+      #|  "SimplyTypedLambda.Type.Int->RawTarget(order=[])",
+      #|  "SimplyTypedLambda.Type.Arrow->RawTarget(order=[0,1])",
       #|]
     ),
   )
@@ -297,7 +302,6 @@ test "sig_to_impl" {
       #|  )
       #|}
       #|
-
     ),
   )
 }

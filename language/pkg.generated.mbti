@@ -10,6 +10,7 @@ import {
 }
 
 // Values
+pub fn expand_language_group(Array[@meta_parser.NanoLangDef], extra_known_types? : Array[String]) -> ExpandedLanguageGroup raise
 
 // Errors
 pub suberror LangError {
@@ -17,6 +18,29 @@ pub suberror LangError {
 }
 
 // Types and methods
+pub(all) enum ConstructorOrigin {
+  Shared
+  Own
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ExpandedConstructor {
+  owner : String
+  constr : @syntax.ConstrDecl
+  origin : ConstructorOrigin
+}
+
+pub(all) struct ExpandedLanguage {
+  name : String
+  extends : String?
+  entry : @meta_parser.ResolvedEntry
+  constructors : Array[ExpandedConstructor]
+  def : @meta_parser.NanoLangDef
+}
+
+pub(all) struct ExpandedLanguageGroup {
+  languages : Array[ExpandedLanguage]
+}
+
 pub struct Language {
   name : String
   group : Array[@meta_parser.NanoLangDef]
@@ -24,6 +48,7 @@ pub struct Language {
 } derive(@debug.Debug)
 #callsite(autofill(_args_loc, loc))
 pub fn Language::def(name? : String, loc~ : SourceLoc, _args_loc~ : ArgsLoc) -> Self raise
+pub fn Language::expand(Self) -> ExpandedLanguageGroup raise
 pub fn Language::from_file(name? : String, path~ : String, mod~ : String) -> Self raise
 pub fn Language::gen(Self) -> @list.List[@syntax.Impl] raise
 pub fn Language::layout(Self) -> @layout.GeneratedLanguageLayout raise
