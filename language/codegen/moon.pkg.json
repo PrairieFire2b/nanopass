@@ -1,0 +1,8 @@
+{
+    "import": [
+        "moonbitlang/lexer/basic",
+        "moonbitlang/parser",
+        "moonbitlang/parser/syntax",
+        "YumeXi/nanocake/meta_parser"
+    ]
+}

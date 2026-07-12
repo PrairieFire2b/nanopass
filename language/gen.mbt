@@ -6,11 +6,13 @@ pub fn Language::gen(self : Language) -> @list.List[@syntax.Impl] raise {
   let wrapper_impls = layout.wrappers.map(fn(w) { @syntax.TopTypeDef(w.decl) })
   let ext_impls = layout.ext_enums.map(fn(e) { @syntax.TopTypeDef(e.decl) })
   let external_impls = layout.external_types.filter_map(sig_to_impl)
+  let entry_impls = @codegen.parse_unparse_entry_impls(layout.group)
   @list.List(
     [@syntax.TopTypeDef(layout.tree.decl)] +
     wrapper_impls +
     ext_impls +
-    external_impls,
+    external_impls +
+    entry_impls,
   )
 }
 

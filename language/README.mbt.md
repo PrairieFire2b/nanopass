@@ -53,6 +53,7 @@ Generate the complete set of `Impl`s for this language group:
 2. **Struct wrappers** — e.g. `struct Expr(Tree[Expr, Unit, Unit])` tying the knot
 3. **Ext enums** — derived-language-only constructors (e.g. `TypedExprExt`)
 4. **External terminals** — types referenced by the tree but defined elsewhere, looked up via `.mbti`
+5. **Parse/unparse entries** — public Cause-wrapped entrypoints plus raw `SexpError` helpers
 
 The result can be formatted with `@fmt.impls_to_string`.
 
@@ -109,6 +110,54 @@ test "define and generate a language" {
       #|  Arrow(Type, Type)
       #|}
       #|
+      #|///|
+      #|pub fn parse_Lambda(sexp : @sexp.Sexp) -> Expr raise @sexp.Cause {
+      #|  @sexp.with_context("parse Lambda", () => parse_Lambda_raw(sexp))
+      #|}
+      #|
+      #|///|
+      #|fn parse_Lambda_raw(_sexp : @sexp.Sexp) -> Expr raise @sexp.SexpError {
+      #|  raise  @sexp.GeneratedCode(message="parse Lambda is not generated yet")
+      #|}
+      #|
+      #|///|
+      #|pub fn unparse_Lambda(value : Expr) -> @sexp.SexpDoc raise @sexp.Cause {
+      #|  @sexp.with_context("unparse Lambda", () => unparse_Lambda_raw(value))
+      #|}
+      #|
+      #|///|
+      #|fn unparse_Lambda_raw(_value : Expr) -> @sexp.SexpDoc raise @sexp.SexpError {
+      #|  raise  @sexp.GeneratedCode(message="unparse Lambda is not generated yet")
+      #|}
+      #|
+      #|///|
+      #|pub fn parse_SimplyTypedLambda(sexp : @sexp.Sexp) -> TypedExpr raise @sexp.Cause {
+      #|  @sexp.with_context("parse SimplyTypedLambda", () => {
+      #|    parse_SimplyTypedLambda_raw(sexp)
+      #|  })
+      #|}
+      #|
+      #|///|
+      #|fn parse_SimplyTypedLambda_raw(_sexp : @sexp.Sexp) -> TypedExpr raise @sexp.SexpError {
+      #|  raise  
+      #|    @sexp.GeneratedCode(message="parse SimplyTypedLambda is not generated yet")
+      #|}
+      #|
+      #|///|
+      #|pub fn unparse_SimplyTypedLambda(value : TypedExpr) -> @sexp.SexpDoc raise @sexp.Cause {
+      #|  @sexp.with_context("unparse SimplyTypedLambda", () => {
+      #|    unparse_SimplyTypedLambda_raw(value)
+      #|  })
+      #|}
+      #|
+      #|///|
+      #|fn unparse_SimplyTypedLambda_raw(_value : TypedExpr) -> @sexp.SexpDoc raise @sexp.SexpError {
+      #|  raise  @sexp.GeneratedCode(
+      #|    message="unparse SimplyTypedLambda is not generated yet",
+      #|  )
+      #|}
+      #|
+
 
     ),
   )

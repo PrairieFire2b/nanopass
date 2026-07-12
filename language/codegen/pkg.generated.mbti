@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "YumeXi/nanocake/language/codegen"
+
+import {
+  "YumeXi/nanocake/meta_parser",
+  "moonbitlang/parser/syntax",
+}
+
+// Values
+pub fn parse_unparse_entry_impls(Array[@meta_parser.NanoLangDef]) -> Array[@syntax.Impl] raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
