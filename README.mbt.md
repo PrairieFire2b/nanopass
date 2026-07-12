@@ -2,27 +2,55 @@
 
 A metaprogramming framework for defining composable, type-safe AST transformations.
 
-Given MoonBit enums annotated with `#nanopass.language`, the current library generates unified `Tree` types that merge shared constructors across language extensions.
+Given MoonBit enums annotated with `#nanopass.language`, the library generates
+unified `Tree` types that merge shared constructors across language extensions,
+plus S-expression parsers/unparsers and transformation-pass scaffolding for the
+resulting ASTs.
 
 ## Architecture
 
 ```
-                  ┌─────────────┐
-#nanopass.language │ meta_parser │  parse annotations, resolve extends chains
-                  └──────┬──────┘
-                         │ NanoLangDef[]
-                         ▼
-                  ┌─────────────┐
-                  │   language   │  generate a unified syntax tree structure.
-                  └──────┬──────┘
+                   ┌─────────────┐
+#nanopass.language │ meta_parser │  parse annotations, resolve extends chains,
+                   └──────┬──────┘  apply #nano.remove, resolve entries/.mbti
+                          │ NanoLangDef[]
+                          ▼
+                   ┌─────────────┐
+                   │  language   │  expand inheritance -> a layout, then
+                   └──────┬──────┘  generate the unified Tree + wrappers
+                          │ GeneratedLanguageLayout
+              ┌───────────┼───────────┐
+              ▼                       ▼
+     ┌─────────────┐          ┌─────────────┐
+     │unparser/gen │          │    pass     │  transform/fold scaffolding,
+     └──────┬──────┘          └─────────────┘  smart constructors, PassM
+            │ from_sexp / to_sexp_doc
+            ▼
+     ┌─────────────┐
+     │unparser/sexp│  S-expression runtime: parse, doc render, form matching
+     └─────────────┘
 ```
 
-- **`meta_parser`** — Parses `#nanopass.language` / `#nanopass.nonterminal` annotations from source files. Resolves language definitions, `extends` chains, and `.mbti` interfaces.
-- **`language`** — Generates the AST scaffolding: unified syntax trees and language-specific aliases
+- **`meta_parser`** — Parses `#nanopass.language` / `#nanopass.nonterminal` and
+  `#nano.*` annotations from source files. Resolves language definitions,
+  `extends` chains, `#nano.remove` deletions, effective entries, and `.mbti`
+  interfaces.
+- **`language`** — Expands each language against its parent (inheritance,
+  override, and `#nano.remove`) into a `GeneratedLanguageLayout`, then generates
+  the AST scaffolding: unified syntax trees, per-language wrappers, extension
+  enums, and terminal aliases.
+- **`unparser/sexp`** — S-expression runtime shared by generated code: a parser,
+  a pretty-printing document model, `#nano.form` pattern matching, and layered
+  parse/decode/hook errors.
+- **`unparser/gen`** — Generates concrete `from_sexp` / `to_sexp_doc` /
+  `parse_sexp` / `unparse_sexp` codecs from a language's layout, honoring custom
+  surface syntax and hooks.
+- **`pass`** — Transformation-pass scaffolding built on the layout (smart
+  constructors, catamorphisms, delayed-subtree rewrites, and the effectful
+  `PassM` pipeline). See `pass/README.mbt.md`.
 
-Pass generation is planned future work: typed transform/fold structs, traversal defaults, and pass composition will build on the `meta_parser` and `language` layers once their layout model is stable.
-
-The `poc` package is kept as a fixture/example package for `.mbti`-backed tests. It is not part of the first-round public package split.
+The `poc` package is kept as a fixture/example package for `.mbti`-backed tests.
+It is not part of the first-round public package split.
 
 ## Quick Start
 
@@ -54,6 +82,27 @@ enum TypedExpr {
 }
 ```
 
+Surface syntax can be declared alongside constructors with `#nano.*` attributes:
+
+```mbt nocheck
+  #nano.form("(lambda ($0 : $1) $2)")
+  #nano.form_only
+  Lam(LambdaVar, Type, TypedExpr)
+
+  #nano.inline           // renders as ($0 $1) — no constructor head
+  App(TypedExpr, TypedExpr)
+```
+
+To remove an inherited constructor in a derived language, declare it at the top of the enum:
+
+```mbt nocheck
+#nanopass.language(name="NoApp", extends="Lambda")
+#nano.remove("App")
+enum NoAppExpr {
+  // only Lam, Int, LambdaVar are inherited; App is dropped
+}
+```
+
 ### 2. Generate AST scaffolding
 
 ```mbt nocheck
@@ -64,11 +113,27 @@ let impls = lang.gen()
 @fmt.impls_to_string(impls) // format and write to file
 ```
 
-This produces a unified `Tree[Self_, LamE, TreeExt]` enum, per-language structs (`Expr`, `TypedExpr`), extension enums (`TypedExprExt`), and external terminal aliases.
+This produces a unified `Tree[Self_, LamE, TreeExt]` enum, per-language structs
+(`Expr`, `TypedExpr`), extension enums (`TypedExprExt`), external terminal
+aliases, and stub parse/unparse entry functions.
 
-### 3. Write passes
+### 3. Generate S-expression codecs
 
-Pass generation is planned future work.
+```mbt nocheck
+let lang = @language.Language::from_file(...)
+// Generate from_sexp / parse_sexp / to_sexp_doc / unparse_sexp per type.
+let codec_impls = @gen.gen(lang)
+```
+
+The generator honours `#nano.form`, `#nano.inline`, `#nano.infix`, `#nano.name`
+surface syntax and `#nano.parse_by` / `#nano.unparse_by` hook escape hatches.
+It also emits a `from_sexp_without_hooks` variant so hooks can call back into
+the generated parser without infinite recursion.
+
+### 4. Write passes
+
+See the `pass` package for transform/fold scaffolding and the `PassM` effectful
+pipeline combinator.
 
 ## Package Reference
 
@@ -78,9 +143,14 @@ Pass generation is planned future work.
 |-----|-------------|
 | `find_languages(src)` | Parse `#nanopass.language` annotations from a `SourceLocRepr` |
 | `find_languages_by_file(path)` | Parse language annotations from a file path |
+| `normalize_language_defs(langs)` | Validate and resolve entries; returns langs with `resolved_entry` populated |
 | `resolve(loc)` | Convert a `SourceLoc` to a structured `SourceLocRepr` |
 | `resolve_mbti(repr)` | Parse the `.mbti` interface for a package |
 | `NanoLangDef::diff(base, deriv)` | Compute the structural diff between two language definitions |
+| `NanoLangDef::with_constructors(self, constrs)` | Return a copy with a new constructor set (rebuilds `production_defs`) |
+
+Key types: `NanoLangDef` (with `removed : Array[String]` for `#nano.remove`),
+`ProductionDef` (with `surface_forms`, `hooks`), `FormPattern`, `NanoHooks`.
 
 ### `@language` — Generate AST scaffolding
 
@@ -88,13 +158,56 @@ Pass generation is planned future work.
 |-----|-------------|
 | `Language::def(name?, loc~)` | Resolve languages from the callsite file |
 | `Language::from_file(name?, path~, mod~)` | Resolve languages from an explicit file |
-| `Language::gen()` | Generate AST definitions|
+| `Language::gen()` | Generate AST definitions (Tree, wrappers, ext enums, terminals, entry stubs) |
+| `Language::layout()` | Compute `GeneratedLanguageLayout` (shared by gen and codec generator) |
+| `Language::expand()` | Expand the group into `ExpandedLanguageGroup` (inheritance + remove applied) |
+| `expand_language_group(raw)` | Standalone expansion without a `Language` object |
+
+`GeneratedLanguageLayout` carries `ConstructorLayout` per constructor: `target`
+(`RawTarget` / `TreeTarget` / `ExtTarget`), `field_order`, `surface_forms`, and
+`hooks`.
+
+### `@unparser/sexp` — S-expression runtime
+
+| API | Description |
+|-----|-------------|
+| `parse(src)` | Parse a `StringView` into a `Sexp` |
+| `match_form(sexp, pattern, field_count)` | Match a sexp against a `$0`/`$1`-placeholder pattern |
+| `form_doc(pattern, fields)` | Render field docs into a surface form |
+| `expect_atom / expect_list / expect_arity` | Structural decode helpers |
+| `hook_error / decode_error / literal_failure` | Structured error constructors |
+| `SexpDoc::render(self, width?)` | Pretty-print a doc to a string |
+
+Error hierarchy: `SexpError { Syntax | Decode | HookError | GeneratedCode }`.
+Cause-chained context via `with_context`.
+
+### `@unparser/gen` — Codec generator
+
+| API | Description |
+|-----|-------------|
+| `gen(lang)` | Generate `Array[@syntax.Impl]` codecs for all types in a language group |
+| `gen_source(lang)` | Return the generated source as a `String` (for inspection/snapshotting) |
+
+Generated per type: `Ty::from_sexp`, `Ty::from_sexp_without_hooks` (safe hook
+fallback), `Ty::parse_sexp`, `Ty::to_sexp_doc`, `Ty::unparse_sexp`.
+
+### `@pass` — Transformation-pass scaffolding
+
+See `pass/README.mbt.md` for the full API. Highlights:
+
+| Milestone | What is generated |
+|-----------|-------------------|
+| M1 (surface) | Smart constructors + view functions for wrapper-based ASTs |
+| M2 (cata) | Catamorphism `cata` for bottom-up folds |
+| M3 (rewrite_m) | Effectful delayed-subtree rewrite with `RewriteAlg` |
+| M4 (stub) | Diff-driven pass stub generator |
+| M5 (PassM) | Effectful pipeline/trace combinators |
 
 ## Design Rationale
 
 ### Why code generation instead of a generic runtime?
 
-The generated `Tree` has per-language-group type parameter lists. A generic runtime library cannot express typed operations over arbitrary tree shapes without higher-kinded types. Code generation produces exactly-typed syntax scaffolding per language group, and future pass generation will reuse the same layout decisions.
+The generated `Tree` has per-language-group type parameter lists. A generic runtime library cannot express typed operations over arbitrary tree shapes without higher-kinded types. Code generation produces exactly-typed syntax scaffolding per language group; the same layout decisions drive AST generation, S-expression codec generation, and pass scaffolding.
 
 ### How extra type variables work
 
@@ -104,12 +217,24 @@ When a derived language adds arguments to an inherited constructor (e.g., `Lam` 
 
 ### TODOs
 
-- **Generating Passes** - provide interfaces to easily play with the AST and write passes.
+- **`#nano.form` named placeholders** — `$x` / `$body` by meta-var name, repeat
+  (`...`), optional, and dotted-list patterns are parsed by `meta_parser` but not
+  yet consumed by the codec generator.
+- **`+/-` extension syntax** — explicit add/remove in the enum body (current
+  `#nano.remove` covers top-level removal; inline `+/-` markers are not yet
+  supported).
+- **`layout.group` type convergence** — `GeneratedLanguageLayout.group` is still
+  `Array[NanoLangDef]`; migrating to `ExpandedLanguageGroup` would eliminate the
+  parallel shared/own derivation in the layout builder.
 
 ### Continued improvements
 
-- **Better codegen ergonomics** — simplify the generated output: reduce `raise` noise, improve formatting, and add docstrings to generated methods.
-- **Error handling in passes** — allow passes to raise typed errors, with ergonomic error propagation across the pipeline.
+- **Better codegen ergonomics** — reduce `raise` noise in generated output,
+  improve formatting, and add docstrings to generated methods.
+- **Error handling in passes** — allow passes to raise typed errors, with
+  ergonomic error propagation across the pipeline.
+- **Pass composition** — a higher-level API for chaining passes with shared
+  state, dependency tracking, and short-circuit on error.
 
 ### Incremental computation
 
