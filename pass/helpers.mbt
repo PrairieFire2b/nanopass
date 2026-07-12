@@ -319,3 +319,36 @@ fn make_constr_call(
     )
   }
 }
+
+///|
+/// Build a *bare* constructor application `Constr(args...)` (no `Tycon::`
+/// prefix). Because the constructors of the merged `Tree` enum and the ext
+/// enum are in scope wherever the generated code lives, and the language
+/// wrapper is a tuple struct (`struct Expr(Tree[...])`), both the wrapper
+/// wrapping and the inner tree constructor use this bare form:
+///
+///   Expr(Int(n))          // wrapper(bare inner tree constructor)
+///   Expr(Ext(If(c, t, e)))
+fn bare_constr_call(
+  constr_name : String,
+  args : Array[@syntax.Expr],
+  loc : @basic.Location,
+) -> @syntax.Expr {
+  let constr : @syntax.Constructor = {
+    name: { name: constr_name, loc },
+    extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+    loc,
+  }
+  if args.length() == 0 {
+    @syntax.Expr::Constr(constr~, loc~)
+  } else {
+    @syntax.Expr::Apply(
+      func=@syntax.Expr::Constr(constr~, loc~),
+      args=@list.from_array(
+        args.map(fn(e) { { value: e, kind: @syntax.ArgumentKind::Positional } }),
+      ),
+      loc~,
+    )
+  }
+}
+

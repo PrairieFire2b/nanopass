@@ -158,32 +158,19 @@ fn identity_field_from_desc(
     arg_exprs.push(var_expr(p.name, loc))
   })
 
-  // Body: for regular constructors, call Tycon::Constr(...);
-  // for ext constructors, wrap with Tycon::Ext(ExtEnum::Constr(...))
-  let body = if d.is_ext {
-    let ext_enum_name = match d.ext_enum_name {
-      Some(n) => n
-      None => abort("ext constructor without ext_enum_name")
-    }
-    let ext_inner = make_constr_call(ext_enum_name, d.name, arg_exprs, loc)
-    @syntax.Expr::Apply(
-      func=@syntax.Expr::Method(
-        type_name={
-          is_object: false,
-          loc,
-          name: @syntax.LongIdent::Ident(name=tycon),
-        },
-        method_name={ name: "Ext", loc },
-        loc~,
-      ),
-      args=@list.from_array([
-        { value: ext_inner, kind: @syntax.ArgumentKind::Positional },
-      ]),
-      loc~,
-    )
+  // Body wraps the inner tree constructor in the language wrapper, because the
+  // wrapper is a tuple struct `struct Tycon(Tree[...])`:
+  //   regular: Tycon(Constr(args))
+  //   ext:     Tycon(Ext(Constr(args)))
+  // Both the wrapper and the (ext) constructor are bare applications: the
+  // constructors are in scope, and `Tycon::Constr` is NOT valid for a
+  // tuple-struct wrapper.
+  let inner = if d.is_ext {
+    bare_constr_call("Ext", [bare_constr_call(d.name, arg_exprs, loc)], loc)
   } else {
-    make_constr_call(tycon, d.name, arg_exprs, loc)
+    bare_constr_call(d.name, arg_exprs, loc)
   }
+  let body = bare_constr_call(tycon, [inner], loc)
 
   let lambda_func : @syntax.Func = {
     parameters: @list.from_array(params_rev[:]),
@@ -217,8 +204,10 @@ fn gen_cata_impl(
 ) -> @syntax.Impl {
   let match_expr = build_cata_match(tycon, tree_info, descs, loc)
 
+  // Destructure the tuple-struct wrapper `struct Tycon(Tree[...])` with
+  // `let Tycon(t) = self`, exposing the inner Tree value `t` to the match.
   let tree_constr : @syntax.Constructor = {
-    name: { name: "Tree", loc },
+    name: { name: tycon, loc },
     extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
     loc,
   }
@@ -330,16 +319,16 @@ fn cata_case_from_desc(
   tycon : String,
   loc : @basic.Location,
 ) -> @syntax.Case {
-  // Build pattern: ConstrName(arg0, arg1, ...), respecting labels
-  let pat_vars : Array[@syntax.Binder] = []
+  // Build pattern: ConstrName(arg0, arg1, ...), respecting labels.
+  // A labelled field `cond~` binds the variable `cond`; the body must then
+  // reference `cond` (handled in cata_field_call via the same rule).
   let pat_args : Array[@syntax.ConstrPatArg] = []
   d.params.each(fn(p) {
-    pat_vars.push({ name: p.name, loc })
-    let kind : @syntax.ArgumentKind = match p.label {
-      Some(l) => @syntax.ArgumentKind::Labelled(l)
-      None => @syntax.ArgumentKind::Positional
+    let (kind, bind_name) : (@syntax.ArgumentKind, String) = match p.label {
+      Some(l) => (@syntax.ArgumentKind::Labelled(l), l.name)
+      None => (@syntax.ArgumentKind::Positional, p.name)
     }
-    pat_args.push({ pat: @syntax.Pattern::Var({ name: p.name, loc }), kind })
+    pat_args.push({ pat: @syntax.Pattern::Var({ name: bind_name, loc }), kind })
   })
 
   let constr : @syntax.Constructor = {
@@ -436,7 +425,13 @@ fn cata_field_call(
 ) -> @syntax.Expr {
   let args : Array[@syntax.Argument] = []
   d.params.each(fn(p) {
-    let var_e = var_expr(p.name, loc)
+    // Must match the pattern binder chosen in cata_case_from_desc: labelled
+    // fields bind their label name, positional fields bind `argN`.
+    let bind_name = match p.label {
+      Some(l) => l.name
+      None => p.name
+    }
+    let var_e = var_expr(bind_name, loc)
     let arg_e = if p.is_self_ref {
       @syntax.Expr::DotApply(
         self=var_e,
