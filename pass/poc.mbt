@@ -423,3 +423,34 @@ test "gen_rewrite - RewriteAlg struct, identity, and rewrite_m driver" {
   ))
 }
 
+
+///|
+test "gen_rewrite_stub - minimal coverage stub for derived language" {
+  let impls = gen_rewrite_stub(lang, "simplify")
+  let output = @fmt.impls_to_string(impls)
+  inspect(output, content=(
+    #|///|
+    #|fn[Env, St, Log, Err] simplify() -> TypedExprRewriteAlg[Env, St, Log, Err] {
+    #|  let base = TypedExprRewriteAlg::identity()
+    #|  TypedExprRewriteAlg::{
+    #|    ..base,
+    #|    Lam_: base.Lam_,
+    #|    If_: base.If_,
+    #|    True_: base.True_,
+    #|    False_: base.False_,
+    #|  }
+    #|}
+    #|
+    #|
+
+  ))
+}
+
+///|
+test "changed_and_added_fields - coverage set from Diff" {
+  let diff = lang.group[0].diff(lang.group[1])
+  let fields = changed_and_added_fields(diff)
+  inspect(fields, content=(
+    #|[Lam_, If_, True_, False_]
+  ))
+}

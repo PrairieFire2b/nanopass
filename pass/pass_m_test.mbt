@@ -509,3 +509,86 @@ test "state changes inside local_env are visible" {
     _ => panic()
   }
 }
+
+///|
+/// ---- M5: traced, pipeline_m, when_m ----
+
+///|
+test "traced prepends label to log before running computation" {
+  let m : PassM[Unit, Unit, String, String, Int] = @pass.traced(
+    "step-a",
+    @pass.PassM::pure(42),
+  )
+  match m.exec_empty() {
+    Ok((42, _, logs)) => assert_eq(logs, ["step-a"])
+    _ => panic()
+  }
+}
+
+///|
+test "traced with nested emit: label appears first" {
+  let m : PassM[Unit, Unit, String, String, Int] = @pass.traced(
+    "outer",
+    @pass.emit("inner").flat_map(fn(_) { @pass.PassM::pure(7) }),
+  )
+  match m.exec_empty() {
+    Ok((7, _, logs)) => assert_eq(logs, ["outer", "inner"])
+    _ => panic()
+  }
+}
+
+///|
+test "pipeline_m sequences steps, accumulates logs" {
+  let step1 : (Int) -> PassM[Unit, Unit, String, String, Int] = fn(x) {
+    @pass.emit("step1").flat_map(fn(_) { @pass.PassM::pure(x + 1) })
+  }
+  let step2 : (Int) -> PassM[Unit, Unit, String, String, Int] = fn(x) {
+    @pass.emit("step2").flat_map(fn(_) { @pass.PassM::pure(x * 2) })
+  }
+  let result = @pass.pipeline_m([step1, step2], 5).exec_empty()
+  match result {
+    Ok((12, _, logs)) => assert_eq(logs, ["step1", "step2"]) // (5+1)*2=12
+    _ => panic()
+  }
+}
+
+///|
+test "pipeline_m short-circuits on error, later steps do not run" {
+  let step1 : (Int) -> PassM[Unit, Unit, String, String, Int] = fn(x) {
+    @pass.emit("step1").flat_map(fn(_) { @pass.PassM::from_result(Err("fail")) })
+  }
+  let step2 : (Int) -> PassM[Unit, Unit, String, String, Int] = fn(x) {
+    @pass.emit("step2").flat_map(fn(_) { @pass.PassM::pure(x * 2) })
+  }
+  let result = @pass.pipeline_m([step1, step2], 5).exec_empty()
+  match result {
+    Err("fail") => () // step2 never ran
+    _ => panic()
+  }
+}
+
+///|
+test "when_m skips step when condition false" {
+  let always_false : (Int) -> Bool = fn(_) { false }
+  let step : (Int) -> PassM[Unit, Unit, String, String, Int] = fn(x) {
+    @pass.emit("ran").flat_map(fn(_) { @pass.PassM::pure(x + 100) })
+  }
+  let guarded = @pass.when_m(always_false, step)
+  match guarded(5).exec_empty() {
+    Ok((5, _, logs)) => assert_true(logs.is_empty()) // unchanged, no log
+    _ => panic()
+  }
+}
+
+///|
+test "when_m runs step when condition true" {
+  let always_true : (Int) -> Bool = fn(_) { true }
+  let step : (Int) -> PassM[Unit, Unit, String, String, Int] = fn(x) {
+    @pass.emit("ran").flat_map(fn(_) { @pass.PassM::pure(x + 100) })
+  }
+  let guarded = @pass.when_m(always_true, step)
+  match guarded(5).exec_empty() {
+    Ok((105, _, logs)) => assert_eq(logs, ["ran"])
+    _ => panic()
+  }
+}

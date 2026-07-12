@@ -221,3 +221,35 @@ test "M3 golden: derived-language rewrite_m expands ext constructors" {
   }
 }
 
+///|
+/// --- M4 golden: Diff-driven minimal-coverage stub shape ---
+///
+/// A stub binds `identity()` once, then spreads it and re-lists ONLY the
+/// changed/added constructors as identity placeholders for the user to fill in.
+/// This proves the `let base = identity(); { ..base, f: base.f }` shape compiles.
+fn[Env, St, Log, Err] mtyped_stub() -> MTypedRewriteAlg[Env, St, Log, Err] {
+  let base = MTypedRewriteAlg::identity()
+  // Overridable: true_/false_/if_ are the "added" ext constructors.
+  MTypedRewriteAlg::{ ..base, true_: base.true_, false_: base.false_, if_: base.if_ }
+}
+
+///|
+test "M4 golden: stub with identity placeholders round-trips" {
+  let alg : MTypedRewriteAlg[Unit, Unit, String, String] = mtyped_stub()
+  let e = MTypedExpr::if_(
+    MTypedExpr::true_(),
+    MTypedExpr::int(1),
+    MTypedExpr::int(0),
+  )
+  match e.rewrite_m(alg).exec_empty() {
+    Ok((out, _, _)) =>
+      debug_inspect(
+        out,
+        content=(
+          #|MTypedExpr(Ext(If(cond=MTypedExpr(Ext(True)), MTypedExpr(Int(1)), MTypedExpr(Int(0)))))
+        ),
+      )
+    Err(_) => panic()
+  }
+}
+

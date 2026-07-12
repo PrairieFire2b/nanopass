@@ -201,3 +201,18 @@ pub fn[Log, Err, A] PassM::exec_empty(
 ) -> Result[(A, Unit, Array[Log]), Err] {
   (self._run)((), ())
 }
+
+///|
+/// Emit `label` as a log entry, then run `m`.
+/// Useful for tracing which pass is executing in a pipeline.
+///
+/// # Example
+/// ```
+/// traced("rename", expr.rewrite_m(rename_alg))
+/// ```
+pub fn[Env, St, Log, Err, A] traced(
+  label : Log,
+  m : PassM[Env, St, Log, Err, A],
+) -> PassM[Env, St, Log, Err, A] {
+  emit(label).flat_map(fn(_) { m })
+}
