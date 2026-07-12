@@ -44,12 +44,6 @@ fn type_ref(name : String, loc : @basic.Location) -> @syntax.Type {
 }
 
 ///|
-/// Create a `Self_` type reference.
-fn self_type(loc : @basic.Location) -> @syntax.Type {
-  type_ref("Self_", loc)
-}
-
-///|
 /// Create a function arrow type `(params...) -> result`.
 fn make_fn_type(
   param_tys : Array[@syntax.Type],
@@ -84,252 +78,48 @@ fn make_field_decl(
 }
 
 ///|
-/// Build a name-to-constructor map from a NanoLangDef's type declaration.
-fn make_base_map(
-  base : @meta_parser.NanoLangDef,
-) -> Map[String, @syntax.ConstrDecl] {
-  let m : Map[String, @syntax.ConstrDecl] = {}
-  match base.type_decl.components {
-    @syntax.Variant(cs) => cs.each(fn(c) { m[c.name.name] = c })
-    _ => ()
-  }
-  m
-}
-
-///|
-/// Replace self-references to `tycon` with `Self_` in constructor args.
-fn replace_self_refs(
-  constr : @syntax.ConstrDecl,
-  tycon : String,
-  _loc : @basic.Location,
-) -> @syntax.ConstrDecl {
-  let new_args = match constr.args {
-    Some(args) => {
-      let params : Array[@syntax.ConstrParam] = []
-      args.each(fn(p) {
-        let new_ty = if type_name(p.ty) == tycon {
-          self_type(_loc)
-        } else {
-          p.ty
-        }
-        params.push({ ..p, ty: new_ty })
-      })
-      Some(@list.from_array(params[:]))
-    }
-    None => None
-  }
-  { ..constr, args: new_args }
-}
-
-///|
-/// Merge base and derived versions of a shared constructor.
-/// Returns (merged_constructor, extra_var_name?).
-fn merge_constr(
-  base_c : @syntax.ConstrDecl,
-  deriv_c : @syntax.ConstrDecl,
-  base_tycon : String,
-  loc : @basic.Location,
-) -> (@syntax.ConstrDecl, String?) {
-  let base_count = match base_c.args {
-    Some(args) => args.length()
-    None => 0
-  }
-  let deriv_count = match deriv_c.args {
-    Some(args) => args.length()
-    None => 0
-  }
-  let extra_var : String? = if deriv_count > base_count {
-    Some(base_c.name.name + "E")
-  } else {
-    None
-  }
-
-  let merged_args : Array[@syntax.ConstrParam] = []
-  match base_c.args {
-    Some(args) =>
-      args.each(fn(p) {
-        let new_ty = if type_name(p.ty) == base_tycon {
-          self_type(loc)
-        } else {
-          p.ty
-        }
-        merged_args.push({ ..p, ty: new_ty })
-      })
-    None => ()
-  }
-  match extra_var {
-    Some(name) =>
-      merged_args.push({ label: None, mut_: false, ty: type_ref(name, loc) })
-    None => ()
-  }
-  let merged_c = {
-    ..base_c,
-    args: if merged_args.length() > 0 {
-      Some(@list.from_array(merged_args[:]))
-    } else {
-      None
-    },
-  }
-  (merged_c, extra_var)
-}
-
-///|
-/// Merge all shared constructors between base and derived languages.
-/// Returns (merged_constructors, extra_type_variable_names).
-fn merge_shared_constrs(
-  deriv_pairs : Array[(@syntax.ConstrDecl, String)],
-  base_map : Map[String, @syntax.ConstrDecl],
-  base_tycon : String,
-  loc : @basic.Location,
-) -> (Array[@syntax.ConstrDecl], Array[String]) {
-  let shared = deriv_pairs.filter(fn(pair) {
-    let (dc, _) = pair
-    base_map.get(dc.name.name) is Some(_)
-  })
-  let (merged_rev, extra_vars_rev) = shared.fold(init=([], []), fn(acc, pair) {
-    let (ms, vs) = acc
-    let (dc, _deriv_tycon) = pair
-    match base_map.get(dc.name.name) {
-      Some(bc) => {
-        let (merged, extra_var) = merge_constr(bc, dc, base_tycon, loc)
-        let next_vs = match extra_var {
-          Some(v) => if vs.contains(v) { vs } else { [v] + vs }
-          None => vs
-        }
-        ([merged] + ms, next_vs)
-      }
-      None => (ms, vs)
-    }
-  })
-  (merged_rev.rev(), extra_vars_rev.rev())
-}
-
-///|
-/// For a derived language, extract constructors not present in the base,
-/// building an ext enum if any exist.
-fn build_ext_enum_constrs(
-  deriv : @meta_parser.NanoLangDef,
-  base_map : Map[String, @syntax.ConstrDecl],
-  loc : @basic.Location,
-) -> (@syntax.TypeDecl, String)? {
-  let deriv_tycon = deriv.type_decl.tycon
-  let ext_constrs : Array[@syntax.ConstrDecl] = []
-  match deriv.type_decl.components {
-    @syntax.Variant(cs) =>
-      cs.each(fn(c) {
-        match base_map.get(c.name.name) {
-          None => ext_constrs.push(replace_self_refs(c, deriv_tycon, loc))
-          _ => ()
-        }
-      })
-    _ => ()
-  }
-  if ext_constrs.length() > 0 {
-    let ext_name = deriv_tycon + "Ext"
-    let binders = @list.from_array([
-      @syntax.TypeDeclBinder::{ name: Some("Self_"), loc },
-    ])
-    let ext_enum : @syntax.TypeDecl = {
-      attrs: @list.empty(),
-      components: @syntax.Variant(@list.from_array(ext_constrs[:])),
-      deriving: @list.empty(),
-      doc: @syntax.DocString::empty(),
-      is_declare: false,
-      loc,
-      params: binders,
-      tycon: ext_name,
-      tycon_loc: loc,
-      type_vis: @syntax.Visibility::Default,
-    }
-    Some((ext_enum, ext_name))
-  } else {
-    None
-  }
-}
-
-///|
-/// Determine Tree type parameters and constructors from a language group.
-/// Mirrors `gen_tree_def` in language/gen.mbt.
-fn compute_tree_params(
-  langs : Array[@meta_parser.NanoLangDef],
+/// Determine Tree type parameters and constructors from a language group's
+/// generated layout.
+///
+/// This is the single source of truth: instead of independently re-deriving the
+/// merged `Tree` shape (as an earlier version did), we read it from
+/// `@language.GeneratedLanguageLayout`, which is the same layout that
+/// `Language::gen` uses to emit the AST. This guarantees the pass codegen and
+/// the AST codegen never drift.
+fn tree_info_from_layout(
+  layout : @layout.GeneratedLanguageLayout,
 ) -> TreeInfo raise {
-  if langs.length() == 0 {
-    fail("compute_tree_params: empty language group")
+  let tree_constrs = match layout.tree.decl.components {
+    @syntax.Variant(cs) => cs.to_array()
+    _ => []
   }
 
-  let base = langs[0]
-  let loc = base.type_decl.loc
-  let base_tycon = base.type_decl.tycon
-  let base_map = make_base_map(base)
-
-  // Collect all derived constructors as (constr, deriv_tycon) pairs
-  let deriv_pairs : Array[(@syntax.ConstrDecl, String)] = []
-  for i in 1..<langs.length() {
-    let deriv = langs[i]
-    match deriv.type_decl.components {
-      @syntax.Variant(cs) =>
-        cs.each(fn(c) { deriv_pairs.push((c, deriv.type_decl.tycon)) })
-      _ => ()
+  // The `Ext(TreeExt)` constructor, if present, is the one named "Ext".
+  let mut ext_constr_index = -1
+  tree_constrs.eachi(fn(i, c) {
+    if c.name.name == "Ext" {
+      ext_constr_index = i
     }
-  }
+  })
 
-  // Merge shared constructors
-  let (merged_constrs, extra_vars) = merge_shared_constrs(
-    deriv_pairs, base_map, base_tycon, loc,
-  )
-
-  // Build ext enums for derived-only constructors
-  let ext_results : Array[(@syntax.TypeDecl, String)] = []
-  for i in 1..<langs.length() {
-    match build_ext_enum_constrs(langs[i], base_map, loc) {
-      Some(result) => ext_results.push(result)
-      None => ()
-    }
-  }
-
-  let ext_enums = ext_results.map(fn(pair) { pair.0 })
-  let ext_names = ext_results.map(fn(pair) { pair.1 })
-
-  // Add Ext(TreeExt) constructor if there are ext enums
-  let (final_constrs, final_type_params, ext_constr_index) = if ext_names.length() >
-    0 {
-    let ext_constr : @syntax.ConstrDecl = {
-      args: Some(
-        @list.from_array([
-          { label: None, mut_: false, ty: type_ref("TreeExt", loc) },
-        ]),
-      ),
-      attrs: @list.empty(),
-      doc: @syntax.DocString::empty(),
-      loc,
-      name: @syntax.ConstrName::{ name: "Ext", loc },
-      tag: None,
-    }
-    (
-      merged_constrs + [ext_constr],
-      extra_vars + ["TreeExt"],
-      merged_constrs.length(),
-    )
-  } else {
-    (merged_constrs, extra_vars, -1)
-  }
-
-  let ext_enum : ExtEnumInfo? = if ext_names.length() > 0 {
+  // Flatten every derived language's ext enum into one descriptor set; the
+  // generated Tree only ever references a single `TreeExt` type parameter.
+  let ext_enum : ExtEnumInfo? = if layout.ext_enums.length() > 0 {
     let all_ext_constrs : Array[@syntax.ConstrDecl] = []
-    for i in 0..<ext_enums.length() {
-      match ext_enums[i].components {
+    layout.ext_enums.each(fn(ee) {
+      match ee.decl.components {
         @syntax.Variant(cs) => cs.each(fn(c) { all_ext_constrs.push(c) })
         _ => ()
       }
-    }
-    Some({ name: ext_names[0], constrs: all_ext_constrs })
+    })
+    Some({ name: layout.ext_enums[0].tycon, constrs: all_ext_constrs })
   } else {
     None
   }
 
   {
-    tree_type_params: ["Self_"] + final_type_params,
-    tree_constrs: final_constrs,
+    tree_type_params: layout.tree.params,
+    tree_constrs,
     ext_constr_index,
     ext_enum,
   }

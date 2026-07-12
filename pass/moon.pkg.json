@@ -6,6 +6,7 @@
         "moonbitlang/parser/fmt",
         "moonbitlang/parser/attribute",
         "YumeXi/nanocake/meta_parser",
-        "YumeXi/nanocake/language"
+        "YumeXi/nanocake/language",
+        "YumeXi/nanocake/language/layout"
     ]
 }

@@ -7,7 +7,7 @@
 pub fn gen_syntax_kind(
   lang : @language.Language,
 ) -> @list.List[@syntax.Impl] raise {
-  let tree_info = compute_tree_params(lang.group)
+  let tree_info = tree_info_from_layout(lang.layout())
   let loc = lang.group[0].type_decl.loc
   let descs = collect_all_descriptors(lang, tree_info, loc)
   let enum_decl = build_syntax_kind_enum(descs, loc)

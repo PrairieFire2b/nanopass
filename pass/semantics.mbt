@@ -13,7 +13,7 @@
 pub fn gen_semantics(
   lang : @language.Language,
 ) -> @list.List[@syntax.Impl] raise {
-  let tree_info = compute_tree_params(lang.group)
+  let tree_info = tree_info_from_layout(lang.layout())
   let loc = lang.group[0].type_decl.loc
   let impls : Array[@syntax.Impl] = []
   lang.group.eachi(fn(i, nl) { gen_for_lang(nl, i, tree_info, loc, impls) })
