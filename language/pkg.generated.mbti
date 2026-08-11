@@ -29,4 +29,3 @@ pub fn Language::gen(Self) -> @list.List[@syntax.Impl] raise
 // Type aliases
 
 // Traits
-

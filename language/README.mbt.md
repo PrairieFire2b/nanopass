@@ -1,4 +1,4 @@
-# YumeXi/nanopass/language
+# YumeXi/nanocake/language
 
 Define and generate Tree-structured ASTs from annotated MoonBit enum definitions.
 
@@ -66,7 +66,7 @@ test "define and generate a language" {
   let l = @language.Language::from_file(
     name="Lambda",
     path="poc/lang_def.mbt",
-    mod="YumeXi/nanopass",
+    mod="YumeXi/nanocake",
   )
   let impls = l.gen()
   let output = @fmt.impls_to_string(impls).trim_end().to_owned() + "\n"
@@ -77,9 +77,9 @@ test "define and generate a language" {
       #|enum Tree[Self_, LamE, TreeExt] {
       #|  /// Terminals
       #|  Int(Int)
-      #|  Var(Var)
+      #|  LambdaVar(LambdaVar)
       #|  /// Nonterminals
-      #|  Lam(Var, Self_, LamE)
+      #|  Lam(LambdaVar, Self_, LamE)
       #|  App(Self_, Self_)
       #|  Ext(TreeExt)
       #|}
@@ -100,7 +100,7 @@ test "define and generate a language" {
       #|}
       #|
       #|///|
-      #|pub typealias String as Var
+      #|pub typealias String as LambdaVar
       #|
       #|///|
       #|pub enum Type {

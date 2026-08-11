@@ -21,7 +21,7 @@ test {
 
   let poc_repr = @meta_parser.SourceLocRepr::for_pkg(
     pkg="poc",
-    mod="YumeXi/nanopass",
+    mod="YumeXi/nanocake",
   )
   let ext = find_external_types(a, tree, @meta_parser.resolve_mbti(poc_repr))
   debug_inspect(
@@ -37,7 +37,7 @@ test {
       }
     }),
     content=(
-      #|["Var", "Type"]
+      #|["LambdaVar", "Type"]
     ),
   )
 
@@ -51,9 +51,9 @@ test {
       #|enum Tree[Self_, LamE, TreeExt] {
       #|  /// Terminals
       #|  Int(Int)
-      #|  Var(Var)
+      #|  LambdaVar(LambdaVar)
       #|  /// Nonterminals
-      #|  Lam(Var, Self_, LamE)
+      #|  Lam(LambdaVar, Self_, LamE)
       #|  App(Self_, Self_)
       #|  Ext(TreeExt)
       #|}
@@ -76,7 +76,7 @@ test "sig_to_impl" {
   let (tree, _) = tree_def
   let poc_repr = @meta_parser.SourceLocRepr::for_pkg(
     pkg="poc",
-    mod="YumeXi/nanopass",
+    mod="YumeXi/nanocake",
   )
   let mbti = @meta_parser.resolve_mbti(poc_repr)
   let ext = find_external_types(a, tree, mbti)
@@ -88,7 +88,7 @@ test "sig_to_impl" {
     output,
     content=(
       #|///|
-      #|pub typealias String as Var
+      #|pub typealias String as LambdaVar
       #|
       #|///|
       #|pub enum Type {
@@ -109,9 +109,9 @@ test "sig_to_impl" {
       #|enum Tree[Self_, LamE, TreeExt] {
       #|  /// Terminals
       #|  Int(Int)
-      #|  Var(Var)
+      #|  LambdaVar(LambdaVar)
       #|  /// Nonterminals
-      #|  Lam(Var, Self_, LamE)
+      #|  Lam(LambdaVar, Self_, LamE)
       #|  App(Self_, Self_)
       #|  Ext(TreeExt)
       #|}
@@ -132,7 +132,7 @@ test "sig_to_impl" {
       #|}
       #|
       #|///|
-      #|pub typealias String as Var
+      #|pub typealias String as LambdaVar
       #|
       #|///|
       #|pub enum Type {

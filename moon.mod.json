@@ -1,9 +1,10 @@
 {
   "name": "YumeXi/nanocake",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "deps": {
-    "moonbitlang/parser": "0.3.2",
-    "moonbitlang/x": "0.4.43"
+    "moonbitlang/parser": "0.3.13",
+    "moonbitlang/lexer": "0.3.13",
+    "moonbitlang/x": "0.4.49"
   },
   "readme": "README.mbt.md",
   "repository": "",

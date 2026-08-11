@@ -6,40 +6,7 @@ fn type_def_to_type_desc(td : @mbti_ast.TypeDefinition) -> @syntax.TypeDesc {
     Error(ed) => @syntax.Error(ed)
     ExtensibleEnum(cs) => @syntax.ExtensibleEnum(cs)
     Newtype(ty) => @syntax.Alias(ty)
-    Record(fields~, constr~) => {
-      let fun_decl = match constr {
-        Some(func_sig) => {
-          let (return_type, error_type) = func_sig.return_
-          Some(@syntax.FunDecl::{
-            attrs: func_sig.attrs,
-            decl_params: Some(func_sig.params),
-            doc: @syntax.DocString::empty(),
-            error_type,
-            is_async: func_sig.is_async,
-            loc: func_sig.name.loc,
-            name: @syntax.Binder::{
-              loc: func_sig.name.loc,
-              name: func_sig.name.name,
-            },
-            params_loc: func_sig.name.loc,
-            quantifiers: @list.empty(),
-            return_type: Some(return_type),
-            type_name: match func_sig.type_name {
-              Some(mst) =>
-                Some(@syntax.TypeName::{
-                  is_object: mst.is_object,
-                  loc: mst.loc,
-                  name: @syntax.LongIdent::Ident(name=mst.name),
-                })
-              None => None
-            },
-            vis: @syntax.Visibility::Default,
-          })
-        }
-        None => None
-      }
-      @syntax.Record(fields~, constr_decl=fun_decl)
-    }
+    Record(fields~) => @syntax.Record(fields~)
     TupleStruct(tys) => @syntax.TupleStruct(tys)
     Variant(cs) => @syntax.Variant(cs)
     ExtendEnum(target~, constructors~) => {

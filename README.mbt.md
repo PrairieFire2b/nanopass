@@ -2,10 +2,7 @@
 
 A metaprogramming framework for defining composable, type-safe AST transformations.
 
-Given MoonBit enums annotated with `#nanopass.language`, the library generates:
-
-1. **Unified Tree types** — merged enums combining shared constructors across language extensions
-2. **NanoPass boilerplate** — typed transform/fold structs with traversal logic, ready for user-defined passes
+Given MoonBit enums annotated with `#nanopass.language`, the current library generates unified `Tree` types that merge shared constructors across language extensions.
 
 ## Architecture
 
@@ -18,16 +15,14 @@ Given MoonBit enums annotated with `#nanopass.language`, the library generates:
                   ┌─────────────┐
                   │   language   │  generate a unified syntax tree structure.
                   └──────┬──────┘
-                         │
-                         ▼
-                  ┌─────────────┐
-                  │     pass     │  generate nanopasses, transform/fold methods
-                  └─────────────┘
 ```
 
 - **`meta_parser`** — Parses `#nanopass.language` / `#nanopass.nonterminal` annotations from source files. Resolves language definitions, `extends` chains, and `.mbti` interfaces.
-- **`language`** — Generates the AST scaffolding: unfied syntax trees and language-specific aliases
-- **`pass`** — Generates typed NanoPass infrastructure: transform structs with identity defaults, bottom-up traversal, fold/catamorphism support, and minimal pass stubs from `Diff`s. Also provides runtime composition utilities.
+- **`language`** — Generates the AST scaffolding: unified syntax trees and language-specific aliases
+
+Pass generation is planned future work: typed transform/fold structs, traversal defaults, and pass composition will build on the `meta_parser` and `language` layers once their layout model is stable.
+
+The `poc` package is kept as a fixture/example package for `.mbti`-backed tests. It is not part of the first-round public package split.
 
 ## Quick Start
 
@@ -35,11 +30,14 @@ Given MoonBit enums annotated with `#nanopass.language`, the library generates:
 
 ```mbt nocheck
 ///|
+pub type LambdaVar = String
+
+///|
 #nanopass.language(name="Lambda")
 pub(all) enum Expr {
   Int(Int)
-  Var(String)
-  Lam(String, Expr)
+  LambdaVar(LambdaVar)
+  Lam(LambdaVar, Expr)
   App(Expr, Expr)
 }
 
@@ -49,9 +47,9 @@ enum TypedExpr {
   True
   False
   Int(Int)
-  Var(String)
+  LambdaVar(LambdaVar)
   If(cond~ : TypedExpr, TypedExpr, TypedExpr)
-  Lam(String, Type, TypedExpr)
+  Lam(LambdaVar, Type, TypedExpr)
   App(TypedExpr, TypedExpr)
 }
 ```
@@ -60,7 +58,7 @@ enum TypedExpr {
 
 ```mbt nocheck
 let lang = @language.Language::from_file(
-  name="Lambda", path="poc/lang_def.mbt", mod="YumeXi/nanopass",
+  name="Lambda", path="poc/lang_def.mbt", mod="YumeXi/nanocake",
 )
 let impls = lang.gen()
 @fmt.impls_to_string(impls) // format and write to file
@@ -70,7 +68,7 @@ This produces a unified `Tree[Self_, LamE, TreeExt]` enum, per-language structs 
 
 ### 3. Write passes
 
-**TODO**
+Pass generation is planned future work.
 
 ## Package Reference
 
@@ -96,7 +94,7 @@ This produces a unified `Tree[Self_, LamE, TreeExt]` enum, per-language structs 
 
 ### Why code generation instead of a generic runtime?
 
-The generated `Tree` has per-language-group type parameter lists. A generic runtime library cannot express typed operations over arbitrary tree shapes without higher-kinded types. Code generation produces exactly-typed nanopasses and traversals per language group — the same pattern `language::gen` uses for Tree enums.
+The generated `Tree` has per-language-group type parameter lists. A generic runtime library cannot express typed operations over arbitrary tree shapes without higher-kinded types. Code generation produces exactly-typed syntax scaffolding per language group, and future pass generation will reuse the same layout decisions.
 
 ### How extra type variables work
 
