@@ -41,8 +41,8 @@ test {
     ),
   )
 
-  let impls = @list.from_array(
-    [@syntax.TopTypeDef(tree)] + ext_enums.map(fn(e) { @syntax.TopTypeDef(e) }),
+  let impls = @list.List(
+    [@syntax.TopTypeDef(tree)] + ext_enums.map(fn(e) { TopTypeDef(e) }),
   )
   inspect(
     one_trailing_blank(@fmt.impls_to_string(impls)),
@@ -80,9 +80,7 @@ test "sig_to_impl" {
   )
   let mbti = @meta_parser.resolve_mbti(poc_repr)
   let ext = find_external_types(a, tree, mbti)
-  let impls : @list.List[@syntax.Impl] = @list.from_array(
-    ext.filter_map(sig_to_impl),
-  )
+  let impls : @list.List[@syntax.Impl] = List(ext.filter_map(sig_to_impl))
   let output = one_trailing_blank(@fmt.impls_to_string(impls))
   inspect(
     output,

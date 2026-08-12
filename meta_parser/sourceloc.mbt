@@ -55,7 +55,7 @@ pub fn resolve(loc : SourceLoc) -> SourceLocRepr {
   // The first part contains "path/file.mbt:line:col-line:col"
   let path = if parts.length() >= 1 { parts[0] } else { "<UNKOWN_PATH>" }
 
-  guard path.split_once(":") is Some((file_path, info))
+  guard! path.split_once(":") is Some((file_path, info))
 
   let line_col = info
     .replace(old="-", new=":")

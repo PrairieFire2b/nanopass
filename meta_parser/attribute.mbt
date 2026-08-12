@@ -51,10 +51,10 @@ fn get_extends_from_attr(attr : @attribute.Attribute) -> String? {
 /// Get the simple type name from a Type AST node
 fn type_to_name(ty : @syntax.Type) -> String {
   match ty {
-    @syntax.Name(constr_id~, ..) =>
+    Name(constr_id~, ..) =>
       match constr_id.id {
-        @syntax.Ident(name~) => name
-        @syntax.Dot(id~, ..) => id
+        Ident(name~) => name
+        Dot(id~, ..) => id
       }
     _ => ""
   }
@@ -68,9 +68,9 @@ fn find_nonterminal_types(
   impls
   .filter_map(impl_ => {
     match impl_ {
-      @syntax.TopTypeDef(type_decl) =>
+      TopTypeDef(type_decl) =>
         match type_decl.components {
-          @syntax.Variant(_) =>
+          Variant(_) =>
             if type_decl.attrs.any(fn(attr) {
                 attr.raw is [.. "#nanopass.nonterminal", ..]
               }) {
@@ -97,9 +97,9 @@ fn parse_languages_from_impls(
   impls
   .filter_map(impl_ => {
     match impl_ {
-      @syntax.TopTypeDef(type_decl) =>
+      TopTypeDef(type_decl) =>
         match type_decl.components {
-          @syntax.Variant(constructors) =>
+          Variant(constructors) =>
             type_decl.attrs
             .find(fn(attr) { attr.raw is [.. "#nanopass.language", ..] })
             .map(attr => {
@@ -119,7 +119,7 @@ fn parse_languages_from_impls(
                       None => false
                     }
                   }) {
-                  nonterminals.push(NonTerminal::TypeDecl(nt_td))
+                  nonterminals.push(TypeDecl(nt_td))
                 }
               })
 
@@ -135,7 +135,7 @@ fn parse_languages_from_impls(
                   None => false
                 }
                 if self_ref {
-                  nonterminals.push(NonTerminal::Constructor(c))
+                  nonterminals.push(Constructor(c))
                 } else if nt_ref {
                   ()
                 } else {

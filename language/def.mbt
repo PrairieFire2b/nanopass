@@ -80,7 +80,7 @@ fn find_external_types(
 ) -> Array[@mbti_ast.Sig] {
   let param_names : Array[String] = []
   match tree.components {
-    @syntax.Variant(cs) =>
+    Variant(cs) =>
       cs.each(fn(c) {
         match c.args {
           Some(args) =>
@@ -118,7 +118,7 @@ fn find_external_types(
     !excluded.contains(name)
   })
 
-  let @meta_parser.Mbti(mbti_ast) = mbti
+  let Mbti(mbti_ast) = mbti
   external.filter_map(fn(target) {
     mbti_ast.sigs
     .find(fn(pair) {
