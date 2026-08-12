@@ -157,8 +157,6 @@ test "define and generate a language" {
       #|  )
       #|}
       #|
-
-
     ),
   )
 }

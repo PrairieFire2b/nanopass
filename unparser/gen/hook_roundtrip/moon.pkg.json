@@ -1,8 +1,0 @@
-{
-    "import": [
-        "YumeXi/nanocake/unparser/sexp"
-    ],
-    "wbtest-import": [
-        "moonbitlang/core/test"
-    ]
-}

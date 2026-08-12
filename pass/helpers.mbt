@@ -272,22 +272,22 @@ fn collect_descriptors(
     match tree_info.ext_enum {
       Some(ee) =>
         ee.constrs.each(fn(c) {
-        let params = build_params(
-          c,
-          tycon,
-          is_base,
-          ext_enum_name,
-          tree_info.tree_type_params,
-          loc,
-        )
-        descs.push({
-          name: c.name.name,
-          field_name: field_name(c.name.name),
-          params,
-          is_ext: true,
-          ext_enum_name: Some(ee.name),
+          let params = build_params(
+            c,
+            tycon,
+            is_base,
+            ext_enum_name,
+            tree_info.tree_type_params,
+            loc,
+          )
+          descs.push({
+            name: c.name.name,
+            field_name: field_name(c.name.name),
+            params,
+            is_ext: true,
+            ext_enum_name: Some(ee.name),
+          })
         })
-      })
       None => ()
     }
   }
@@ -359,4 +359,3 @@ fn bare_constr_call(
     )
   }
 }
-

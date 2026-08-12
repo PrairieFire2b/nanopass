@@ -14,9 +14,7 @@
 /// scope-sensitive handlers (Lam/Let) can extend the environment BEFORE running
 /// the child. Generated code lives in the user's package, so `PassM` and its
 /// combinators are referenced through `@pass`.
-pub fn gen_rewrite(
-  lang : @language.Language,
-) -> @list.List[@syntax.Impl] raise {
+pub fn gen_rewrite(lang : @language.Language) -> @list.List[@syntax.Impl] raise {
   let tree_info = tree_info_from_layout(lang.layout())
   let loc = lang.group[0].type_decl.loc
   let ext_enum_name = match tree_info.ext_enum {
@@ -27,7 +25,9 @@ pub fn gen_rewrite(
   lang.group.eachi(fn(i, nl) {
     let tycon = nl.type_decl.tycon
     let is_base = i == 0
-    let descs = collect_descriptors(tree_info, tycon, is_base, ext_enum_name, loc)
+    let descs = collect_descriptors(
+      tree_info, tycon, is_base, ext_enum_name, loc,
+    )
     let struct_name = tycon + "RewriteAlg"
     impls.push(gen_rewrite_struct(struct_name, tycon, descs, loc))
     impls.push(gen_rewrite_identity(struct_name, tycon, descs, loc))
@@ -90,10 +90,7 @@ fn gen_rewrite_struct(
   })
   let type_decl : @syntax.TypeDecl = {
     attrs: @list.empty(),
-    components: @syntax.Record(
-      fields=@list.List(fields[:]),
-      constr_decl=None,
-    ),
+    components: @syntax.Record(fields=@list.List(fields[:])),
     deriving: @list.empty(),
     doc: @syntax.DocString::empty(),
     is_declare: false,
@@ -119,9 +116,7 @@ fn gen_rewrite_identity(
   loc : @basic.Location,
 ) -> @syntax.Impl {
   let fields : Array[@syntax.FieldDef] = []
-  descs.each(fn(d) {
-    fields.push(rewrite_identity_field(d, tycon, loc))
-  })
+  descs.each(fn(d) { fields.push(rewrite_identity_field(d, tycon, loc)) })
   let record_expr : @syntax.Expr = @syntax.Record(
     type_name=None,
     fields=@list.List(fields[:]),
@@ -253,7 +248,10 @@ fn passm_map_last(
 ) -> @syntax.Expr {
   let lambda : @syntax.Func = {
     parameters: @list.List([
-      @syntax.Parameter::Positional(binder={ name: p.name + "_v", loc }, ty=None),
+      @syntax.Parameter::Positional(
+        binder={ name: p.name + "_v", loc },
+        ty=None,
+      ),
     ]),
     params_loc: loc,
     body: rebuilt,
@@ -286,7 +284,10 @@ fn passm_flat_map(
 ) -> @syntax.Expr {
   let lambda : @syntax.Func = {
     parameters: @list.List([
-      @syntax.Parameter::Positional(binder={ name: p.name + "_v", loc }, ty=None),
+      @syntax.Parameter::Positional(
+        binder={ name: p.name + "_v", loc },
+        ty=None,
+      ),
     ]),
     params_loc: loc,
     body: cont,
@@ -337,7 +338,6 @@ fn smart_ctor_call(
     loc~,
   )
 }
-
 
 ///|
 fn gen_rewrite_driver(
@@ -397,7 +397,10 @@ fn gen_rewrite_driver(
           binder={ name: "self", loc },
           ty=Some(type_ref(tycon, loc)),
         ),
-        @syntax.Parameter::Positional(binder={ name: "alg", loc }, ty=Some(alg_ty)),
+        @syntax.Parameter::Positional(
+          binder={ name: "alg", loc },
+          ty=Some(alg_ty),
+        ),
       ]),
     ),
     params_loc: loc,

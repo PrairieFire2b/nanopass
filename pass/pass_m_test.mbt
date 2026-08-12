@@ -171,8 +171,7 @@ fn validate(e : Expr) -> PassM[Map[Var, Unit], Unit, String, String, Unit] {
       @pass.emit("bind \{x}").flat_map(fn(_) {
         @pass.local_env(fn(env) { add_var(env, x) }, validate(body))
       })
-    App(f, a) =>
-      validate(f).flat_map(fn(_) { validate(a) })
+    App(f, a) => validate(f).flat_map(fn(_) { validate(a) })
     Let(x, rhs, body) =>
       validate(rhs).flat_map(fn(_) {
         @pass.emit("bind \{x}").flat_map(fn(_) {
@@ -240,10 +239,7 @@ test "validate: nested shadowing — inner x hides outer x" {
   let m : PassM[Map[Var, Unit], Unit, String, String, Unit] = validate(input)
   match m.exec_env({}) {
     Ok((_, _, logs)) =>
-      debug_inspect(
-        logs,
-        content="[\"bind x\", \"bind x\", \"lookup x\"]",
-      )
+      debug_inspect(logs, content="[\"bind x\", \"bind x\", \"lookup x\"]")
     _ => panic()
   }
 }

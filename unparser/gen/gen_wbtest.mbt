@@ -211,7 +211,6 @@ test "generate lambda codec source" {
       #|}
       #|
       #|
-
     ),
   )
 }

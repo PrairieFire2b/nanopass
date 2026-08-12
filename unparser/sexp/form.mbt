@@ -248,4 +248,3 @@ pub fn form_doc(
 ) -> SexpDoc raise SexpError {
   SexpForm::compile(pattern, path~).to_doc(fields)
 }
-

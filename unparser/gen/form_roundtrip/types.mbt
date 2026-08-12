@@ -8,10 +8,10 @@ enum Tree[Self_] {
   Var(String)
   Lam(String, Self_)
   App(Self_, Self_)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
-struct FExpr(Tree[FExpr]) derive(Eq, Show)
+struct FExpr(Tree[FExpr]) derive(Eq, Debug)
 
 ///|
-struct FExpr2(Tree[FExpr2]) derive(Eq, Show)
+struct FExpr2(Tree[FExpr2]) derive(Eq, Debug)

@@ -38,14 +38,16 @@ fn form_pattern_string(
 /// name to the source field index.
 fn field_index_resolver(c : @syntax.ConstrDecl) -> (String) -> Int? {
   let by_label : Map[String, Int] = {}
-  constr_args(c).eachi((i, p) => match p.label {
-    Some(label) => by_label[label.name] = i
-    None => ()
+  constr_args(c).eachi((i, p) => {
+    match p.label {
+      Some(label) => by_label[label.name] = i
+      None => ()
+    }
   })
   fn(name) {
     match by_label.get(name) {
       Some(i) => Some(i)
-      None => @string.parse_int(name) |> Some catch { _ => None }
+      None => (@string.parse_int(name) |> Some) catch { _ => None }
     }
   }
 }

@@ -3,6 +3,7 @@ package "YumeXi/nanocake/unparser/gen/hook_roundtrip"
 
 import {
   "YumeXi/nanocake/unparser/sexp",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -13,18 +14,17 @@ pub fn unparse_sym(HExpr) -> @sexp.SexpDoc raise @sexp.SexpError
 // Errors
 
 // Types and methods
-type HExpr derive(Eq, Show)
+type HExpr derive(Eq, @debug.Debug)
 pub fn HExpr::from_sexp(@sexp.Sexp) -> Self raise @sexp.SexpError
 pub fn HExpr::from_sexp_without_hooks(@sexp.Sexp) -> Self raise @sexp.SexpError
 pub fn HExpr::parse_sexp(StringView) -> Self raise @sexp.SexpError
 pub fn HExpr::to_sexp_doc(Self) -> @sexp.SexpDoc raise @sexp.SexpError
 pub fn HExpr::unparse_sexp(Self, width? : Int) -> String raise @sexp.SexpError
 
-type HExpr2 derive(Eq, Show)
+type HExpr2 derive(Eq, @debug.Debug)
 
-type Tree[Self_] derive(Eq, Show)
+type Tree[Self_] derive(Eq, @debug.Debug)
 
 // Type aliases
 
 // Traits
-

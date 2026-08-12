@@ -18,4 +18,3 @@ pub fn gen_source(@language.Language) -> String raise
 // Type aliases
 
 // Traits
-

@@ -258,7 +258,11 @@ fn constructor_layouts(
             target: @layout.TreeTarget,
             field_order: identity_field_order(constr),
             tree_extra_type: None,
-            surface_forms: surface_forms_for(langs, base_tycon, constr.name.name),
+            surface_forms: surface_forms_for(
+              langs,
+              base_tycon,
+              constr.name.name,
+            ),
             hooks: hooks_for(langs, base_tycon, constr.name.name),
           })
         }
@@ -287,7 +291,11 @@ fn constructor_layouts(
                   tree_extra_type: shared_extra_type(
                     base_constr, constr, base_tycon, tycon,
                   ),
-                  surface_forms: surface_forms_for(langs, tycon, constr.name.name),
+                  surface_forms: surface_forms_for(
+                    langs,
+                    tycon,
+                    constr.name.name,
+                  ),
                   hooks: hooks_for(langs, tycon, constr.name.name),
                 })
               }

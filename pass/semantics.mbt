@@ -67,10 +67,7 @@ fn gen_semantics_struct(
   })
   let struct_type_decl : @syntax.TypeDecl = {
     attrs: @list.empty(),
-    components: @syntax.Record(
-      fields=@list.from_array(fields[:]),
-      constr_decl=None,
-    ),
+    components: @syntax.Record(fields=@list.from_array(fields[:])),
     deriving: @list.empty(),
     doc: @syntax.DocString::empty(),
     is_declare: false,

@@ -7,10 +7,10 @@ enum Tree[Self_] {
   Num(Int)
   Sym(String)
   App(Self_, Self_)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
-struct HExpr(Tree[HExpr]) derive(Eq, Show)
+struct HExpr(Tree[HExpr]) derive(Eq, Debug)
 
 ///|
-struct HExpr2(Tree[HExpr2]) derive(Eq, Show)
+struct HExpr2(Tree[HExpr2]) derive(Eq, Debug)

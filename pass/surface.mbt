@@ -10,9 +10,7 @@
 ///     `Expr(Ext(If(c, t, e)))` internally.
 ///   - `Expr::view() -> ExprView`: flattens the wrapped `Tree`/`Ext` into a
 ///     single flat enum so pass authors can `match` without nesting.
-pub fn gen_surface(
-  lang : @language.Language,
-) -> @list.List[@syntax.Impl] raise {
+pub fn gen_surface(lang : @language.Language) -> @list.List[@syntax.Impl] raise {
   let tree_info = tree_info_from_layout(lang.layout())
   let loc = lang.group[0].type_decl.loc
   let impls : Array[@syntax.Impl] = []
@@ -24,11 +22,11 @@ pub fn gen_surface(
   lang.group.eachi(fn(i, nl) {
     let tycon = nl.type_decl.tycon
     let is_base = i == 0
-    let descs = collect_descriptors(tree_info, tycon, is_base, ext_enum_name, loc)
+    let descs = collect_descriptors(
+      tree_info, tycon, is_base, ext_enum_name, loc,
+    )
     // Smart constructors
-    descs.each(fn(d) {
-      impls.push(gen_smart_constructor(tycon, d, loc))
-    })
+    descs.each(fn(d) { impls.push(gen_smart_constructor(tycon, d, loc)) })
     // View enum + accessor
     impls.push(gen_view_enum(tycon, descs, loc))
     impls.push(gen_view_impl(tycon, descs, has_ext_constr, loc))
@@ -100,11 +98,7 @@ fn gen_smart_constructor(
   let params : Array[@syntax.Parameter] = []
   let arg_exprs : Array[@syntax.Expr] = []
   d.params.each(fn(p) {
-    let ty = if p.is_self_ref {
-      type_ref(tycon, loc)
-    } else {
-      p.field_ty
-    }
+    let ty = if p.is_self_ref { type_ref(tycon, loc) } else { p.field_ty }
     params.push(
       @syntax.Parameter::Positional(binder={ name: p.name, loc }, ty=Some(ty)),
     )
@@ -164,11 +158,7 @@ fn gen_view_enum(
   descs.each(fn(d) {
     let args : Array[@syntax.ConstrParam] = []
     d.params.each(fn(p) {
-      let ty = if p.is_self_ref {
-        type_ref(tycon, loc)
-      } else {
-        p.field_ty
-      }
+      let ty = if p.is_self_ref { type_ref(tycon, loc) } else { p.field_ty }
       args.push({ label: None, mut_: false, ty })
     })
     variants.push({

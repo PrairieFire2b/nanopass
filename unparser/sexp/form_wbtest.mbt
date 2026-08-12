@@ -14,7 +14,8 @@ test "form pattern helpers" {
       "(lambda ($0 : $1) $2)",
       3,
       path="Lam",
-    ) is Some(_),
+    )
+    is Some(_),
   )
 
   let lam_doc = lam_form.to_doc([

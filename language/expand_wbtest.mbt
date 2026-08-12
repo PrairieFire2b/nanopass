@@ -24,7 +24,6 @@ test "expand applies #nano.remove and inherits undeclared constructors" {
     }),
     content=(
       #|[RemoveBase -> [Lit:shared, Add:shared, Neg:shared], RemoveChild -> [Lit:shared, Add:shared, Mul:own]]
-
     ),
   )
 }
@@ -64,7 +63,6 @@ test "expand records entry inheritance and constructor origins" {
     group.languages.map(l => "\{l.name}: entry=\{entry_tag(l.entry)}"),
     content=(
       #|[Lambda: entry=Expr<-default, SimplyTypedLambda: entry=Expr<-inherited(Lambda)]
-
     ),
   )
   inspect(
@@ -76,7 +74,6 @@ test "expand records entry inheritance and constructor origins" {
     }),
     content=(
       #|[Lambda -> [Int:shared, LambdaVar:shared, Lam:shared, App:shared], SimplyTypedLambda -> [True:own, False:own, Int:shared, LambdaVar:shared, If:own, Lam:shared, App:shared]]
-
     ),
   )
 }

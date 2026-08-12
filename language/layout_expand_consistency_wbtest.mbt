@@ -37,10 +37,9 @@ test "layout target kind agrees with expand origin" {
     mod="YumeXi/nanocake",
   )
   let layout = lang.layout()
-  let group = expand_language_group(
-    langs,
-    extra_known_types=["Type", "LambdaVar"],
-  )
+  let group = expand_language_group(langs, extra_known_types=[
+    "Type", "LambdaVar",
+  ])
 
   // Build (tycon.constr -> origin) from expand, restricted to language wrappers.
   let origin_of : Map[String, ConstructorOrigin] = {}

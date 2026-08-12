@@ -787,10 +787,9 @@ pub fn NanoLangDef::with_constructors(
     ..self.type_decl,
     components: @syntax.Variant(@list.List(constrs[:])),
   }
-  let production_defs = constrs.map(c => production_def_from_constr(
-    self.type_decl.tycon,
-    c,
-  ))
+  let production_defs = constrs.map(c => {
+    production_def_from_constr(self.type_decl.tycon, c)
+  })
   { ..self, type_decl: td, production_defs }
 }
 
@@ -811,7 +810,7 @@ pub fn validate_language_defs(langs : Array[NanoLangDef]) -> Unit raise {
 /// re-implementing entry inheritance.
 pub fn normalize_language_defs(
   langs : Array[NanoLangDef],
-  extra_known_types~ : Array[String] = [],
+  extra_known_types? : Array[String] = [],
 ) -> Array[NanoLangDef] raise {
   normalize_language_defs_with_known_types(langs, extra_known_types)
 }

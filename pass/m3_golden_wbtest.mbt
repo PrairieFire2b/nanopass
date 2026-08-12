@@ -20,10 +20,13 @@ struct MExprRewriteAlg[Env, St, Log, Err] {
     Err,
     MExpr,
   ]
-  app_ : (
-    PassM[Env, St, Log, Err, MExpr],
-    PassM[Env, St, Log, Err, MExpr],
-  ) -> PassM[Env, St, Log, Err, MExpr]
+  app_ : (PassM[Env, St, Log, Err, MExpr], PassM[Env, St, Log, Err, MExpr]) -> PassM[
+    Env,
+    St,
+    Log,
+    Err,
+    MExpr,
+  ]
 }
 
 ///|
@@ -37,9 +40,7 @@ fn[Env, St, Log, Err] MExprRewriteAlg::identity() -> MExprRewriteAlg[
   {
     int_: fn(n) { PassM::pure(MExpr::int(n)) },
     var_: fn(x) { PassM::pure(MExpr::var(x)) },
-    lam_: fn(x, body_m, _e) {
-      body_m.map(fn(body) { MExpr::lam(x, body) })
-    },
+    lam_: fn(x, body_m, _e) { body_m.map(fn(body) { MExpr::lam(x, body) }) },
     app_: fn(f_m, a_m) {
       f_m.flat_map(fn(f) { a_m.map(fn(a) { MExpr::app(f, a) }) })
     },
@@ -97,11 +98,14 @@ test "M3 golden: alpha-rename overrides only var_ and lam_" {
       get_st().flat_map(fn(n : Int) {
         put_st(n + 1).flat_map(fn(_) {
           let x2 = "\{x}_\{n}"
-          local_env(fn(env : Map[MVar, MVar]) {
-            let e2 = env.copy()
-            e2.set(x, x2)
-            e2
-          }, body_m).map(fn(body) { MExpr::lam(x2, body) })
+          local_env(
+            fn(env : Map[MVar, MVar]) {
+              let e2 = env.copy()
+              e2.set(x, x2)
+              e2
+            },
+            body_m,
+          ).map(fn(body) { MExpr::lam(x2, body) })
         })
       })
     },
@@ -113,7 +117,6 @@ test "M3 golden: alpha-rename overrides only var_ and lam_" {
         out,
         content=(
           #|MExpr(Lam("x_0", MExpr(Lam("x_1", MExpr(LambdaVar("x_1")), ())), ()))
-
         ),
       )
       debug_inspect(st, content="2")
@@ -194,7 +197,7 @@ fn[Env, St, Log, Err] MTypedExpr::rewrite_m(
       match te {
         True => (alg.true_)()
         False => (alg.false_)()
-        If(cond=cond, a1, a2) =>
+        If(cond~, a1, a2) =>
           (alg.if_)(cond.rewrite_m(alg), a1.rewrite_m(alg), a2.rewrite_m(alg))
       }
     _ => abort("unhandled")
@@ -230,7 +233,12 @@ test "M3 golden: derived-language rewrite_m expands ext constructors" {
 fn[Env, St, Log, Err] mtyped_stub() -> MTypedRewriteAlg[Env, St, Log, Err] {
   let base = MTypedRewriteAlg::identity()
   // Overridable: true_/false_/if_ are the "added" ext constructors.
-  MTypedRewriteAlg::{ ..base, true_: base.true_, false_: base.false_, if_: base.if_ }
+  MTypedRewriteAlg::{
+    ..base,
+    true_: base.true_,
+    false_: base.false_,
+    if_: base.if_,
+  }
 }
 
 ///|
@@ -252,4 +260,3 @@ test "M4 golden: stub with identity placeholders round-trips" {
     Err(_) => panic()
   }
 }
-

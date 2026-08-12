@@ -51,15 +51,24 @@ underlying `Tree` / `Ext`:
 
 ```mbt nocheck
 // Smart constructors: Wrapper(bare-constructor(...))
-fn Expr::int(arg0 : Int) -> Expr { Expr(Int(arg0)) }
+///|
+fn Expr::int(arg0 : Int) -> Expr {
+  Expr(Int(arg0))
+}
+
+///|
 fn Expr::lam(arg0 : LambdaVar, arg1 : Expr, arg2 : Unit) -> Expr {
   Expr(Lam(arg0, arg1, arg2))
 }
+
+///|
 fn Expr::if_(arg0 : Expr, arg1 : Expr, arg2 : Expr) -> Expr {
-  Expr(Ext(If(arg0, arg1, arg2)))   // ext constructors lifted flat
+  Expr(Ext(If(arg0, arg1, arg2))) // ext constructors lifted flat
 }
 
 // Flat view enum + view()
+
+///|
 enum ExprView {
   VInt(Int)
   VLam(LambdaVar, Expr, Unit)
@@ -67,7 +76,11 @@ enum ExprView {
   VIf(Expr, Expr, Expr)
   // ...
 }
-fn Expr::view(self : Expr) -> ExprView { ... }
+
+///|
+fn Expr::view(self : Expr) -> ExprView {
+  ...
+}
 ```
 
 ## Pure fold / transform (`gen_semantics`)
@@ -177,6 +190,7 @@ fn[Env, St, Log, Err] simplify() -> TypedExprRewriteAlg[Env, St, Log, Err] {
 `PassM[Env, St, Log, Err, A]` = Reader + State + Writer + Result:
 
 ```mbt nocheck
+///|
 pub(all) struct PassM[Env, St, Log, Err, A] {
   _run : (Env, St) -> Result[(A, St, Array[Log]), Err]
 }
@@ -216,17 +230,29 @@ Effectful combinators (over `(In) -> PassM[...]`):
 | `traced` | `(Log, PassM[...,A]) → PassM[...,A]` | Emit a log entry before running |
 
 ```mbt nocheck
+///|
 let step = fn(e : Expr) { e.rewrite_m(rename) }
-let out = pipeline_m([step, when_m(needs_fold, fold_step)], expr)
-            .exec(env0, 0)
+
+///|
+let out = pipeline_m([step, when_m(needs_fold, fold_step)], expr).exec(env0, 0)
 ```
 
 ## Runtime types
 
 ```mbt nocheck
-pub enum PassDirection { BottomUp; TopDown }
-pub enum ExtStrategy { Keep; Fail }
+///|
+pub enum PassDirection {
+  BottomUp
+  TopDown
+}
 
+///|
+pub enum ExtStrategy {
+  Keep
+  Fail
+}
+
+///|
 pub struct PassMeta {
   name : String
   from_lang : String
@@ -234,6 +260,7 @@ pub struct PassMeta {
   direction : PassDirection
 }
 
+///|
 pub struct NamedPass[In, Out] {
   meta : PassMeta
   run : (In) -> Out

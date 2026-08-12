@@ -120,7 +120,6 @@ test "M1 golden: labelled ext field destructure and rebuild" {
   }
 }
 
-
 ///|
 test "M1 golden: smart constructors build wrapped Tree values" {
   let e = MExpr::app(MExpr::lam("x", MExpr::var("x")), MExpr::int(5))
@@ -143,7 +142,6 @@ test "M1 golden: ext smart constructors build Ext-wrapped values" {
     e,
     content=(
       #|MTypedExpr(Ext(If(cond=MTypedExpr(Ext(True)), MTypedExpr(Int(1)), MTypedExpr(Int(0)))))
-
     ),
   )
 }
@@ -222,4 +220,3 @@ test "M1 golden: cata folds over wrapped Tree via let-destructure" {
   let e = MExpr::app(MExpr::lam("x", MExpr::var("x")), MExpr::int(5))
   inspect(e.cata(count_leaves), content="2")
 }
-

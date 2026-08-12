@@ -67,8 +67,7 @@ fn[R] MTypedExpr::cata(self : MTypedExpr, s : MTypedSem[R]) -> R {
       match te {
         True => (s.true_)()
         False => (s.false_)()
-        If(cond=cond, a1, a2) =>
-          (s.if_)(cond.cata(s), a1.cata(s), a2.cata(s))
+        If(cond~, a1, a2) => (s.if_)(cond.cata(s), a1.cata(s), a2.cata(s))
       }
   }
 }

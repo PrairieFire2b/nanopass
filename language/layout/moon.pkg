@@ -1,0 +1,6 @@
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/parser/syntax",
+  "moonbitlang/parser/mbti_ast",
+  "YumeXi/nanocake/meta_parser",
+}

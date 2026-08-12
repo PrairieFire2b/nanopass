@@ -56,4 +56,3 @@ pub fn Language::layout(Self) -> @layout.GeneratedLanguageLayout raise
 // Type aliases
 
 // Traits
-

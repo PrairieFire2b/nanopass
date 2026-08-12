@@ -1,0 +1,13 @@
+import {
+  "moonbitlang/core/json",
+  "moonbitlang/core/list",
+  "moonbitlang/core/string",
+  "moonbitlang/core/debug",
+  "moonbitlang/x/path",
+  "moonbitlang/x/fs",
+  "moonbitlang/parser",
+  "moonbitlang/parser/mbti_parser",
+  "moonbitlang/parser/mbti_ast",
+  "moonbitlang/parser/syntax",
+  "moonbitlang/parser/attribute",
+}

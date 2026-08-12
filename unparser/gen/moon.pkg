@@ -1,0 +1,19 @@
+import {
+  "moonbitlang/core/list",
+  "moonbitlang/core/string",
+  "moonbitlang/lexer/basic",
+  "moonbitlang/parser",
+  "moonbitlang/parser/syntax",
+  "YumeXi/nanocake/meta_parser",
+  "YumeXi/nanocake/language",
+  "YumeXi/nanocake/language/layout",
+}
+
+import {
+  "moonbitlang/parser/fmt",
+} for "test"
+
+import {
+  "moonbitlang/parser/fmt",
+  "YumeXi/nanocake/meta_parser",
+} for "wbtest"

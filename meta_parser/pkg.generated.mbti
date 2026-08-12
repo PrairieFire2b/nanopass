@@ -177,4 +177,3 @@ pub impl @debug.Debug for Terminal
 // Type aliases
 
 // Traits
-

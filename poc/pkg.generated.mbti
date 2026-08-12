@@ -38,4 +38,3 @@ type TypedExpr derive(@debug.Debug)
 pub type LambdaVar = String
 
 // Traits
-

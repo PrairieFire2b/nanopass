@@ -67,11 +67,5 @@ pub fn[In, Env, St, Log, Err] when_m(
   cond : (In) -> Bool,
   step : (In) -> PassM[Env, St, Log, Err, In],
 ) -> (In) -> PassM[Env, St, Log, Err, In] {
-  fn(input) {
-    if cond(input) {
-      step(input)
-    } else {
-      PassM::pure(input)
-    }
-  }
+  fn(input) { if cond(input) { step(input) } else { PassM::pure(input) } }
 }

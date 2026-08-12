@@ -16,16 +16,17 @@ test "probe hooks reach layout" {
       Some(h) => h
       None => "-"
     }
-    lines.push(
-      "\{cl.source_tycon}.\{cl.constr_name}: pb=\{pb} ub=\{ub}",
-    )
+    lines.push("\{cl.source_tycon}.\{cl.constr_name}: pb=\{pb} ub=\{ub}")
   }
-  inspect(lines.join("\n"), content=(
-    #|HExpr.Num: pb=- ub=-
-    #|HExpr.Sym: pb=parse_sym ub=unparse_sym
-    #|HExpr.App: pb=- ub=-
-    #|HExpr2.Num: pb=- ub=-
-    #|HExpr2.Sym: pb=- ub=-
-    #|HExpr2.App: pb=- ub=-
-  ))
+  inspect(
+    lines.join("\n"),
+    content=(
+      #|HExpr.Num: pb=- ub=-
+      #|HExpr.Sym: pb=parse_sym ub=unparse_sym
+      #|HExpr.App: pb=- ub=-
+      #|HExpr2.Num: pb=- ub=-
+      #|HExpr2.Sym: pb=- ub=-
+      #|HExpr2.App: pb=- ub=-
+    ),
+  )
 }

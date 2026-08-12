@@ -12,20 +12,23 @@ enum Tree[Self_, LamE, TreeExt] {
   Lam(LambdaVar, Self_, LamE)
   App(Self_, Self_)
   Ext(TreeExt)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
-struct Expr(Tree[Expr, Unit, Unit]) derive(Eq, Show)
+struct Expr(Tree[Expr, Unit, Unit]) derive(Eq, Debug)
 
 ///|
-struct TypedExpr(Tree[TypedExpr, Type, TypedExprExt[TypedExpr]]) derive(Eq, Show)
+struct TypedExpr(Tree[TypedExpr, Type, TypedExprExt[TypedExpr]]) derive (
+  Eq,
+  Debug,
+)
 
 ///|
 enum TypedExprExt[Self_] {
   True
   False
   If(cond~ : Self_, Self_, Self_)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub typealias String as LambdaVar
@@ -35,4 +38,4 @@ pub enum Type {
   Bool
   Int
   Arrow(Type, Type)
-} derive(Eq, Show)
+} derive(Eq, Debug)

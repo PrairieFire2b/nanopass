@@ -16,4 +16,3 @@ pub fn parse_unparse_entry_impls(Array[@meta_parser.NanoLangDef]) -> Array[@synt
 // Type aliases
 
 // Traits
-

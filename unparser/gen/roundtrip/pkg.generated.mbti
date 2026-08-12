@@ -3,6 +3,7 @@ package "YumeXi/nanocake/unparser/gen/roundtrip"
 
 import {
   "YumeXi/nanocake/unparser/sexp",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -10,34 +11,33 @@ import {
 // Errors
 
 // Types and methods
-type Expr derive(Eq, Show)
+type Expr derive(Eq, @debug.Debug)
 pub fn Expr::from_sexp(@sexp.Sexp) -> Self raise @sexp.SexpError
 pub fn Expr::parse_sexp(StringView) -> Self raise @sexp.SexpError
 pub fn Expr::to_sexp_doc(Self) -> @sexp.SexpDoc raise @sexp.SexpError
 pub fn Expr::unparse_sexp(Self, width? : Int) -> String raise @sexp.SexpError
 
-type Tree[Self_, LamE, TreeExt] derive(Eq, Show)
+type Tree[Self_, LamE, TreeExt] derive(Eq, @debug.Debug)
 
 pub enum Type {
   Bool
   Int
   Arrow(Type, Type)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn Type::from_sexp(@sexp.Sexp) -> Self raise @sexp.SexpError
 pub fn Type::parse_sexp(StringView) -> Self raise @sexp.SexpError
 pub fn Type::to_sexp_doc(Self) -> @sexp.SexpDoc raise @sexp.SexpError
 pub fn Type::unparse_sexp(Self, width? : Int) -> String raise @sexp.SexpError
 
-type TypedExpr derive(Eq, Show)
+type TypedExpr derive(Eq, @debug.Debug)
 pub fn TypedExpr::from_sexp(@sexp.Sexp) -> Self raise @sexp.SexpError
 pub fn TypedExpr::parse_sexp(StringView) -> Self raise @sexp.SexpError
 pub fn TypedExpr::to_sexp_doc(Self) -> @sexp.SexpDoc raise @sexp.SexpError
 pub fn TypedExpr::unparse_sexp(Self, width? : Int) -> String raise @sexp.SexpError
 
-type TypedExprExt[Self_] derive(Eq, Show)
+type TypedExprExt[Self_] derive(Eq, @debug.Debug)
 
 // Type aliases
 pub type LambdaVar = String
 
 // Traits
-

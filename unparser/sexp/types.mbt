@@ -25,12 +25,12 @@ pub(all) suberror SexpError {
 } derive(Debug)
 
 ///|
-pub impl Show for SexpError with output(self, logger) {
+pub impl Show for SexpError with fn output(self, logger) {
   logger.write_string(@debug.to_string(self))
 }
 
 ///|
-pub using @error { type Cause }
+pub using @error {type Cause}
 
 ///|
 #callsite(autofill(loc))
@@ -142,4 +142,3 @@ pub fn int_from_atom(sexp : Sexp, path~ : String) -> Int raise SexpError {
 pub fn string_from_atom(sexp : Sexp, path~ : String) -> String raise SexpError {
   expect_atom(sexp, path~)
 }
-

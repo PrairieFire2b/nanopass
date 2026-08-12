@@ -1,0 +1,10 @@
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/string",
+  "moonbit-community/prettyprinter",
+  "YumeXi/error",
+}
+
+import {
+  "moonbitlang/core/test",
+} for "wbtest"

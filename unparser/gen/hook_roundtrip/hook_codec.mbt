@@ -4,13 +4,15 @@
 
 ///|
 pub fn HExpr::from_sexp(sexp : @sexp.Sexp) -> HExpr raise @sexp.SexpError {
-  match (parse_sym(sexp) catch {
-    _ => @sexp.hook_error(
-      path="HExpr.Sym",
-      hook="parse_sym",
-      message="parse hook failed",
-    )
-  }) {
+  match
+    (parse_sym(sexp) catch {
+      _ =>
+        @sexp.hook_error(
+          path="HExpr.Sym",
+          hook="parse_sym",
+          message="parse hook failed",
+        )
+    }) {
     Some(value) => return value
     None => ()
   }
@@ -49,7 +51,9 @@ pub fn HExpr::from_sexp_without_hooks(
       match head {
         "App" => {
           @sexp.expect_arity(items, 3, path="HExpr.App")
-          HExpr(Tree::App(HExpr::from_sexp(items[1]), HExpr::from_sexp(items[2])))
+          HExpr(
+            Tree::App(HExpr::from_sexp(items[1]), HExpr::from_sexp(items[2])),
+          )
         }
         _ => @sexp.unknown_head(head, path="HExpr")
       }

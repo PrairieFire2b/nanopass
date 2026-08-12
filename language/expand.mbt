@@ -49,9 +49,7 @@ pub(all) struct ExpandedLanguageGroup {
 
 ///|
 /// The constructor names declared directly in a language's enum body.
-fn declared_constr_names(
-  lang : @meta_parser.NanoLangDef,
-) -> Array[String] {
+fn declared_constr_names(lang : @meta_parser.NanoLangDef) -> Array[String] {
   let names : Array[String] = []
   match lang.type_decl.components {
     @syntax.Variant(cs) => cs.each(c => names.push(c.name.name))
@@ -126,7 +124,9 @@ fn expand_base(lang : @meta_parser.NanoLangDef) -> ExpandedLanguage raise {
     None => raise NoLanguageFound
   }
   let constructors = declared_constrs(lang).map(c => {
-    { owner: lang.type_decl.tycon, constr: c, origin: Shared }
+    owner: lang.type_decl.tycon,
+    constr: c,
+    origin: Shared,
   })
   { name: lang.name, extends: lang.extends, entry, constructors, def: lang }
 }
@@ -181,7 +181,7 @@ fn expand_derived(
 /// drops inherited constructors and same-name declarations override.
 pub fn expand_language_group(
   raw : Array[@meta_parser.NanoLangDef],
-  extra_known_types~ : Array[String] = [],
+  extra_known_types? : Array[String] = [],
 ) -> ExpandedLanguageGroup raise {
   if raw.length() == 0 {
     raise NoLanguageFound
