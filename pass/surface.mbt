@@ -31,7 +31,7 @@ pub fn gen_surface(lang : @language.Language) -> @list.List[@syntax.Impl] raise 
     impls.push(gen_view_enum(tycon, descs, loc))
     impls.push(gen_view_impl(tycon, descs, has_ext_constr, loc))
   })
-  @list.List(impls[:])
+  List(impls[:])
 }
 
 ///|
@@ -42,8 +42,7 @@ fn smart_ctor_name(constr_name : String) -> String {
   let lowered = if constr_name.length() == 0 {
     constr_name
   } else {
-    constr_name.substring(start=0, end=1).to_lower() +
-    constr_name.substring(start=1)
+    constr_name[:1].to_owned().to_lower() + constr_name[1:].to_owned()
   }
   if is_keyword(lowered) {
     lowered + "_"
@@ -99,9 +98,7 @@ fn gen_smart_constructor(
   let arg_exprs : Array[@syntax.Expr] = []
   d.params.each(fn(p) {
     let ty = if p.is_self_ref { type_ref(tycon, loc) } else { p.field_ty }
-    params.push(
-      @syntax.Parameter::Positional(binder={ name: p.name, loc }, ty=Some(ty)),
-    )
+    params.push(Positional(binder={ name: p.name, loc }, ty=Some(ty)))
     arg_exprs.push(var_expr(p.name, loc))
   })
 
@@ -115,29 +112,20 @@ fn gen_smart_constructor(
 
   let ret_ty = type_ref(tycon, loc)
   let fun_decl : @syntax.FunDecl = {
-    type_name: Some({
-      is_object: false,
-      loc,
-      name: @syntax.LongIdent::Ident(name=tycon),
-    }),
+    type_name: Some({ is_object: false, loc, name: Ident(name=tycon) }),
     name: { name: smart_ctor_name(d.name), loc },
     is_async: None,
-    decl_params: Some(@list.List(params[:])),
+    decl_params: Some(List(params[:])),
     params_loc: loc,
     quantifiers: @list.empty(),
     return_type: Some(ret_ty),
-    error_type: @syntax.ErrorType::NoErrorType,
-    vis: @syntax.Visibility::Default,
+    error_type: NoErrorType,
+    vis: Default,
     attrs: @list.empty(),
     doc: @syntax.DocString::empty(),
     loc,
   }
-  @syntax.TopFuncDef(
-    fun_decl~,
-    decl_body=@syntax.DeclBody::DeclBody(expr=body),
-    where_clause=None,
-    loc~,
-  )
+  TopFuncDef(fun_decl~, decl_body=DeclBody(expr=body), where_clause=None, loc~)
 }
 
 ///|
@@ -163,20 +151,20 @@ fn gen_view_enum(
     })
     variants.push({
       args: if args.length() > 0 {
-        Some(@list.List(args[:]))
+        Some(List(args[:]))
       } else {
         None
       },
       attrs: @list.empty(),
       doc: @syntax.DocString::empty(),
       loc,
-      name: @syntax.ConstrName::{ name: view_variant_name(d.name), loc },
+      name: { name: view_variant_name(d.name), loc },
       tag: None,
     })
   })
   let type_decl : @syntax.TypeDecl = {
     attrs: @list.empty(),
-    components: @syntax.Variant(@list.List(variants[:])),
+    components: Variant(List(variants[:])),
     deriving: @list.empty(),
     doc: @syntax.DocString::empty(),
     is_declare: false,
@@ -184,9 +172,9 @@ fn gen_view_enum(
     params: @list.empty(),
     tycon: tycon + "View",
     tycon_loc: loc,
-    type_vis: @syntax.Visibility::Default,
+    type_vis: Default,
   }
-  @syntax.TopTypeDef(type_decl)
+  TopTypeDef(type_decl)
 }
 
 ///|
@@ -197,7 +185,7 @@ fn gen_view_impl(
   has_ext_constr : Bool,
   loc : @basic.Location,
 ) -> @syntax.Impl {
-  let regular = descs.filter(fn(d) { not(d.is_ext) })
+  let regular = descs.filter(fn(d) { !d.is_ext })
   let ext = descs.filter(fn(d) { d.is_ext })
 
   let cases : Array[@syntax.Case] = []
@@ -213,7 +201,7 @@ fn gen_view_impl(
 
   let match_expr = @syntax.Expr::Match(
     expr=var_expr("t", loc),
-    cases=@list.List(cases[:]),
+    cases=List(cases[:]),
     match_loc=loc,
     loc~,
   )
@@ -221,20 +209,20 @@ fn gen_view_impl(
   // let Tycon(t) = self
   let wrapper_constr : @syntax.Constructor = {
     name: { name: tycon, loc },
-    extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+    extra_info: NoExtraInfo,
     loc,
   }
   let t_pat_arg : @syntax.ConstrPatArg = {
-    pat: @syntax.Pattern::Var({ name: "t", loc }),
-    kind: @syntax.ArgumentKind::Positional,
+    pat: Var({ name: "t", loc }),
+    kind: Positional,
   }
-  let wrapper_pattern : @syntax.Pattern = @syntax.Pattern::Constr(
+  let wrapper_pattern : @syntax.Pattern = Constr(
     constr=wrapper_constr,
-    args=Some(@list.List([t_pat_arg])),
+    args=Some(List([t_pat_arg])),
     is_open=false,
     loc~,
   )
-  let fn_body : @syntax.Expr = @syntax.Expr::Let(
+  let fn_body : @syntax.Expr = Let(
     pattern=wrapper_pattern,
     expr=var_expr("self", loc),
     body=match_expr,
@@ -244,33 +232,24 @@ fn gen_view_impl(
   let view_ty = type_ref(tycon + "View", loc)
   let self_ty = type_ref(tycon, loc)
   let fun_decl : @syntax.FunDecl = {
-    type_name: Some({
-      is_object: false,
-      loc,
-      name: @syntax.LongIdent::Ident(name=tycon),
-    }),
+    type_name: Some({ is_object: false, loc, name: Ident(name=tycon) }),
     name: { name: "view", loc },
     is_async: None,
     decl_params: Some(
-      @list.List([
-        @syntax.Parameter::Positional(
-          binder={ name: "self", loc },
-          ty=Some(self_ty),
-        ),
-      ]),
+      List([Positional(binder={ name: "self", loc }, ty=Some(self_ty))]),
     ),
     params_loc: loc,
     quantifiers: @list.empty(),
     return_type: Some(view_ty),
-    error_type: @syntax.ErrorType::NoErrorType,
-    vis: @syntax.Visibility::Default,
+    error_type: NoErrorType,
+    vis: Default,
     attrs: @list.empty(),
     doc: @syntax.DocString::empty(),
     loc,
   }
-  @syntax.TopFuncDef(
+  TopFuncDef(
     fun_decl~,
-    decl_body=@syntax.DeclBody::DeclBody(expr=fn_body),
+    decl_body=DeclBody(expr=fn_body),
     where_clause=None,
     loc~,
   )
@@ -287,24 +266,20 @@ fn view_case(d : ConstrDescriptor, loc : @basic.Location) -> @syntax.Case {
     // the variable `cond`; the rebuild must reference `cond`, not `argN`.
     // For positional fields we use `argN`.
     let (kind, bind_name) : (@syntax.ArgumentKind, String) = match p.label {
-      Some(l) => (@syntax.ArgumentKind::Labelled(l), l.name)
-      None => (@syntax.ArgumentKind::Positional, p.name)
+      Some(l) => (Labelled(l), l.name)
+      None => (Positional, p.name)
     }
-    pat_args.push({ pat: @syntax.Pattern::Var({ name: bind_name, loc }), kind })
+    pat_args.push({ pat: Var({ name: bind_name, loc }), kind })
     val_exprs.push(var_expr(bind_name, loc))
   })
   let constr : @syntax.Constructor = {
     name: { name: d.name, loc },
-    extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+    extra_info: NoExtraInfo,
     loc,
   }
-  let pattern : @syntax.Pattern = @syntax.Pattern::Constr(
+  let pattern : @syntax.Pattern = Constr(
     constr~,
-    args=if pat_args.length() > 0 {
-      Some(@list.List(pat_args[:]))
-    } else {
-      None
-    },
+    args=if pat_args.length() > 0 { Some(List(pat_args[:])) } else { None },
     is_open=false,
     loc~,
   )
@@ -320,24 +295,24 @@ fn view_ext_case(
 ) -> @syntax.Case {
   let ext_cases : Array[@syntax.Case] = []
   ext_descs.each(fn(d) { ext_cases.push(view_case(d, loc)) })
-  let nested_match : @syntax.Expr = @syntax.Expr::Match(
+  let nested_match : @syntax.Expr = Match(
     expr=var_expr("te", loc),
-    cases=@list.List(ext_cases[:]),
+    cases=List(ext_cases[:]),
     match_loc=loc,
     loc~,
   )
   let ext_constr : @syntax.Constructor = {
     name: { name: "Ext", loc },
-    extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+    extra_info: NoExtraInfo,
     loc,
   }
   let te_pat_arg : @syntax.ConstrPatArg = {
-    pat: @syntax.Pattern::Var({ name: "te", loc }),
-    kind: @syntax.ArgumentKind::Positional,
+    pat: Var({ name: "te", loc }),
+    kind: Positional,
   }
-  let ext_pattern : @syntax.Pattern = @syntax.Pattern::Constr(
+  let ext_pattern : @syntax.Pattern = Constr(
     constr=ext_constr,
-    args=Some(@list.List([te_pat_arg])),
+    args=Some(List([te_pat_arg])),
     is_open=false,
     loc~,
   )

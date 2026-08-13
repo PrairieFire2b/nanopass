@@ -132,9 +132,9 @@ fn find_nonterminal_types(
   impls
   .filter_map(impl_ => {
     match impl_ {
-      @syntax.TopTypeDef(type_decl) =>
+      TopTypeDef(type_decl) =>
         match type_decl.components {
-          @syntax.Variant(_) =>
+          Variant(_) =>
             if type_decl.attrs.any(fn(attr) {
                 attr.raw is [.. "#nanopass.nonterminal", ..]
               }) {
@@ -155,7 +155,7 @@ fn find_source_type_names(impls : @list.List[@syntax.Impl]) -> Array[String] {
   let names : Array[String] = []
   impls.each(impl_ => {
     match impl_ {
-      @syntax.TopTypeDef(type_decl) =>
+      TopTypeDef(type_decl) =>
         if !names.contains(type_decl.tycon) {
           names.push(type_decl.tycon)
         }
@@ -177,9 +177,9 @@ fn parse_languages_from_impls(
   let langs = impls
     .filter_map(impl_ => {
       match impl_ {
-        @syntax.TopTypeDef(type_decl) =>
+        TopTypeDef(type_decl) =>
           match type_decl.components {
-            @syntax.Variant(constructors) =>
+            Variant(constructors) =>
               type_decl.attrs
               .find(is_language_attr)
               .map(attr => {
@@ -204,7 +204,7 @@ fn parse_languages_from_impls(
                         None => false
                       }
                     }) {
-                    nonterminals.push(NonTerminal::TypeDecl(nt_td))
+                    nonterminals.push(TypeDecl(nt_td))
                     meta_vars_from_attrs(nt_td.tycon, nt_td.attrs).each(meta_var => {
                       meta_vars.push(meta_var)
                     })
@@ -225,7 +225,7 @@ fn parse_languages_from_impls(
                     None => false
                   }
                   if self_ref {
-                    nonterminals.push(NonTerminal::Constructor(c))
+                    nonterminals.push(Constructor(c))
                   } else if nt_ref {
                     ()
                   } else {

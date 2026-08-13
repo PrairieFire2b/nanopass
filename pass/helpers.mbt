@@ -24,10 +24,10 @@ priv struct ExtEnumInfo {
 /// Extract a simple type name from a `@syntax.Type`.
 fn type_name(ty : @syntax.Type) -> String {
   match ty {
-    @syntax.Name(constr_id~, ..) =>
+    Name(constr_id~, ..) =>
       match constr_id.id {
-        @syntax.Ident(name~) => name
-        @syntax.Dot(id~, ..) => id
+        Ident(name~) => name
+        Dot(id~, ..) => id
       }
     _ => ""
   }
@@ -36,11 +36,7 @@ fn type_name(ty : @syntax.Type) -> String {
 ///|
 /// Create a named type reference at a given location.
 fn type_ref(name : String, loc : @basic.Location) -> @syntax.Type {
-  @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Ident(name~), loc },
-    tys=@list.empty(),
-    loc~,
-  )
+  Name(constr_id={ id: Ident(name~), loc }, tys=@list.empty(), loc~)
 }
 
 ///|
@@ -50,10 +46,10 @@ fn make_fn_type(
   result : @syntax.Type,
   loc : @basic.Location,
 ) -> @syntax.Type {
-  @syntax.Arrow(
-    args=@list.from_array(param_tys[:]),
+  Arrow(
+    args=List(param_tys[:]),
     res=result,
-    err=@syntax.ErrorType::NoErrorType,
+    err=NoErrorType,
     is_async=None,
     loc~,
   )
@@ -67,10 +63,10 @@ fn make_field_decl(
   loc : @basic.Location,
 ) -> @syntax.FieldDecl {
   {
-    name: @syntax.FieldName::{ label: name, loc },
+    name: { label: name, loc },
     ty,
     mut_: false,
-    vis: @syntax.Visibility::Default,
+    vis: Default,
     loc,
     attrs: @list.empty(),
     doc: @syntax.DocString::empty(),
@@ -86,11 +82,9 @@ fn make_field_decl(
 /// `@language.GeneratedLanguageLayout`, which is the same layout that
 /// `Language::gen` uses to emit the AST. This guarantees the pass codegen and
 /// the AST codegen never drift.
-fn tree_info_from_layout(
-  layout : @layout.GeneratedLanguageLayout,
-) -> TreeInfo raise {
+fn tree_info_from_layout(layout : @layout.GeneratedLanguageLayout) -> TreeInfo {
   let tree_constrs = match layout.tree.decl.components {
-    @syntax.Variant(cs) => cs.to_array()
+    Variant(cs) => cs.to_array()
     _ => []
   }
 
@@ -108,7 +102,7 @@ fn tree_info_from_layout(
     let all_ext_constrs : Array[@syntax.ConstrDecl] = []
     layout.ext_enums.each(fn(ee) {
       match ee.decl.components {
-        @syntax.Variant(cs) => cs.each(fn(c) { all_ext_constrs.push(c) })
+        Variant(cs) => cs.each(fn(c) { all_ext_constrs.push(c) })
         _ => ()
       }
     })
@@ -156,10 +150,7 @@ fn field_name(name : String) -> String {
 ///|
 /// Create a variable reference expression.
 fn var_expr(name : String, loc : @basic.Location) -> @syntax.Expr {
-  @syntax.Expr::Ident(
-    id=@syntax.Var::{ name: @syntax.LongIdent::Ident(name~), loc },
-    loc~,
-  )
+  Ident(id={ name: Ident(name~), loc }, loc~)
 }
 
 ///|
@@ -268,7 +259,7 @@ fn collect_descriptors(
   // has NO real ext constructors; emitting `True`/`If`/... matches against its
   // `Ext(Unit)` payload would not type-check. Derived languages whose wrapper
   // fills `TreeExt` with a real ext enum do carry them.
-  if not(is_base) {
+  if !is_base {
     match tree_info.ext_enum {
       Some(ee) =>
         ee.constrs.each(fn(c) {
@@ -295,40 +286,6 @@ fn collect_descriptors(
 }
 
 ///|
-/// Build a constructor call expression for a language type.
-fn make_constr_call(
-  tycon : String,
-  constr_name : String,
-  args : Array[@syntax.Expr],
-  loc : @basic.Location,
-) -> @syntax.Expr {
-  if args.length() == 0 {
-    let constr : @syntax.Constructor = {
-      name: { name: constr_name, loc },
-      extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
-      loc,
-    }
-    @syntax.Expr::Constr(constr~, loc~)
-  } else {
-    @syntax.Expr::Apply(
-      func=@syntax.Expr::Method(
-        type_name={
-          is_object: false,
-          loc,
-          name: @syntax.LongIdent::Ident(name=tycon),
-        },
-        method_name={ name: constr_name, loc },
-        loc~,
-      ),
-      args=@list.from_array(
-        args.map(fn(e) { { value: e, kind: @syntax.ArgumentKind::Positional } }),
-      ),
-      loc~,
-    )
-  }
-}
-
-///|
 /// Build a *bare* constructor application `Constr(args...)` (no `Tycon::`
 /// prefix). Because the constructors of the merged `Tree` enum and the ext
 /// enum are in scope wherever the generated code lives, and the language
@@ -344,17 +301,15 @@ fn bare_constr_call(
 ) -> @syntax.Expr {
   let constr : @syntax.Constructor = {
     name: { name: constr_name, loc },
-    extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+    extra_info: NoExtraInfo,
     loc,
   }
   if args.length() == 0 {
-    @syntax.Expr::Constr(constr~, loc~)
+    Constr(constr~, loc~)
   } else {
-    @syntax.Expr::Apply(
-      func=@syntax.Expr::Constr(constr~, loc~),
-      args=@list.from_array(
-        args.map(fn(e) { { value: e, kind: @syntax.ArgumentKind::Positional } }),
-      ),
+    Apply(
+      func=Constr(constr~, loc~),
+      args=List(args.map(fn(e) { { value: e, kind: Positional } })),
       loc~,
     )
   }

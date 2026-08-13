@@ -9,6 +9,7 @@ pub enum PassDirection {
 
 ///|
 /// Strategy for handling the `Ext` constructor.
+#warnings("-unused_constructor")
 pub enum ExtStrategy {
   /// Keep the ext constructor unchanged.
   Keep

@@ -21,18 +21,23 @@ test "hook-driven surface syntax roundtrips" {
 test "hooks produce the intended surface syntax" {
   // `@name` parses through the hook to `Sym(name)`, unparses back to `@name`.
   let sym = HExpr::parse_sexp("@foo")
-  assert_eq(sym, HExpr(Tree::Sym("foo")))
+  assert_eq(sym, HExpr(Sym("foo")))
   inspect(sym.unparse_sexp(), content="@foo")
 
   // Canonical `foo` (bare string atom) is also accepted as Sym via string_from_atom,
   // and unparses via the hook as `@foo`.
   let sym2 = HExpr::parse_sexp("foo")
-  assert_eq(sym2, HExpr(Tree::Sym("foo")))
+  assert_eq(sym2, HExpr(Sym("foo")))
   inspect(sym2.unparse_sexp(), content="@foo")
 
   // App with hook-driven children.
   let app = HExpr::parse_sexp("(App @f @x)")
   inspect(app.unparse_sexp(), content="(App @f @x)")
+}
+
+///|
+test "child wrapper constructor remains usable from wbtest" {
+  debug_inspect(HExpr2(Num(0)), content="HExpr2(Num(0))")
 }
 
 ///|

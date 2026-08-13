@@ -10,11 +10,11 @@ pub fn parse_sym(sexp : @sexp.Sexp) -> HExpr? raise @sexp.SexpError {
   match @sexp.atom_text(sexp) {
     Some(text) =>
       if text.has_prefix("@") {
-        let name = text.substring(start=1)
+        let name = text[1:].to_owned()
         if name.is_empty() {
           @sexp.decode_error(path="HExpr.Sym", message="empty symbol name")
         }
-        Some(HExpr(Tree::Sym(name)))
+        Some(HExpr(Sym(name)))
       } else {
         None
       }
@@ -26,7 +26,7 @@ pub fn parse_sym(sexp : @sexp.Sexp) -> HExpr? raise @sexp.SexpError {
 /// unparse hook: `Sym(name)` -> `@name` atom.
 pub fn unparse_sym(value : HExpr) -> @sexp.SexpDoc raise @sexp.SexpError {
   match value {
-    HExpr(Tree::Sym(name)) => @sexp.atom_doc("@" + name)
+    HExpr(Sym(name)) => @sexp.atom_doc("@" + name)
     _ => @sexp.decode_error(path="HExpr.Sym", message="unparse_sym: not a Sym")
   }
 }

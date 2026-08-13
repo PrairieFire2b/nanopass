@@ -550,7 +550,7 @@ test "pipeline_m sequences steps, accumulates logs" {
 
 ///|
 test "pipeline_m short-circuits on error, later steps do not run" {
-  let step1 : (Int) -> PassM[Unit, Unit, String, String, Int] = fn(x) {
+  let step1 : (Int) -> PassM[Unit, Unit, String, String, Int] = fn(_x) {
     @pass.emit("step1").flat_map(fn(_) { @pass.PassM::from_result(Err("fail")) })
   }
   let step2 : (Int) -> PassM[Unit, Unit, String, String, Int] = fn(x) {

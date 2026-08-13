@@ -31,7 +31,7 @@ enum TypedExprExt[Self_] {
 } derive(Eq, Debug)
 
 ///|
-pub typealias String as LambdaVar
+pub type LambdaVar = String
 
 ///|
 pub enum Type {

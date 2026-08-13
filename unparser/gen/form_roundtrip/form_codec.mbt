@@ -8,7 +8,7 @@ pub fn FExpr::from_sexp(sexp : @sexp.Sexp) -> FExpr raise @sexp.SexpError {
   match @sexp.match_form(sexp, "(lambda $0 $1)", 2, path="FExpr.Lam") {
     Some(fields) =>
       return FExpr(
-        Tree::Lam(
+        Lam(
           @sexp.string_from_atom(fields[0], path="FExpr.Lam[0]"),
           FExpr::from_sexp(fields[1]),
         ),
@@ -18,7 +18,7 @@ pub fn FExpr::from_sexp(sexp : @sexp.Sexp) -> FExpr raise @sexp.SexpError {
   match @sexp.match_form(sexp, "($0 $1)", 2, path="FExpr.App") {
     Some(fields) =>
       return FExpr(
-        Tree::App(FExpr::from_sexp(fields[0]), FExpr::from_sexp(fields[1])),
+        App(FExpr::from_sexp(fields[0]), FExpr::from_sexp(fields[1])),
       )
     None => ()
   }
@@ -26,13 +26,13 @@ pub fn FExpr::from_sexp(sexp : @sexp.Sexp) -> FExpr raise @sexp.SexpError {
     Some(atom) => {
       try {
         let v = @sexp.int_from_atom(sexp, path="FExpr.Num")
-        return FExpr(Tree::Num(v))
+        return FExpr(Num(v))
       } catch {
         _ => ()
       }
       try {
         let v = @sexp.string_from_atom(sexp, path="FExpr.Var")
-        return FExpr(Tree::Var(v))
+        return FExpr(Var(v))
       } catch {
         _ => ()
       }
@@ -51,7 +51,7 @@ pub fn FExpr::from_sexp(sexp : @sexp.Sexp) -> FExpr raise @sexp.SexpError {
         "Lam" => {
           @sexp.expect_arity(items, 3, path="FExpr.Lam")
           FExpr(
-            Tree::Lam(
+            Lam(
               @sexp.string_from_atom(items[1], path="FExpr.Lam[0]"),
               FExpr::from_sexp(items[2]),
             ),
@@ -59,9 +59,7 @@ pub fn FExpr::from_sexp(sexp : @sexp.Sexp) -> FExpr raise @sexp.SexpError {
         }
         "App" => {
           @sexp.expect_arity(items, 3, path="FExpr.App")
-          FExpr(
-            Tree::App(FExpr::from_sexp(items[1]), FExpr::from_sexp(items[2])),
-          )
+          FExpr(App(FExpr::from_sexp(items[1]), FExpr::from_sexp(items[2])))
         }
         _ => @sexp.unknown_head(head, path="FExpr")
       }
@@ -72,15 +70,15 @@ pub fn FExpr::from_sexp(sexp : @sexp.Sexp) -> FExpr raise @sexp.SexpError {
 ///|
 pub fn FExpr::to_sexp_doc(self : FExpr) -> @sexp.SexpDoc raise @sexp.SexpError {
   match self {
-    FExpr(Tree::Num(x0)) => @sexp.int_to_doc(x0)
-    FExpr(Tree::Var(x0)) => @sexp.string_to_doc(x0)
-    FExpr(Tree::Lam(x0, x1)) =>
+    FExpr(Num(x0)) => @sexp.int_to_doc(x0)
+    FExpr(Var(x0)) => @sexp.string_to_doc(x0)
+    FExpr(Lam(x0, x1)) =>
       @sexp.form_doc(
         "(lambda $0 $1)",
         [@sexp.string_to_doc(x0), x1.to_sexp_doc()],
         path="FExpr.Lam",
       )
-    FExpr(Tree::App(x0, x1)) =>
+    FExpr(App(x0, x1)) =>
       @sexp.form_doc(
         "($0 $1)",
         [x0.to_sexp_doc(), x1.to_sexp_doc()],

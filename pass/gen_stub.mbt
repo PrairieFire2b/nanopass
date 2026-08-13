@@ -25,33 +25,29 @@
 /// constructors and have no rewrite handler.
 pub fn changed_and_added_fields(diff : @meta_parser.Diff) -> Array[String] {
   let names : Array[String] = []
-  let push_unique = fn(n : String) {
-    if not(names.contains(n)) {
-      names.push(n)
-    }
-  }
+  let push_unique = fn(n : String) { if !names.contains(n) { names.push(n) } }
 
   // changed / added nonterminals (constructors only)
   diff.changed_nonterminals.each(fn(m) {
     match m.modified {
-      @meta_parser.Constructor(c) => push_unique(field_name(c.name.name))
-      @meta_parser.TypeDecl(_) => ()
+      Constructor(c) => push_unique(field_name(c.name.name))
+      TypeDecl(_) => ()
     }
   })
   diff.added_nonterminals.each(fn(nt) {
     match nt {
-      @meta_parser.Constructor(c) => push_unique(field_name(c.name.name))
-      @meta_parser.TypeDecl(_) => ()
+      Constructor(c) => push_unique(field_name(c.name.name))
+      TypeDecl(_) => ()
     }
   })
 
   // changed / added terminals
   diff.changed_terminals.each(fn(m) {
-    let @meta_parser.Terminal(c) = m.modified
+    let Terminal(c) = m.modified
     push_unique(field_name(c.name.name))
   })
   diff.added_terminals.each(fn(t) {
-    let @meta_parser.Terminal(c) = t
+    let Terminal(c) = t
     push_unique(field_name(c.name.name))
   })
   names
@@ -77,12 +73,8 @@ pub fn gen_rewrite_stub(
 
   // let base = DerivRewriteAlg::identity()
   let identity_call = @syntax.Expr::Apply(
-    func=@syntax.Expr::Method(
-      type_name={
-        is_object: false,
-        loc,
-        name: @syntax.LongIdent::Ident(name=struct_name),
-      },
+    func=Method(
+      type_name={ is_object: false, loc, name: Ident(name=struct_name) },
       method_name={ name: "identity", loc },
       loc~,
     ),
@@ -95,7 +87,7 @@ pub fn gen_rewrite_stub(
   fields.each(fn(f) {
     let access = @syntax.Expr::Field(
       record=var_expr("base", loc),
-      accessor=@syntax.Accessor::Label({ name: f, loc }),
+      accessor=Label({ name: f, loc }),
       loc~,
     )
     spread_fields.push({
@@ -105,27 +97,23 @@ pub fn gen_rewrite_stub(
       loc,
     })
   })
-  let record_expr : @syntax.Expr = @syntax.Expr::RecordUpdate(
-    type_name=Some({
-      name: @syntax.LongIdent::Ident(name=struct_name),
-      is_object: false,
-      loc,
-    }),
+  let record_expr : @syntax.Expr = RecordUpdate(
+    type_name=Some({ name: Ident(name=struct_name), is_object: false, loc }),
     record=var_expr("base", loc),
-    fields=@list.List(spread_fields[:]),
+    fields=List(spread_fields[:]),
     loc~,
   )
 
-  let body : @syntax.Expr = @syntax.Expr::Let(
-    pattern=@syntax.Pattern::Var({ name: "base", loc }),
+  let body : @syntax.Expr = Let(
+    pattern=Var({ name: "base", loc }),
     expr=identity_call,
     body=record_expr,
     loc~,
   )
 
-  let ret_ty : @syntax.Type = @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Ident(name=struct_name), loc },
-    tys=@list.List([
+  let ret_ty : @syntax.Type = Name(
+    constr_id={ id: Ident(name=struct_name), loc },
+    tys=List([
       type_ref("Env", loc),
       type_ref("St", loc),
       type_ref("Log", loc),
@@ -141,16 +129,16 @@ pub fn gen_rewrite_stub(
     params_loc: loc,
     quantifiers: rewrite_quantifiers(loc),
     return_type: Some(ret_ty),
-    error_type: @syntax.ErrorType::NoErrorType,
-    vis: @syntax.Visibility::Default,
+    error_type: NoErrorType,
+    vis: Default,
     attrs: @list.empty(),
     doc: @syntax.DocString::empty(),
     loc,
   }
-  @list.List([
-    @syntax.TopFuncDef(
+  List([
+    TopFuncDef(
       fun_decl~,
-      decl_body=@syntax.DeclBody::DeclBody(expr=body),
+      decl_body=DeclBody(expr=body),
       where_clause=None,
       loc~,
     ),

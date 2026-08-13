@@ -7,7 +7,7 @@ pub fn Language::gen(self : Language) -> @list.List[@syntax.Impl] raise {
   let ext_impls = layout.ext_enums.map(fn(e) { @syntax.TopTypeDef(e.decl) })
   let external_impls = layout.external_types.filter_map(sig_to_impl)
   let entry_impls = @codegen.parse_unparse_entry_impls(layout.group)
-  @list.List(
+  List(
     [@syntax.TopTypeDef(layout.tree.decl)] +
     wrapper_impls +
     ext_impls +
@@ -19,10 +19,10 @@ pub fn Language::gen(self : Language) -> @list.List[@syntax.Impl] raise {
 ///|
 fn type_name(ty : @syntax.Type) -> String {
   match ty {
-    @syntax.Name(constr_id~, ..) =>
+    Name(constr_id~, ..) =>
       match constr_id.id {
-        @syntax.Ident(name~) => name
-        @syntax.Dot(id~, ..) => id
+        Ident(name~) => name
+        Dot(id~, ..) => id
       }
     _ => ""
   }
@@ -30,11 +30,7 @@ fn type_name(ty : @syntax.Type) -> String {
 
 ///|
 fn self_type(loc : @basic.Location) -> @syntax.Type {
-  @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Ident(name="Self_"), loc },
-    tys=@list.empty(),
-    loc~,
-  )
+  Name(constr_id={ id: Ident(name="Self_"), loc }, tys=@list.empty(), loc~)
 }
 
 ///|
@@ -75,7 +71,7 @@ fn merge_constr(
   match extra_var {
     Some(name) => {
       let var_ty = @syntax.Name(
-        constr_id={ id: @syntax.LongIdent::Ident(name~), loc },
+        constr_id={ id: Ident(name~), loc },
         tys=@list.empty(),
         loc~,
       )
@@ -86,7 +82,7 @@ fn merge_constr(
   let merged_c = {
     ..base_c,
     args: if merged_args.length() > 0 {
-      Some(@list.List(merged_args[:]))
+      Some(List(merged_args[:]))
     } else {
       None
     },
@@ -98,9 +94,9 @@ fn merge_constr(
 fn make_base_map(
   base : @meta_parser.NanoLangDef,
 ) -> Map[String, @syntax.ConstrDecl] {
-  let m : Map[String, @syntax.ConstrDecl] = {}
+  let m : Map[String, @syntax.ConstrDecl] = Map([])
   match base.type_decl.components {
-    @syntax.Variant(cs) => cs.each(fn(c) { m[c.name.name] = c })
+    Variant(cs) => cs.each(fn(c) { m[c.name.name] = c })
     _ => ()
   }
   m
@@ -144,7 +140,7 @@ fn make_type_decl(
   )
   {
     attrs: @list.empty(),
-    components: @syntax.Variant(@list.List(constrs[:])),
+    components: Variant(List(constrs[:])),
     deriving: @list.empty(),
     doc: @syntax.DocString::empty(),
     is_declare: false,
@@ -152,7 +148,7 @@ fn make_type_decl(
     params: binders,
     tycon,
     tycon_loc: loc,
-    type_vis: @syntax.Visibility::Default,
+    type_vis: Default,
   }
 }
 
@@ -196,7 +192,7 @@ fn build_ext_enum(
   let deriv_tycon = deriv.type_decl.tycon
   let ext_constrs : Array[@syntax.ConstrDecl] = []
   match deriv.type_decl.components {
-    @syntax.Variant(cs) =>
+    Variant(cs) =>
       cs.each(fn(c) {
         match base_map.get(c.name.name) {
           None => ext_constrs.push(replace_self_refs(c, deriv_tycon, loc))
@@ -233,7 +229,7 @@ fn gen_tree_def(
   for i in 1..<langs.length() {
     let deriv = langs[i]
     match deriv.type_decl.components {
-      @syntax.Variant(cs) =>
+      Variant(cs) =>
         cs.each(fn(c) { deriv_pairs.push((c, deriv.type_decl.tycon)) })
       _ => ()
     }
@@ -255,12 +251,12 @@ fn gen_tree_def(
   let (final_constrs, final_type_params) = if ext_vars.length() > 0 {
     let ext_var = "TreeExt"
     let ext_ty = @syntax.Name(
-      constr_id={ id: @syntax.LongIdent::Ident(name=ext_var), loc },
+      constr_id={ id: Ident(name=ext_var), loc },
       tys=@list.empty(),
       loc~,
     )
     let ext_constr : @syntax.ConstrDecl = {
-      args: Some(@list.List([{ label: None, mut_: false, ty: ext_ty }])),
+      args: Some(List([{ label: None, mut_: false, ty: ext_ty }])),
       attrs: @list.empty(),
       doc: @syntax.DocString::empty(),
       loc,
@@ -287,20 +283,12 @@ fn builtin_types() -> Array[String] {
 
 ///|
 fn unit_type(loc : @basic.Location) -> @syntax.Type {
-  @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Ident(name="Unit"), loc },
-    tys=@list.empty(),
-    loc~,
-  )
+  Name(constr_id={ id: Ident(name="Unit"), loc }, tys=@list.empty(), loc~)
 }
 
 ///|
 fn type_ref(name : String, loc : @basic.Location) -> @syntax.Type {
-  @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Ident(name~), loc },
-    tys=@list.empty(),
-    loc~,
-  )
+  Name(constr_id={ id: Ident(name~), loc }, tys=@list.empty(), loc~)
 }
 
 ///|
@@ -309,11 +297,7 @@ fn type_ref_with_args(
   args : Array[@syntax.Type],
   loc : @basic.Location,
 ) -> @syntax.Type {
-  @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Ident(name~), loc },
-    tys=@list.List(args[:]),
-    loc~,
-  )
+  Name(constr_id={ id: Ident(name~), loc }, tys=List(args[:]), loc~)
 }
 
 ///|
@@ -397,9 +381,9 @@ fn extra_type_map(
   deriv : @meta_parser.NanoLangDef,
   base_tycon : String,
 ) -> Map[String, @syntax.Type] {
-  let result : Map[String, @syntax.Type] = {}
+  let result : Map[String, @syntax.Type] = Map([])
   match deriv.type_decl.components {
-    @syntax.Variant(cs) =>
+    Variant(cs) =>
       cs.each(fn(c) {
         match base_map.get(c.name.name) {
           Some(base_c) =>
@@ -459,13 +443,13 @@ fn struct_wrappers(
       }
     })
     let tree_ty = @syntax.Name(
-      constr_id={ id: @syntax.LongIdent::Ident(name="Tree"), loc },
-      tys=@list.List(tys[:]),
+      constr_id={ id: Ident(name="Tree"), loc },
+      tys=List(tys[:]),
       loc~,
     )
     {
       attrs: @list.empty(),
-      components: @syntax.TupleStruct(@list.List([tree_ty])),
+      components: TupleStruct(List([tree_ty])),
       deriving: @list.empty(),
       doc: @syntax.DocString::empty(),
       is_declare: false,
@@ -473,7 +457,7 @@ fn struct_wrappers(
       params: @list.empty(),
       tycon,
       tycon_loc: loc,
-      type_vis: @syntax.Visibility::Default,
+      type_vis: Default,
     }
   })
 }

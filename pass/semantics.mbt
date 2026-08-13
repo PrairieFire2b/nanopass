@@ -17,7 +17,7 @@ pub fn gen_semantics(
   let loc = lang.group[0].type_decl.loc
   let impls : Array[@syntax.Impl] = []
   lang.group.eachi(fn(i, nl) { gen_for_lang(nl, i, tree_info, loc, impls) })
-  @list.from_array(impls[:])
+  List(impls[:])
 }
 
 ///|
@@ -67,17 +67,17 @@ fn gen_semantics_struct(
   })
   let struct_type_decl : @syntax.TypeDecl = {
     attrs: @list.empty(),
-    components: @syntax.Record(fields=@list.from_array(fields[:])),
+    components: Record(fields=List(fields[:])),
     deriving: @list.empty(),
     doc: @syntax.DocString::empty(),
     is_declare: false,
     loc,
-    params: @list.from_array([{ name: Some("Repr"), loc }]),
+    params: List([{ name: Some("Repr"), loc }]),
     tycon: struct_name,
     tycon_loc: loc,
-    type_vis: @syntax.Visibility::Default,
+    type_vis: Default,
   }
-  @syntax.TopTypeDef(struct_type_decl)
+  TopTypeDef(struct_type_decl)
 }
 
 ///|
@@ -93,47 +93,39 @@ fn gen_identity_impl(
   let fields : Array[@syntax.FieldDef] = []
   descs.each(fn(d) { fields.push(identity_field_from_desc(d, tycon, loc)) })
 
-  let record_expr : @syntax.Expr = @syntax.Record(
+  let record_expr : @syntax.Expr = Record(
     type_name=None,
-    fields=@list.from_array(fields[:]),
-    trailing=@syntax.TrailingMark::None,
+    fields=List(fields[:]),
+    trailing=None,
     loc~,
   )
 
-  let ret_ty : @syntax.Type = @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Ident(name=struct_name), loc },
-    tys=@list.from_array([
-      @syntax.Name(
-        constr_id={ id: @syntax.LongIdent::Ident(name=tycon), loc },
-        tys=@list.empty(),
-        loc~,
-      ),
+  let ret_ty : @syntax.Type = Name(
+    constr_id={ id: Ident(name=struct_name), loc },
+    tys=List([
+      Name(constr_id={ id: Ident(name=tycon), loc }, tys=@list.empty(), loc~),
     ]),
     loc~,
   )
 
   let fun_decl : @syntax.FunDecl = {
-    type_name: Some({
-      is_object: false,
-      loc,
-      name: @syntax.LongIdent::Ident(name=struct_name),
-    }),
+    type_name: Some({ is_object: false, loc, name: Ident(name=struct_name) }),
     name: { name: "identity", loc },
     is_async: None,
     decl_params: Some(@list.empty()),
     params_loc: loc,
     quantifiers: @list.empty(),
     return_type: Some(ret_ty),
-    error_type: @syntax.ErrorType::DefaultErrorType(loc~),
-    vis: @syntax.Visibility::Default,
+    error_type: DefaultErrorType(loc~),
+    vis: Default,
     attrs: @list.empty(),
     doc: @syntax.DocString::empty(),
     loc,
   }
 
-  @syntax.TopFuncDef(
+  TopFuncDef(
     fun_decl~,
-    decl_body=@syntax.DeclBody::DeclBody(expr=record_expr),
+    decl_body=DeclBody(expr=record_expr),
     where_clause=None,
     loc~,
   )
@@ -149,9 +141,7 @@ fn identity_field_from_desc(
   let params_rev : Array[@syntax.Parameter] = []
   let arg_exprs : Array[@syntax.Expr] = []
   d.params.each(fn(p) {
-    params_rev.push(
-      @syntax.Parameter::Positional(binder={ name: p.name, loc }, ty=None),
-    )
+    params_rev.push(Positional(binder={ name: p.name, loc }, ty=None))
     arg_exprs.push(var_expr(p.name, loc))
   })
 
@@ -170,19 +160,19 @@ fn identity_field_from_desc(
   let body = bare_constr_call(tycon, [inner], loc)
 
   let lambda_func : @syntax.Func = {
-    parameters: @list.from_array(params_rev[:]),
+    parameters: List(params_rev[:]),
     params_loc: loc,
     body,
     return_type: None,
-    error_type: @syntax.ErrorType::DefaultErrorType(loc~),
-    kind: @syntax.FnKind::Lambda,
+    error_type: DefaultErrorType(loc~),
+    kind: Lambda,
     is_async: None,
     loc,
   }
 
   {
     label: { name: d.field_name, loc },
-    expr: @syntax.Expr::Function(func=lambda_func, loc~),
+    expr: Function(func=lambda_func, loc~),
     is_pun: false,
     loc,
   }
@@ -205,80 +195,71 @@ fn gen_cata_impl(
   // `let Tycon(t) = self`, exposing the inner Tree value `t` to the match.
   let tree_constr : @syntax.Constructor = {
     name: { name: tycon, loc },
-    extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+    extra_info: NoExtraInfo,
     loc,
   }
   let t_pat_arg : @syntax.ConstrPatArg = {
-    pat: @syntax.Pattern::Var({ name: "t", loc }),
-    kind: @syntax.ArgumentKind::Positional,
+    pat: Var({ name: "t", loc }),
+    kind: Positional,
   }
-  let tree_pattern : @syntax.Pattern = @syntax.Pattern::Constr(
+  let tree_pattern : @syntax.Pattern = Constr(
     constr=tree_constr,
-    args=Some(@list.from_array([t_pat_arg])),
+    args=Some(List([t_pat_arg])),
     is_open=false,
     loc~,
   )
 
-  let fn_body : @syntax.Expr = @syntax.Expr::Let(
+  let fn_body : @syntax.Expr = Let(
     pattern=tree_pattern,
     expr=var_expr("self", loc),
     body=match_expr,
     loc~,
   )
 
-  let repr_ty : @syntax.Type = @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Ident(name="R"), loc },
+  let repr_ty : @syntax.Type = Name(
+    constr_id={ id: Ident(name="R"), loc },
     tys=@list.empty(),
     loc~,
   )
 
-  let sem_param_type : @syntax.Type = @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Ident(name=struct_name), loc },
-    tys=@list.from_array([repr_ty]),
+  let sem_param_type : @syntax.Type = Name(
+    constr_id={ id: Ident(name=struct_name), loc },
+    tys=List([repr_ty]),
     loc~,
   )
 
   let fun_decl : @syntax.FunDecl = {
-    type_name: Some({
-      is_object: false,
-      loc,
-      name: @syntax.LongIdent::Ident(name=tycon),
-    }),
+    type_name: Some({ is_object: false, loc, name: Ident(name=tycon) }),
     name: { name: "cata", loc },
     is_async: None,
     decl_params: Some(
-      @list.from_array([
-        @syntax.Parameter::Positional(
+      List([
+        Positional(
           binder={ name: "self", loc },
           ty=Some(
-            @syntax.Name(
-              constr_id={ id: @syntax.LongIdent::Ident(name=tycon), loc },
+            Name(
+              constr_id={ id: Ident(name=tycon), loc },
               tys=@list.empty(),
               loc~,
             ),
           ),
         ),
-        @syntax.Parameter::Positional(
-          binder={ name: "s", loc },
-          ty=Some(sem_param_type),
-        ),
+        Positional(binder={ name: "s", loc }, ty=Some(sem_param_type)),
       ]),
     ),
     params_loc: loc,
-    quantifiers: @list.from_array([
-      { name: "R", name_loc: loc, constraints: @list.empty() },
-    ]),
+    quantifiers: List([{ name: "R", name_loc: loc, constraints: @list.empty() }]),
     return_type: Some(repr_ty),
-    error_type: @syntax.ErrorType::DefaultErrorType(loc~),
-    vis: @syntax.Visibility::Default,
+    error_type: DefaultErrorType(loc~),
+    vis: Default,
     attrs: @list.empty(),
     doc: @syntax.DocString::empty(),
     loc,
   }
 
-  @syntax.TopFuncDef(
+  TopFuncDef(
     fun_decl~,
-    decl_body=@syntax.DeclBody::DeclBody(expr=fn_body),
+    decl_body=DeclBody(expr=fn_body),
     where_clause=None,
     loc~,
   )
@@ -307,12 +288,7 @@ fn build_cata_match(
     }
   }
 
-  @syntax.Expr::Match(
-    expr=var_expr("t", loc),
-    cases=@list.from_array(cases[:]),
-    match_loc=loc,
-    loc~,
-  )
+  Match(expr=var_expr("t", loc), cases=List(cases[:]), match_loc=loc, loc~)
 }
 
 ///|
@@ -327,28 +303,23 @@ fn cata_case_from_desc(
   let pat_args : Array[@syntax.ConstrPatArg] = []
   d.params.each(fn(p) {
     let (kind, bind_name) : (@syntax.ArgumentKind, String) = match p.label {
-      Some(l) => (@syntax.ArgumentKind::Labelled(l), l.name)
-      None => (@syntax.ArgumentKind::Positional, p.name)
+      Some(l) => (Labelled(l), l.name)
+      None => (Positional, p.name)
     }
-    pat_args.push({ pat: @syntax.Pattern::Var({ name: bind_name, loc }), kind })
+    pat_args.push({ pat: Var({ name: bind_name, loc }), kind })
   })
 
   let constr : @syntax.Constructor = {
     name: { name: d.name, loc },
-    extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+    extra_info: NoExtraInfo,
     loc,
   }
   let args : @list.List[@syntax.ConstrPatArg]? = if pat_args.length() > 0 {
-    Some(@list.from_array(pat_args[:]))
+    Some(List(pat_args[:]))
   } else {
     None
   }
-  let pattern : @syntax.Pattern = @syntax.Pattern::Constr(
-    constr~,
-    args~,
-    is_open=false,
-    loc~,
-  )
+  let pattern : @syntax.Pattern = Constr(constr~, args~, is_open=false, loc~)
 
   let body = cata_field_call(d, tycon, loc)
   { pattern, guard_: None, body }
@@ -357,7 +328,7 @@ fn cata_case_from_desc(
 ///|
 fn cata_ext_case(
   ext_descs : Array[ConstrDescriptor],
-  tree_info : TreeInfo,
+  _tree_info : TreeInfo,
   tycon : String,
   loc : @basic.Location,
 ) -> @syntax.Case {
@@ -370,23 +341,23 @@ fn cata_ext_case(
 
       let ext_constr : @syntax.Constructor = {
         name: { name: "Ext", loc },
-        extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+        extra_info: NoExtraInfo,
         loc,
       }
       let te_pat_arg : @syntax.ConstrPatArg = {
-        pat: @syntax.Pattern::Var({ name: "te", loc }),
-        kind: @syntax.ArgumentKind::Positional,
+        pat: Var({ name: "te", loc }),
+        kind: Positional,
       }
-      let ext_pattern : @syntax.Pattern = @syntax.Pattern::Constr(
+      let ext_pattern : @syntax.Pattern = Constr(
         constr=ext_constr,
-        args=Some(@list.from_array([te_pat_arg])),
+        args=Some(List([te_pat_arg])),
         is_open=false,
         loc~,
       )
 
-      let nested_match : @syntax.Expr = @syntax.Expr::Match(
+      let nested_match : @syntax.Expr = Match(
         expr=var_expr("te", loc),
-        cases=@list.from_array(ext_cases[:]),
+        cases=List(ext_cases[:]),
         match_loc=loc,
         loc~,
       )
@@ -396,22 +367,22 @@ fn cata_ext_case(
     false => {
       let ext_constr : @syntax.Constructor = {
         name: { name: "Ext", loc },
-        extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+        extra_info: NoExtraInfo,
         loc,
       }
       let any_pat_arg : @syntax.ConstrPatArg = {
-        pat: @syntax.Pattern::Any(loc~),
-        kind: @syntax.ArgumentKind::Positional,
+        pat: Any(loc~),
+        kind: Positional,
       }
-      let ext_pattern : @syntax.Pattern = @syntax.Pattern::Constr(
+      let ext_pattern : @syntax.Pattern = Constr(
         constr=ext_constr,
-        args=Some(@list.from_array([any_pat_arg])),
+        args=Some(List([any_pat_arg])),
         is_open=false,
         loc~,
       )
-      let body : @syntax.Expr = @syntax.Expr::Field(
+      let body : @syntax.Expr = Field(
         record=var_expr("s", loc),
-        accessor=@syntax.Accessor::Label({ name: "ext_", loc }),
+        accessor=Label({ name: "ext_", loc }),
         loc~,
       )
       { pattern: ext_pattern, guard_: None, body }
@@ -422,7 +393,7 @@ fn cata_ext_case(
 ///|
 fn cata_field_call(
   d : ConstrDescriptor,
-  tycon : String,
+  _tycon : String,
   loc : @basic.Location,
 ) -> @syntax.Expr {
   let args : Array[@syntax.Argument] = []
@@ -438,22 +409,20 @@ fn cata_field_call(
       @syntax.Expr::DotApply(
         self=var_e,
         method_name={ name: "cata", loc },
-        args=@list.from_array([
-          { value: var_expr("s", loc), kind: @syntax.ArgumentKind::Positional },
-        ]),
+        args=List([{ value: var_expr("s", loc), kind: Positional }]),
         return_self=false,
         loc~,
       )
     } else {
       var_e
     }
-    args.push({ value: arg_e, kind: @syntax.ArgumentKind::Positional })
+    args.push({ value: arg_e, kind: Positional })
   })
 
-  @syntax.Expr::DotApply(
+  DotApply(
     self=var_expr("s", loc),
     method_name={ name: d.field_name, loc },
-    args=@list.from_array(args[:]),
+    args=List(args[:]),
     return_self=false,
     loc~,
   )

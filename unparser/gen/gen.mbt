@@ -48,10 +48,10 @@ fn constr_args(c : @syntax.ConstrDecl) -> Array[@syntax.ConstrParam] {
 ///|
 fn field_type_name(ty : @syntax.Type) -> String {
   match ty {
-    @syntax.Name(constr_id~, ..) =>
+    Name(constr_id~, ..) =>
       match constr_id.id {
-        @syntax.Ident(name~) => name
-        @syntax.Dot(id~, ..) => id
+        Ident(name~) => name
+        Dot(id~, ..) => id
       }
     _ => ""
   }

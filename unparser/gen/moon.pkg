@@ -10,10 +10,5 @@ import {
 }
 
 import {
-  "moonbitlang/parser/fmt",
-} for "test"
-
-import {
-  "moonbitlang/parser/fmt",
   "YumeXi/nanocake/meta_parser",
 } for "wbtest"

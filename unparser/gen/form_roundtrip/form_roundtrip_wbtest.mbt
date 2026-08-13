@@ -30,3 +30,8 @@ test "custom forms produce the intended surface syntax" {
   let lam2 = FExpr::parse_sexp("(Lam x x)")
   inspect(lam2.unparse_sexp(), content="(lambda x x)")
 }
+
+///|
+test "child wrapper constructor remains usable from wbtest" {
+  debug_inspect(FExpr2(Num(0)), content="FExpr2(Num(0))")
+}

@@ -237,7 +237,7 @@ fn gen_to_sexp_doc(
 fn wraps_tree(tc : TypeCodegen) -> Bool {
   tc.constructors.any(cl => {
     match cl.target {
-      @layout.RawTarget => false
+      RawTarget => false
       _ => true
     }
   })

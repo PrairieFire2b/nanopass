@@ -9,10 +9,10 @@ fn constr_to_string(c : @syntax.ConstrDecl) -> String {
           params.write_string(", ")
         }
         match p.ty {
-          @syntax.Name(constr_id~, ..) =>
+          Name(constr_id~, ..) =>
             match constr_id.id {
-              @syntax.Ident(name~) => params.write_string(name)
-              @syntax.Dot(id~, ..) => params.write_string(id)
+              Ident(name~) => params.write_string(name)
+              Dot(id~, ..) => params.write_string(id)
             }
           _ => params.write_string("_")
         }
@@ -42,10 +42,10 @@ pub impl Debug for Terminal with fn to_repr(self) -> Repr {
 pub impl Debug for NanoLangDef with fn to_repr(self) -> Repr {
   Repr::record({
     "name": Repr::string(self.name),
-    "extends": @debug.to_repr(self.extends),
-    "layer": @debug.to_repr(self.layer),
-    "nonterminals": @debug.to_repr(self.nonterminals),
-    "terminals": @debug.to_repr(self.terminals),
+    "extends": Repr(self.extends),
+    "layer": Repr(self.layer),
+    "nonterminals": Repr(self.nonterminals),
+    "terminals": Repr(self.terminals),
     "tycon": Repr::string(self.type_decl.tycon),
   })
 }

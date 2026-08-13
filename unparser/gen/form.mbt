@@ -37,7 +37,7 @@ fn form_pattern_string(
 /// Field-index resolver for a constructor: maps a field label or bare numeric
 /// name to the source field index.
 fn field_index_resolver(c : @syntax.ConstrDecl) -> (String) -> Int? {
-  let by_label : Map[String, Int] = {}
+  let by_label : Map[String, Int] = Map([])
   constr_args(c).eachi((i, p) => {
     match p.label {
       Some(label) => by_label[label.name] = i

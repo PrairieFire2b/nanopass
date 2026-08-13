@@ -15,7 +15,7 @@
 /// target that the M1 generator must reproduce.
 
 ///|
-typealias String as MVar
+type MVar = String
 
 ///|
 enum MTree[Self_, LamE, TreeExt] {
@@ -54,7 +54,7 @@ fn MExpr::int(n : Int) -> MExpr {
 }
 
 ///|
-fn MExpr::var(x : MVar) -> MExpr {
+fn MExpr::variable(x : MVar) -> MExpr {
   MExpr(LambdaVar(x))
 }
 
@@ -122,7 +122,7 @@ test "M1 golden: labelled ext field destructure and rebuild" {
 
 ///|
 test "M1 golden: smart constructors build wrapped Tree values" {
-  let e = MExpr::app(MExpr::lam("x", MExpr::var("x")), MExpr::int(5))
+  let e = MExpr::app(MExpr::lam("x", MExpr::variable("x")), MExpr::int(5))
   debug_inspect(
     e,
     content=(
@@ -175,7 +175,7 @@ fn MExpr::view(self : MExpr) -> MExprView {
 
 ///|
 test "M1 golden: view() flattens wrapped Tree into a flat enum" {
-  let e = MExpr::lam("x", MExpr::app(MExpr::var("x"), MExpr::int(3)))
+  let e = MExpr::lam("x", MExpr::app(MExpr::variable("x"), MExpr::int(3)))
   match e.view() {
     VLam(x, _) => debug_inspect(x, content="\"x\"")
     _ => panic()
@@ -217,6 +217,7 @@ test "M1 golden: cata folds over wrapped Tree via let-destructure" {
     lam_: fn(_, b) { b },
     app_: fn(f, a) { f + a },
   }
-  let e = MExpr::app(MExpr::lam("x", MExpr::var("x")), MExpr::int(5))
+  let e = MExpr::app(MExpr::lam("x", MExpr::variable("x")), MExpr::int(5))
   inspect(e.cata(count_leaves), content="2")
+  debug_inspect((TBool, TInt), content="(TBool, TInt)")
 }

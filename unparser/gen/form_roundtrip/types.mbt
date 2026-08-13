@@ -15,3 +15,8 @@ struct FExpr(Tree[FExpr]) derive(Eq, Debug)
 
 ///|
 struct FExpr2(Tree[FExpr2]) derive(Eq, Debug)
+
+///|
+test "child wrapper constructor remains usable" {
+  debug_inspect(FExpr2(Num(0)), content="FExpr2(Num(0))")
+}

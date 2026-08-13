@@ -14,3 +14,8 @@ struct HExpr(Tree[HExpr]) derive(Eq, Debug)
 
 ///|
 struct HExpr2(Tree[HExpr2]) derive(Eq, Debug)
+
+///|
+test "child wrapper constructor remains usable" {
+  debug_inspect(HExpr2(Num(0)), content="HExpr2(Num(0))")
+}

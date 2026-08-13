@@ -16,12 +16,16 @@ test "expand applies #nano.remove and inherits undeclared constructors" {
   )
   let group = expand_language_group(langs)
   inspect(
-    group.languages.map(l => {
+    "[" +
+    group.languages
+    .map(l => {
       let cs = l.constructors
         .map(c => "\{c.constr.name.name}:\{origin_tag(c.origin)}")
         .join(", ")
       "\{l.name} -> [\{cs}]"
-    }),
+    })
+    .join(", ") +
+    "]",
     content=(
       #|[RemoveBase -> [Lit:shared, Add:shared, Neg:shared], RemoveChild -> [Lit:shared, Add:shared, Mul:own]]
     ),
@@ -60,18 +64,26 @@ fn entry_tag(e : @meta_parser.ResolvedEntry) -> String {
 test "expand records entry inheritance and constructor origins" {
   let group = load_expand_group()
   inspect(
-    group.languages.map(l => "\{l.name}: entry=\{entry_tag(l.entry)}"),
+    "[" +
+    group.languages
+    .map(l => "\{l.name}: entry=\{entry_tag(l.entry)}")
+    .join(", ") +
+    "]",
     content=(
       #|[Lambda: entry=Expr<-default, SimplyTypedLambda: entry=Expr<-inherited(Lambda)]
     ),
   )
   inspect(
-    group.languages.map(l => {
+    "[" +
+    group.languages
+    .map(l => {
       let cs = l.constructors
         .map(c => "\{c.constr.name.name}:\{origin_tag(c.origin)}")
         .join(", ")
       "\{l.name} -> [\{cs}]"
-    }),
+    })
+    .join(", ") +
+    "]",
     content=(
       #|[Lambda -> [Int:shared, LambdaVar:shared, Lam:shared, App:shared], SimplyTypedLambda -> [True:own, False:own, Int:shared, LambdaVar:shared, If:own, Lam:shared, App:shared]]
     ),

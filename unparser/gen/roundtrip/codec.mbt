@@ -8,13 +8,13 @@ pub fn Expr::from_sexp(sexp : @sexp.Sexp) -> Expr raise @sexp.SexpError {
     Some(atom) => {
       try {
         let v = @sexp.int_from_atom(sexp, path="Expr.Int")
-        return Expr(Tree::Int(v))
+        return Expr(Int(v))
       } catch {
         _ => ()
       }
       try {
         let v = @sexp.string_from_atom(sexp, path="Expr.LambdaVar")
-        return Expr(Tree::LambdaVar(v))
+        return Expr(LambdaVar(v))
       } catch {
         _ => ()
       }
@@ -33,7 +33,7 @@ pub fn Expr::from_sexp(sexp : @sexp.Sexp) -> Expr raise @sexp.SexpError {
         "Lam" => {
           @sexp.expect_arity(items, 3, path="Expr.Lam")
           Expr(
-            Tree::Lam(
+            Lam(
               @sexp.string_from_atom(items[1], path="Expr.Lam[0]"),
               Expr::from_sexp(items[2]),
               (),
@@ -42,7 +42,7 @@ pub fn Expr::from_sexp(sexp : @sexp.Sexp) -> Expr raise @sexp.SexpError {
         }
         "App" => {
           @sexp.expect_arity(items, 3, path="Expr.App")
-          Expr(Tree::App(Expr::from_sexp(items[1]), Expr::from_sexp(items[2])))
+          Expr(App(Expr::from_sexp(items[1]), Expr::from_sexp(items[2])))
         }
         _ => @sexp.unknown_head(head, path="Expr")
       }
@@ -53,15 +53,15 @@ pub fn Expr::from_sexp(sexp : @sexp.Sexp) -> Expr raise @sexp.SexpError {
 ///|
 pub fn Expr::to_sexp_doc(self : Expr) -> @sexp.SexpDoc raise @sexp.SexpError {
   match self {
-    Expr(Tree::Int(x0)) => @sexp.int_to_doc(x0)
-    Expr(Tree::LambdaVar(x0)) => @sexp.string_to_doc(x0)
-    Expr(Tree::Lam(x0, x1, _)) =>
+    Expr(Int(x0)) => @sexp.int_to_doc(x0)
+    Expr(LambdaVar(x0)) => @sexp.string_to_doc(x0)
+    Expr(Lam(x0, x1, _)) =>
       @sexp.list_doc([
         @sexp.atom_doc("Lam"),
         @sexp.string_to_doc(x0),
         x1.to_sexp_doc(),
       ])
-    Expr(Tree::App(x0, x1)) =>
+    Expr(App(x0, x1)) =>
       @sexp.list_doc([@sexp.atom_doc("App"), x0.to_sexp_doc(), x1.to_sexp_doc()])
     _ => @sexp.decode_error(path="Expr", message="unreachable tree ext")
   }
@@ -87,20 +87,20 @@ pub fn TypedExpr::from_sexp(
   match @sexp.atom_text(sexp) {
     Some(atom) => {
       if atom == "True" {
-        return TypedExpr(Tree::Ext(TypedExprExt::True))
+        return TypedExpr(Ext(True))
       }
       if atom == "False" {
-        return TypedExpr(Tree::Ext(TypedExprExt::False))
+        return TypedExpr(Ext(False))
       }
       try {
         let v = @sexp.int_from_atom(sexp, path="TypedExpr.Int")
-        return TypedExpr(Tree::Int(v))
+        return TypedExpr(Int(v))
       } catch {
         _ => ()
       }
       try {
         let v = @sexp.string_from_atom(sexp, path="TypedExpr.LambdaVar")
-        return TypedExpr(Tree::LambdaVar(v))
+        return TypedExpr(LambdaVar(v))
       } catch {
         _ => ()
       }
@@ -119,8 +119,8 @@ pub fn TypedExpr::from_sexp(
         "If" => {
           @sexp.expect_arity(items, 4, path="TypedExpr.If")
           TypedExpr(
-            Tree::Ext(
-              TypedExprExt::If(
+            Ext(
+              If(
                 cond=TypedExpr::from_sexp(items[1]),
                 TypedExpr::from_sexp(items[2]),
                 TypedExpr::from_sexp(items[3]),
@@ -131,7 +131,7 @@ pub fn TypedExpr::from_sexp(
         "Lam" => {
           @sexp.expect_arity(items, 4, path="TypedExpr.Lam")
           TypedExpr(
-            Tree::Lam(
+            Lam(
               @sexp.string_from_atom(items[1], path="TypedExpr.Lam[0]"),
               TypedExpr::from_sexp(items[3]),
               Type::from_sexp(items[2]),
@@ -141,10 +141,7 @@ pub fn TypedExpr::from_sexp(
         "App" => {
           @sexp.expect_arity(items, 3, path="TypedExpr.App")
           TypedExpr(
-            Tree::App(
-              TypedExpr::from_sexp(items[1]),
-              TypedExpr::from_sexp(items[2]),
-            ),
+            App(TypedExpr::from_sexp(items[1]), TypedExpr::from_sexp(items[2])),
           )
         }
         _ => @sexp.unknown_head(head, path="TypedExpr")
@@ -158,27 +155,26 @@ pub fn TypedExpr::to_sexp_doc(
   self : TypedExpr,
 ) -> @sexp.SexpDoc raise @sexp.SexpError {
   match self {
-    TypedExpr(Tree::Ext(TypedExprExt::True)) => @sexp.atom_doc("True")
-    TypedExpr(Tree::Ext(TypedExprExt::False)) => @sexp.atom_doc("False")
-    TypedExpr(Tree::Int(x0)) => @sexp.int_to_doc(x0)
-    TypedExpr(Tree::LambdaVar(x0)) => @sexp.string_to_doc(x0)
-    TypedExpr(Tree::Ext(TypedExprExt::If(cond~, x1, x2))) =>
+    TypedExpr(Ext(True)) => @sexp.atom_doc("True")
+    TypedExpr(Ext(False)) => @sexp.atom_doc("False")
+    TypedExpr(Int(x0)) => @sexp.int_to_doc(x0)
+    TypedExpr(LambdaVar(x0)) => @sexp.string_to_doc(x0)
+    TypedExpr(Ext(If(cond~, x1, x2))) =>
       @sexp.list_doc([
         @sexp.atom_doc("If"),
         cond.to_sexp_doc(),
         x1.to_sexp_doc(),
         x2.to_sexp_doc(),
       ])
-    TypedExpr(Tree::Lam(x0, x2, x1)) =>
+    TypedExpr(Lam(x0, x2, x1)) =>
       @sexp.list_doc([
         @sexp.atom_doc("Lam"),
         @sexp.string_to_doc(x0),
         x1.to_sexp_doc(),
         x2.to_sexp_doc(),
       ])
-    TypedExpr(Tree::App(x0, x1)) =>
+    TypedExpr(App(x0, x1)) =>
       @sexp.list_doc([@sexp.atom_doc("App"), x0.to_sexp_doc(), x1.to_sexp_doc()])
-    _ => @sexp.decode_error(path="TypedExpr", message="unreachable tree ext")
   }
 }
 

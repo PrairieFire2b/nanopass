@@ -2,10 +2,10 @@
 /// Get the simple type name from a Type AST node.
 fn type_to_name(ty : @syntax.Type) -> String {
   match ty {
-    @syntax.Name(constr_id~, ..) =>
+    Name(constr_id~, ..) =>
       match constr_id.id {
-        @syntax.Ident(name~) => name
-        @syntax.Dot(id~, ..) => id
+        Ident(name~) => name
+        Dot(id~, ..) => id
       }
     _ => ""
   }

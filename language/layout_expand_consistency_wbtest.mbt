@@ -14,9 +14,9 @@
 ///|
 fn target_kind(t : @layout.ConstructorTarget) -> String {
   match t {
-    @layout.RawTarget => "raw"
-    @layout.TreeTarget => "tree"
-    @layout.ExtTarget(_) => "ext"
+    RawTarget => "raw"
+    TreeTarget => "tree"
+    ExtTarget(_) => "ext"
   }
 }
 
@@ -42,7 +42,7 @@ test "layout target kind agrees with expand origin" {
   ])
 
   // Build (tycon.constr -> origin) from expand, restricted to language wrappers.
-  let origin_of : Map[String, ConstructorOrigin] = {}
+  let origin_of : Map[String, ConstructorOrigin] = Map([])
   group.languages.each(l => {
     l.constructors.each(c => {
       origin_of[l.def.type_decl.tycon + "." + c.constr.name.name] = c.origin

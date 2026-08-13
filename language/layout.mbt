@@ -36,7 +36,7 @@ fn tree_constructor_layouts(
 ) -> Array[@layout.TreeConstructorLayout] {
   let constructors : Array[@layout.TreeConstructorLayout] = []
   match tree.components {
-    @syntax.Variant(cs) =>
+    Variant(cs) =>
       cs.each(constr => {
         constructors.push({
           constr_name: constr.name.name,
@@ -56,11 +56,11 @@ fn tree_constructor_names(tree : @syntax.TypeDecl) -> Array[String] {
 ///|
 fn wrapper_tree_args(wrapper : @syntax.TypeDecl) -> Array[String] {
   match wrapper.components {
-    @syntax.TupleStruct(fields) => {
+    TupleStruct(fields) => {
       let args : Array[String] = []
       fields.each(field => {
         match field {
-          @syntax.Name(tys~, ..) => tys.each(ty => args.push(type_name(ty)))
+          Name(tys~, ..) => tys.each(ty => args.push(type_name(ty)))
           _ => ()
         }
       })
@@ -127,8 +127,7 @@ fn ext_enum_layouts(
     }
     let constructors : Array[String] = []
     match ext_enum.components {
-      @syntax.Variant(cs) =>
-        cs.each(constr => constructors.push(constr.name.name))
+      Variant(cs) => cs.each(constr => constructors.push(constr.name.name))
       _ => ()
     }
     { lang_name, tycon: ext_enum.tycon, constructors, decl: ext_enum }
@@ -247,7 +246,7 @@ fn constructor_layouts(
   let layouts : Array[@layout.ConstructorLayout] = []
 
   match base.type_decl.components {
-    @syntax.Variant(cs) =>
+    Variant(cs) =>
       cs.each(constr => {
         if tree_names.contains(constr.name.name) {
           layouts.push({
@@ -255,7 +254,7 @@ fn constructor_layouts(
             source_tycon: base_tycon,
             constr_name: constr.name.name,
             source_constr: constr,
-            target: @layout.TreeTarget,
+            target: TreeTarget,
             field_order: identity_field_order(constr),
             tree_extra_type: None,
             surface_forms: surface_forms_for(
@@ -274,7 +273,7 @@ fn constructor_layouts(
     let lang = langs[i]
     let tycon = lang.type_decl.tycon
     match lang.type_decl.components {
-      @syntax.Variant(cs) =>
+      Variant(cs) =>
         cs.each(constr => {
           match base_map.get(constr.name.name) {
             Some(base_constr) =>
@@ -284,7 +283,7 @@ fn constructor_layouts(
                   source_tycon: tycon,
                   constr_name: constr.name.name,
                   source_constr: constr,
-                  target: @layout.TreeTarget,
+                  target: TreeTarget,
                   field_order: shared_field_order(
                     base_constr, constr, base_tycon, tycon,
                   ),
@@ -305,7 +304,7 @@ fn constructor_layouts(
                 source_tycon: tycon,
                 constr_name: constr.name.name,
                 source_constr: constr,
-                target: @layout.ExtTarget(tycon + "Ext"),
+                target: ExtTarget(tycon + "Ext"),
                 field_order: identity_field_order(constr),
                 tree_extra_type: None,
                 surface_forms: surface_forms_for(langs, tycon, constr.name.name),
@@ -321,13 +320,13 @@ fn constructor_layouts(
   // `Type`) are plain enums, not merged into the shared `Tree`. Each of their
   // constructors is a `RawTarget`. They may be referenced by several languages
   // in the group, so deduplicate by (source_tycon, constr_name).
-  let seen_raw : Map[String, Unit] = {}
+  let seen_raw : Map[String, Unit] = Map([])
   langs.each(lang => {
     lang.nonterminals.each(nt => {
       match nt {
         TypeDecl(td) =>
           match td.components {
-            @syntax.Variant(cs) =>
+            Variant(cs) =>
               cs.each(constr => {
                 let key = td.tycon + "." + constr.name.name
                 if !seen_raw.contains(key) {
@@ -337,7 +336,7 @@ fn constructor_layouts(
                     source_tycon: td.tycon,
                     constr_name: constr.name.name,
                     source_constr: constr,
-                    target: @layout.RawTarget,
+                    target: RawTarget,
                     field_order: identity_field_order(constr),
                     tree_extra_type: None,
                     surface_forms: [],

@@ -11,7 +11,7 @@ pub fn gen_syntax_kind(
   let loc = lang.group[0].type_decl.loc
   let descs = collect_all_descriptors(lang, tree_info, loc)
   let enum_decl = build_syntax_kind_enum(descs, loc)
-  @list.from_array([@syntax.TopTypeDef(enum_decl)])
+  List([TopTypeDef(enum_decl)])
 }
 
 ///|
@@ -22,7 +22,7 @@ fn collect_all_descriptors(
   tree_info : TreeInfo,
   loc : @basic.Location,
 ) -> Array[ConstrDescriptor] {
-  let seen : Map[String, ConstrDescriptor] = {}
+  let seen : Map[String, ConstrDescriptor] = Map([])
   lang.group.eachi(fn(i, nl) {
     let tycon = nl.type_decl.tycon
     let is_base = i == 0
@@ -67,13 +67,13 @@ fn build_syntax_kind_enum(
       attrs: @list.empty(),
       doc: @syntax.DocString::empty(),
       loc,
-      name: @syntax.ConstrName::{ name, loc },
+      name: { name, loc },
       tag: None,
     })
   })
   {
     attrs: @list.empty(),
-    components: @syntax.Variant(@list.from_array(variants[:])),
+    components: Variant(List(variants[:])),
     deriving: @list.empty(),
     doc: @syntax.DocString::empty(),
     is_declare: false,
@@ -81,6 +81,6 @@ fn build_syntax_kind_enum(
     params: @list.empty(),
     tycon: "SyntaxKind",
     tycon_loc: loc,
-    type_vis: @syntax.Visibility::Default,
+    type_vis: Default,
   }
 }

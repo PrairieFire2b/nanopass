@@ -449,10 +449,5 @@ test "gen_rewrite_stub - minimal coverage stub for derived language" {
 test "changed_and_added_fields - coverage set from Diff" {
   let diff = lang.group[0].diff(lang.group[1])
   let fields = changed_and_added_fields(diff)
-  inspect(
-    fields,
-    content=(
-      #|[Lam_, If_, True_, False_]
-    ),
-  )
+  assert_eq(fields, ["Lam_", "If_", "True_", "False_"])
 }

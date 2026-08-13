@@ -27,11 +27,11 @@ fn layout_target_to_string(layout : @layout.ConstructorLayout) -> String {
     None => "-"
   }
   match layout.target {
-    @layout.RawTarget =>
+    RawTarget =>
       "RawTarget(order=[\{field_order_to_string(layout.field_order)}])"
-    @layout.TreeTarget =>
+    TreeTarget =>
       "TreeTarget(order=[\{field_order_to_string(layout.field_order)}], extra=\{extra})"
-    @layout.ExtTarget(ext) =>
+    ExtTarget(ext) =>
       "ExtTarget(\{ext}, order=[\{field_order_to_string(layout.field_order)}])"
   }
 }
@@ -63,7 +63,7 @@ test {
   )
 
   let impls = @list.List(
-    [@syntax.TopTypeDef(tree)] + ext_enums.map(fn(e) { @syntax.TopTypeDef(e) }),
+    [@syntax.TopTypeDef(tree)] + ext_enums.map(fn(e) { TopTypeDef(e) }),
   )
   inspect(
     one_trailing_blank(@fmt.impls_to_string(impls)),
@@ -196,7 +196,7 @@ test "sig_to_impl" {
   )
   let mbti = @meta_parser.resolve_mbti(poc_repr)
   let ext = find_external_types(a, tree, mbti)
-  let impls : @list.List[@syntax.Impl] = @list.List(ext.filter_map(sig_to_impl))
+  let impls : @list.List[@syntax.Impl] = List(ext.filter_map(sig_to_impl))
   let output = one_trailing_blank(@fmt.impls_to_string(impls))
   inspect(
     output,

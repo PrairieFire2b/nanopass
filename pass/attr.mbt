@@ -5,7 +5,7 @@
 /// Raises if the `name` parameter is missing or the attribute format is invalid.
 pub fn parse_pass_meta(attr : @attribute.Attribute) -> PassMeta raise {
   match attr.parsed {
-    Some(@attribute.Apply(_, props)) => {
+    Some(Apply(_, props)) => {
       let name = get_string_prop(props, "name")
       match name {
         Some(n) => {
@@ -33,13 +33,13 @@ fn get_string_prop(
   props
   .find(fn(prop) {
     match prop {
-      @attribute.Labeled(l, @attribute.String(_)) => l == label
+      Labeled(l, String(_)) => l == label
       _ => false
     }
   })
   .map(fn(prop) {
     match prop {
-      @attribute.Labeled(_, @attribute.String(s)) => s
+      Labeled(_, String(s)) => s
       _ => ""
     }
   })

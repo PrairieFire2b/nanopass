@@ -51,9 +51,8 @@ fn construct(
   filler : String,
 ) -> String {
   match cl.target {
-    @layout.RawTarget =>
-      call_expr(cl.constr_name, labeled(args, cl.source_constr))
-    @layout.TreeTarget => {
+    RawTarget => call_expr(cl.constr_name, labeled(args, cl.source_constr))
+    TreeTarget => {
       let ordered = reorder(args, cl.field_order)
       let slots = tree_slot_count(tree, cl.constr_name)
       while ordered.length() < slots {
@@ -61,7 +60,7 @@ fn construct(
       }
       "\{cl.source_tycon}(Tree::\{call_expr(cl.constr_name, ordered)})"
     }
-    @layout.ExtTarget(ext_tycon) => {
+    ExtTarget(ext_tycon) => {
       let ext = call_expr(
         "\{ext_tycon}::\{cl.constr_name}",
         labeled(args, cl.source_constr),

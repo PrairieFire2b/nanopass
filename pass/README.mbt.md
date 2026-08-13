@@ -51,6 +51,7 @@ underlying `Tree` / `Ext`:
 
 ```mbt nocheck
 // Smart constructors: Wrapper(bare-constructor(...))
+
 ///|
 fn Expr::int(arg0 : Int) -> Expr {
   Expr(Int(arg0))

@@ -64,7 +64,7 @@ fn validate_extends_chain(
 fn declared_constructor_names(lang : NanoLangDef) -> Array[String] {
   let names : Array[String] = []
   match lang.type_decl.components {
-    @syntax.Variant(cs) => cs.each(c => names.push(c.name.name))
+    Variant(cs) => cs.each(c => names.push(c.name.name))
     _ => ()
   }
   names
@@ -392,7 +392,7 @@ fn validate_type_ref(
   known : Array[String],
 ) -> Unit raise {
   match ty {
-    @syntax.Name(tys~, ..) => {
+    Name(tys~, ..) => {
       let name = type_to_name(ty)
       if !known.contains(name) {
         raise InvalidLanguage(
@@ -401,11 +401,10 @@ fn validate_type_ref(
       }
       tys.each(arg => validate_type_ref(lang, prod, field_index, arg, known))
     }
-    @syntax.Option(ty~, ..) =>
-      validate_type_ref(lang, prod, field_index, ty, known)
-    @syntax.Tuple(tys~, ..) =>
+    Option(ty~, ..) => validate_type_ref(lang, prod, field_index, ty, known)
+    Tuple(tys~, ..) =>
       tys.each(ty => validate_type_ref(lang, prod, field_index, ty, known))
-    @syntax.Any(_) => ()
+    Any(_) => ()
     _ =>
       raise InvalidLanguage(
         "Production '\{lang.name}.\{prod.constr_name}' field $\{field_index} has unsupported field type",
@@ -785,7 +784,7 @@ pub fn NanoLangDef::with_constructors(
 ) -> NanoLangDef raise {
   let td : @syntax.TypeDecl = {
     ..self.type_decl,
-    components: @syntax.Variant(@list.List(constrs[:])),
+    components: Variant(List(constrs[:])),
   }
   let production_defs = constrs.map(c => {
     production_def_from_constr(self.type_decl.tycon, c)

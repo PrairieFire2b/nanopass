@@ -39,7 +39,7 @@ fn[Env, St, Log, Err] MExprRewriteAlg::identity() -> MExprRewriteAlg[
 ] {
   {
     int_: fn(n) { PassM::pure(MExpr::int(n)) },
-    var_: fn(x) { PassM::pure(MExpr::var(x)) },
+    var_: fn(x) { PassM::pure(MExpr::variable(x)) },
     lam_: fn(x, body_m, _e) { body_m.map(fn(body) { MExpr::lam(x, body) }) },
     app_: fn(f_m, a_m) {
       f_m.flat_map(fn(f) { a_m.map(fn(a) { MExpr::app(f, a) }) })
@@ -65,7 +65,7 @@ fn[Env, St, Log, Err] MExpr::rewrite_m(
 
 ///|
 test "M3 golden: identity rewrite_m reproduces the input" {
-  let e = MExpr::app(MExpr::lam("x", MExpr::var("x")), MExpr::int(5))
+  let e = MExpr::app(MExpr::lam("x", MExpr::variable("x")), MExpr::int(5))
   let alg : MExprRewriteAlg[Unit, Unit, String, String] = MExprRewriteAlg::identity()
   match e.rewrite_m(alg).exec_empty() {
     Ok((out, _, _)) =>
@@ -89,8 +89,8 @@ test "M3 golden: alpha-rename overrides only var_ and lam_" {
     var_: fn(x) {
       ask_env().map(fn(env : Map[MVar, MVar]) {
         match env.get(x) {
-          Some(y) => MExpr::var(y)
-          None => MExpr::var(x)
+          Some(y) => MExpr::variable(y)
+          None => MExpr::variable(x)
         }
       })
     },
@@ -110,7 +110,7 @@ test "M3 golden: alpha-rename overrides only var_ and lam_" {
       })
     },
   }
-  let e : MExpr = MExpr::lam("x", MExpr::lam("x", MExpr::var("x")))
+  let e : MExpr = MExpr::lam("x", MExpr::lam("x", MExpr::variable("x")))
   match e.rewrite_m(alg).exec({}, 0) {
     Ok((out, st, _)) => {
       debug_inspect(
@@ -233,12 +233,7 @@ test "M3 golden: derived-language rewrite_m expands ext constructors" {
 fn[Env, St, Log, Err] mtyped_stub() -> MTypedRewriteAlg[Env, St, Log, Err] {
   let base = MTypedRewriteAlg::identity()
   // Overridable: true_/false_/if_ are the "added" ext constructors.
-  MTypedRewriteAlg::{
-    ..base,
-    true_: base.true_,
-    false_: base.false_,
-    if_: base.if_,
-  }
+  { ..base, true_: base.true_, false_: base.false_, if_: base.if_ }
 }
 
 ///|

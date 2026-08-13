@@ -27,13 +27,13 @@ pub fn HExpr::from_sexp_without_hooks(
     Some(atom) => {
       try {
         let v = @sexp.int_from_atom(sexp, path="HExpr.Num")
-        return HExpr(Tree::Num(v))
+        return HExpr(Num(v))
       } catch {
         _ => ()
       }
       try {
         let v = @sexp.string_from_atom(sexp, path="HExpr.Sym")
-        return HExpr(Tree::Sym(v))
+        return HExpr(Sym(v))
       } catch {
         _ => ()
       }
@@ -51,9 +51,7 @@ pub fn HExpr::from_sexp_without_hooks(
       match head {
         "App" => {
           @sexp.expect_arity(items, 3, path="HExpr.App")
-          HExpr(
-            Tree::App(HExpr::from_sexp(items[1]), HExpr::from_sexp(items[2])),
-          )
+          HExpr(App(HExpr::from_sexp(items[1]), HExpr::from_sexp(items[2])))
         }
         _ => @sexp.unknown_head(head, path="HExpr")
       }
@@ -64,8 +62,8 @@ pub fn HExpr::from_sexp_without_hooks(
 ///|
 pub fn HExpr::to_sexp_doc(self : HExpr) -> @sexp.SexpDoc raise @sexp.SexpError {
   match self {
-    HExpr(Tree::Num(x0)) => @sexp.int_to_doc(x0)
-    HExpr(Tree::Sym(_)) as bound =>
+    HExpr(Num(x0)) => @sexp.int_to_doc(x0)
+    HExpr(Sym(_)) as bound =>
       unparse_sym(bound) catch {
         _ =>
           @sexp.hook_error(
@@ -74,7 +72,7 @@ pub fn HExpr::to_sexp_doc(self : HExpr) -> @sexp.SexpDoc raise @sexp.SexpError {
             message="unparse hook failed",
           )
       }
-    HExpr(Tree::App(x0, x1)) =>
+    HExpr(App(x0, x1)) =>
       @sexp.list_doc([@sexp.atom_doc("App"), x0.to_sexp_doc(), x1.to_sexp_doc()])
   }
 }

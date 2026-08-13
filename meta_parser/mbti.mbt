@@ -6,7 +6,7 @@ pub(all) struct Mbti(@mbti_ast.Mbti)
 /// Helper function to convert PackageImport to Repr
 fn package_import_to_repr(pkg_import : @mbti_ast.PackageImport) -> Repr {
   let { name, alias_ } = pkg_import
-  Repr::record({ "name": to_repr(name), "alias": to_repr(alias_) })
+  Repr::record({ "name": Repr(name), "alias": Repr(alias_) })
 }
 
 ///|
@@ -15,37 +15,37 @@ fn sig_to_repr(sig : @mbti_ast.Sig) -> Repr {
   match sig {
     Func(func_sig) => {
       let { name, .. } = func_sig
-      Repr::ctor("Func", [(None, to_repr(name.name))])
+      Repr::ctor("Func", [(None, Repr(name.name))])
     }
     Type(type_sig) => {
       let { name, .. } = type_sig
-      Repr::ctor("Type", [(None, to_repr(name.name))])
+      Repr::ctor("Type", [(None, Repr(name.name))])
     }
     Trait(trait_sig) => {
       let { name, .. } = trait_sig
-      Repr::ctor("Trait", [(None, to_repr(name.name))])
+      Repr::ctor("Trait", [(None, Repr(name.name))])
     }
     Impl(_) => Repr::ctor("Impl", [])
     Value(value_sig) => {
       let { name, .. } = value_sig
-      Repr::ctor("Value", [(None, to_repr(name.name))])
+      Repr::ctor("Value", [(None, Repr(name.name))])
     }
     Const(const_sig) => {
       let { name, .. } = const_sig
-      Repr::ctor("Const", [(None, to_repr(name.name))])
+      Repr::ctor("Const", [(None, Repr(name.name))])
     }
     Alias(alias_sig) =>
       match alias_sig {
         FuncAlias(name~, ..) =>
-          Repr::ctor("FuncAlias", [(None, to_repr(name.name))])
+          Repr::ctor("FuncAlias", [(None, Repr(name.name))])
         TypeAlias(name~, ..) =>
-          Repr::ctor("TypeAlias", [(None, to_repr(name.name))])
+          Repr::ctor("TypeAlias", [(None, Repr(name.name))])
         Using(target~, name~, ..) => {
           let display_name = match name {
             Some(n) => n.name
             None => target.name
           }
-          Repr::ctor("Using", [(None, to_repr(display_name))])
+          Repr::ctor("Using", [(None, Repr(display_name))])
         }
       }
   }
@@ -75,7 +75,7 @@ pub impl Debug for Mbti with fn to_repr(self) {
 
   // Build a readable representation using Repr::record
   Repr::record({
-    "package_name": to_repr(package_name),
+    "package_name": Repr(package_name),
     "imports": imports_repr,
     "sigs": sigs_repr,
   })

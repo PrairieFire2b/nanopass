@@ -35,11 +35,14 @@ test "M2 fold: free-variable collection over MExpr" {
     },
   }
   // (\x. x) y  -- free vars: {y}
-  let e = MExpr::app(MExpr::lam("x", MExpr::var("x")), MExpr::var("y"))
+  let e = MExpr::app(
+    MExpr::lam("x", MExpr::variable("x")),
+    MExpr::variable("y"),
+  )
   let fv = e.cata(free_vars)
   inspect(fv.contains("x"), content="false")
   inspect(fv.contains("y"), content="true")
-  inspect(fv.size(), content="1")
+  inspect(fv.length(), content="1")
 }
 
 ///|

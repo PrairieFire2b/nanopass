@@ -52,7 +52,7 @@ pub(all) struct ExpandedLanguageGroup {
 fn declared_constr_names(lang : @meta_parser.NanoLangDef) -> Array[String] {
   let names : Array[String] = []
   match lang.type_decl.components {
-    @syntax.Variant(cs) => cs.each(c => names.push(c.name.name))
+    Variant(cs) => cs.each(c => names.push(c.name.name))
     _ => ()
   }
   names
@@ -65,7 +65,7 @@ fn declared_constrs(
 ) -> Array[@syntax.ConstrDecl] {
   let cs : Array[@syntax.ConstrDecl] = []
   match lang.type_decl.components {
-    @syntax.Variant(vs) => vs.each(c => cs.push(c))
+    Variant(vs) => vs.each(c => cs.push(c))
     _ => ()
   }
   cs
@@ -88,7 +88,7 @@ fn retarget_constr(
       args.each(p => {
         let new_ty = if field_type_name(p.ty) == from {
           @syntax.Name(
-            constr_id={ id: @syntax.LongIdent::Ident(name=to), loc },
+            constr_id={ id: Ident(name=to), loc },
             tys=@list.empty(),
             loc~,
           )
@@ -107,10 +107,10 @@ fn retarget_constr(
 ///|
 fn field_type_name(ty : @syntax.Type) -> String {
   match ty {
-    @syntax.Name(constr_id~, ..) =>
+    Name(constr_id~, ..) =>
       match constr_id.id {
-        @syntax.Ident(name~) => name
-        @syntax.Dot(id~, ..) => id
+        Ident(name~) => name
+        Dot(id~, ..) => id
       }
     _ => ""
   }

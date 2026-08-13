@@ -33,15 +33,15 @@ pub fn gen_rewrite(lang : @language.Language) -> @list.List[@syntax.Impl] raise 
     impls.push(gen_rewrite_identity(struct_name, tycon, descs, loc))
     impls.push(gen_rewrite_driver(tycon, struct_name, tree_info, descs, loc))
   })
-  @list.List(impls[:])
+  List(impls[:])
 }
 
 ///|
 /// Type `@pass.PassM[Env, St, Log, Err, inner]`.
 fn passm_type(inner : @syntax.Type, loc : @basic.Location) -> @syntax.Type {
-  @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Dot(pkg="pass", id="PassM"), loc },
-    tys=@list.List([
+  Name(
+    constr_id={ id: Dot(pkg="pass", id="PassM"), loc },
+    tys=List([
       type_ref("Env", loc),
       type_ref("St", loc),
       type_ref("Log", loc),
@@ -57,7 +57,7 @@ fn passm_type(inner : @syntax.Type, loc : @basic.Location) -> @syntax.Type {
 fn rewrite_quantifiers(
   loc : @basic.Location,
 ) -> @list.List[@syntax.TypeVarBinder] {
-  @list.List([
+  List([
     { name: "Env", name_loc: loc, constraints: @list.empty() },
     { name: "St", name_loc: loc, constraints: @list.empty() },
     { name: "Log", name_loc: loc, constraints: @list.empty() },
@@ -90,12 +90,12 @@ fn gen_rewrite_struct(
   })
   let type_decl : @syntax.TypeDecl = {
     attrs: @list.empty(),
-    components: @syntax.Record(fields=@list.List(fields[:])),
+    components: Record(fields=List(fields[:])),
     deriving: @list.empty(),
     doc: @syntax.DocString::empty(),
     is_declare: false,
     loc,
-    params: @list.List([
+    params: List([
       { name: Some("Env"), loc },
       { name: Some("St"), loc },
       { name: Some("Log"), loc },
@@ -103,9 +103,9 @@ fn gen_rewrite_struct(
     ]),
     tycon: struct_name,
     tycon_loc: loc,
-    type_vis: @syntax.Visibility::Default,
+    type_vis: Default,
   }
-  @syntax.TopTypeDef(type_decl)
+  TopTypeDef(type_decl)
 }
 
 ///|
@@ -117,15 +117,15 @@ fn gen_rewrite_identity(
 ) -> @syntax.Impl {
   let fields : Array[@syntax.FieldDef] = []
   descs.each(fn(d) { fields.push(rewrite_identity_field(d, tycon, loc)) })
-  let record_expr : @syntax.Expr = @syntax.Record(
+  let record_expr : @syntax.Expr = Record(
     type_name=None,
-    fields=@list.List(fields[:]),
-    trailing=@syntax.TrailingMark::None,
+    fields=List(fields[:]),
+    trailing=None,
     loc~,
   )
-  let ret_ty : @syntax.Type = @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Ident(name=struct_name), loc },
-    tys=@list.List([
+  let ret_ty : @syntax.Type = Name(
+    constr_id={ id: Ident(name=struct_name), loc },
+    tys=List([
       type_ref("Env", loc),
       type_ref("St", loc),
       type_ref("Log", loc),
@@ -134,26 +134,22 @@ fn gen_rewrite_identity(
     loc~,
   )
   let fun_decl : @syntax.FunDecl = {
-    type_name: Some({
-      is_object: false,
-      loc,
-      name: @syntax.LongIdent::Ident(name=struct_name),
-    }),
+    type_name: Some({ is_object: false, loc, name: Ident(name=struct_name) }),
     name: { name: "identity", loc },
     is_async: None,
     decl_params: Some(@list.empty()),
     params_loc: loc,
     quantifiers: rewrite_quantifiers(loc),
     return_type: Some(ret_ty),
-    error_type: @syntax.ErrorType::NoErrorType,
-    vis: @syntax.Visibility::Default,
+    error_type: NoErrorType,
+    vis: Default,
     attrs: @list.empty(),
     doc: @syntax.DocString::empty(),
     loc,
   }
-  @syntax.TopFuncDef(
+  TopFuncDef(
     fun_decl~,
-    decl_body=@syntax.DeclBody::DeclBody(expr=record_expr),
+    decl_body=DeclBody(expr=record_expr),
     where_clause=None,
     loc~,
   )
@@ -172,9 +168,7 @@ fn rewrite_identity_field(
   // Lambda parameters (all constructor params, in order).
   let params : Array[@syntax.Parameter] = []
   d.params.each(fn(p) {
-    params.push(
-      @syntax.Parameter::Positional(binder={ name: p.name, loc }, ty=None),
-    )
+    params.push(Positional(binder={ name: p.name, loc }, ty=None))
   })
 
   // Arguments to the smart constructor, in order. Self-ref positions use the
@@ -204,18 +198,18 @@ fn rewrite_identity_field(
   }
 
   let lambda_func : @syntax.Func = {
-    parameters: @list.List(params[:]),
+    parameters: List(params[:]),
     params_loc: loc,
     body,
     return_type: None,
-    error_type: @syntax.ErrorType::NoErrorType,
-    kind: @syntax.FnKind::Lambda,
+    error_type: NoErrorType,
+    kind: Lambda,
     is_async: None,
     loc,
   }
   {
     label: { name: d.field_name, loc },
-    expr: @syntax.Expr::Function(func=lambda_func, loc~),
+    expr: Function(func=lambda_func, loc~),
     is_pun: false,
     loc,
   }
@@ -224,17 +218,13 @@ fn rewrite_identity_field(
 ///|
 /// `@pass.PassM::pure(inner)`
 fn passm_pure(inner : @syntax.Expr, loc : @basic.Location) -> @syntax.Expr {
-  @syntax.Expr::Apply(
-    func=@syntax.Expr::Method(
-      type_name={
-        is_object: false,
-        loc,
-        name: @syntax.LongIdent::Dot(pkg="pass", id="PassM"),
-      },
+  Apply(
+    func=Method(
+      type_name={ is_object: false, loc, name: Dot(pkg="pass", id="PassM") },
       method_name={ name: "pure", loc },
       loc~,
     ),
-    args=@list.List([{ value: inner, kind: @syntax.ArgumentKind::Positional }]),
+    args=List([{ value: inner, kind: Positional }]),
     loc~,
   )
 }
@@ -247,29 +237,19 @@ fn passm_map_last(
   loc : @basic.Location,
 ) -> @syntax.Expr {
   let lambda : @syntax.Func = {
-    parameters: @list.List([
-      @syntax.Parameter::Positional(
-        binder={ name: p.name + "_v", loc },
-        ty=None,
-      ),
-    ]),
+    parameters: List([Positional(binder={ name: p.name + "_v", loc }, ty=None)]),
     params_loc: loc,
     body: rebuilt,
     return_type: None,
-    error_type: @syntax.ErrorType::NoErrorType,
-    kind: @syntax.FnKind::Lambda,
+    error_type: NoErrorType,
+    kind: Lambda,
     is_async: None,
     loc,
   }
-  @syntax.Expr::DotApply(
+  DotApply(
     self=var_expr(p.name, loc),
     method_name={ name: "map", loc },
-    args=@list.List([
-      {
-        value: @syntax.Expr::Function(func=lambda, loc~),
-        kind: @syntax.ArgumentKind::Positional,
-      },
-    ]),
+    args=List([{ value: Function(func=lambda, loc~), kind: Positional }]),
     return_self=false,
     loc~,
   )
@@ -283,29 +263,19 @@ fn passm_flat_map(
   loc : @basic.Location,
 ) -> @syntax.Expr {
   let lambda : @syntax.Func = {
-    parameters: @list.List([
-      @syntax.Parameter::Positional(
-        binder={ name: p.name + "_v", loc },
-        ty=None,
-      ),
-    ]),
+    parameters: List([Positional(binder={ name: p.name + "_v", loc }, ty=None)]),
     params_loc: loc,
     body: cont,
     return_type: None,
-    error_type: @syntax.ErrorType::NoErrorType,
-    kind: @syntax.FnKind::Lambda,
+    error_type: NoErrorType,
+    kind: Lambda,
     is_async: None,
     loc,
   }
-  @syntax.Expr::DotApply(
+  DotApply(
     self=var_expr(p.name, loc),
     method_name={ name: "flat_map", loc },
-    args=@list.List([
-      {
-        value: @syntax.Expr::Function(func=lambda, loc~),
-        kind: @syntax.ArgumentKind::Positional,
-      },
-    ]),
+    args=List([{ value: Function(func=lambda, loc~), kind: Positional }]),
     return_self=false,
     loc~,
   )
@@ -322,19 +292,15 @@ fn smart_ctor_call(
   loc : @basic.Location,
 ) -> @syntax.Expr {
   let arguments : Array[@syntax.Argument] = args.map(fn(a) {
-    { value: a, kind: @syntax.ArgumentKind::Positional }
+    { value: a, kind: Positional }
   })
-  @syntax.Expr::Apply(
-    func=@syntax.Expr::Method(
-      type_name={
-        is_object: false,
-        loc,
-        name: @syntax.LongIdent::Ident(name=tycon),
-      },
+  Apply(
+    func=Method(
+      type_name={ is_object: false, loc, name: Ident(name=tycon) },
       method_name={ name: smart_ctor_name(d.name), loc },
       loc~,
     ),
-    args=@list.List(arguments[:]),
+    args=List(arguments[:]),
     loc~,
   )
 }
@@ -352,29 +318,29 @@ fn gen_rewrite_driver(
   // let Tycon(t) = self
   let wrapper_constr : @syntax.Constructor = {
     name: { name: tycon, loc },
-    extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+    extra_info: NoExtraInfo,
     loc,
   }
   let t_pat_arg : @syntax.ConstrPatArg = {
-    pat: @syntax.Pattern::Var({ name: "t", loc }),
-    kind: @syntax.ArgumentKind::Positional,
+    pat: Var({ name: "t", loc }),
+    kind: Positional,
   }
-  let wrapper_pattern : @syntax.Pattern = @syntax.Pattern::Constr(
+  let wrapper_pattern : @syntax.Pattern = Constr(
     constr=wrapper_constr,
-    args=Some(@list.List([t_pat_arg])),
+    args=Some(List([t_pat_arg])),
     is_open=false,
     loc~,
   )
-  let fn_body : @syntax.Expr = @syntax.Expr::Let(
+  let fn_body : @syntax.Expr = Let(
     pattern=wrapper_pattern,
     expr=var_expr("self", loc),
     body=match_expr,
     loc~,
   )
 
-  let alg_ty : @syntax.Type = @syntax.Name(
-    constr_id={ id: @syntax.LongIdent::Ident(name=struct_name), loc },
-    tys=@list.List([
+  let alg_ty : @syntax.Type = Name(
+    constr_id={ id: Ident(name=struct_name), loc },
+    tys=List([
       type_ref("Env", loc),
       type_ref("St", loc),
       type_ref("Log", loc),
@@ -384,37 +350,27 @@ fn gen_rewrite_driver(
   )
   let ret_ty = passm_type(type_ref(tycon, loc), loc)
   let fun_decl : @syntax.FunDecl = {
-    type_name: Some({
-      is_object: false,
-      loc,
-      name: @syntax.LongIdent::Ident(name=tycon),
-    }),
+    type_name: Some({ is_object: false, loc, name: Ident(name=tycon) }),
     name: { name: "rewrite_m", loc },
     is_async: None,
     decl_params: Some(
-      @list.List([
-        @syntax.Parameter::Positional(
-          binder={ name: "self", loc },
-          ty=Some(type_ref(tycon, loc)),
-        ),
-        @syntax.Parameter::Positional(
-          binder={ name: "alg", loc },
-          ty=Some(alg_ty),
-        ),
+      List([
+        Positional(binder={ name: "self", loc }, ty=Some(type_ref(tycon, loc))),
+        Positional(binder={ name: "alg", loc }, ty=Some(alg_ty)),
       ]),
     ),
     params_loc: loc,
     quantifiers: rewrite_quantifiers(loc),
     return_type: Some(ret_ty),
-    error_type: @syntax.ErrorType::NoErrorType,
-    vis: @syntax.Visibility::Default,
+    error_type: NoErrorType,
+    vis: Default,
     attrs: @list.empty(),
     doc: @syntax.DocString::empty(),
     loc,
   }
-  @syntax.TopFuncDef(
+  TopFuncDef(
     fun_decl~,
-    decl_body=@syntax.DeclBody::DeclBody(expr=fn_body),
+    decl_body=DeclBody(expr=fn_body),
     where_clause=None,
     loc~,
   )
@@ -422,12 +378,12 @@ fn gen_rewrite_driver(
 
 ///|
 fn build_rewrite_match(
-  tycon : String,
+  _tycon : String,
   tree_info : TreeInfo,
   descs : Array[ConstrDescriptor],
   loc : @basic.Location,
 ) -> @syntax.Expr {
-  let regular = descs.filter(fn(d) { not(d.is_ext) })
+  let regular = descs.filter(fn(d) { !d.is_ext })
   let ext = descs.filter(fn(d) { d.is_ext })
 
   let cases : Array[@syntax.Case] = []
@@ -441,12 +397,7 @@ fn build_rewrite_match(
       cases.push(ext_unreachable_case(loc))
     }
   }
-  @syntax.Expr::Match(
-    expr=var_expr("t", loc),
-    cases=@list.List(cases[:]),
-    match_loc=loc,
-    loc~,
-  )
+  Match(expr=var_expr("t", loc), cases=List(cases[:]), match_loc=loc, loc~)
 }
 
 ///|
@@ -457,55 +408,42 @@ fn rewrite_case(d : ConstrDescriptor, loc : @basic.Location) -> @syntax.Case {
   let call_args : Array[@syntax.Argument] = []
   d.params.each(fn(p) {
     let (kind, bind_name) : (@syntax.ArgumentKind, String) = match p.label {
-      Some(l) => (@syntax.ArgumentKind::Labelled(l), l.name)
-      None => (@syntax.ArgumentKind::Positional, p.name)
+      Some(l) => (Labelled(l), l.name)
+      None => (Positional, p.name)
     }
-    pat_args.push({ pat: @syntax.Pattern::Var({ name: bind_name, loc }), kind })
+    pat_args.push({ pat: Var({ name: bind_name, loc }), kind })
     let arg_expr = if p.is_self_ref {
       // <bind>.rewrite_m(alg)  -- delayed sub-computation
       @syntax.Expr::DotApply(
         self=var_expr(bind_name, loc),
         method_name={ name: "rewrite_m", loc },
-        args=@list.List([
-          {
-            value: var_expr("alg", loc),
-            kind: @syntax.ArgumentKind::Positional,
-          },
-        ]),
+        args=List([{ value: var_expr("alg", loc), kind: Positional }]),
         return_self=false,
         loc~,
       )
     } else {
       var_expr(bind_name, loc)
     }
-    call_args.push({ value: arg_expr, kind: @syntax.ArgumentKind::Positional })
+    call_args.push({ value: arg_expr, kind: Positional })
   })
   let constr : @syntax.Constructor = {
     name: { name: d.name, loc },
-    extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+    extra_info: NoExtraInfo,
     loc,
   }
-  let pattern : @syntax.Pattern = @syntax.Pattern::Constr(
+  let pattern : @syntax.Pattern = Constr(
     constr~,
-    args=if pat_args.length() > 0 {
-      Some(@list.List(pat_args[:]))
-    } else {
-      None
-    },
+    args=if pat_args.length() > 0 { Some(List(pat_args[:])) } else { None },
     is_open=false,
     loc~,
   )
   // (alg.constr_)(args...)
   let handler = @syntax.Expr::Field(
     record=var_expr("alg", loc),
-    accessor=@syntax.Accessor::Label({ name: d.field_name, loc }),
+    accessor=Label({ name: d.field_name, loc }),
     loc~,
   )
-  let body = @syntax.Expr::Apply(
-    func=handler,
-    args=@list.List(call_args[:]),
-    loc~,
-  )
+  let body = @syntax.Expr::Apply(func=handler, args=List(call_args[:]), loc~)
   { pattern, guard_: None, body }
 }
 
@@ -517,24 +455,24 @@ fn rewrite_ext_case(
 ) -> @syntax.Case {
   let ext_cases : Array[@syntax.Case] = []
   ext_descs.each(fn(d) { ext_cases.push(rewrite_case(d, loc)) })
-  let nested_match : @syntax.Expr = @syntax.Expr::Match(
+  let nested_match : @syntax.Expr = Match(
     expr=var_expr("te", loc),
-    cases=@list.List(ext_cases[:]),
+    cases=List(ext_cases[:]),
     match_loc=loc,
     loc~,
   )
   let ext_constr : @syntax.Constructor = {
     name: { name: "Ext", loc },
-    extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+    extra_info: NoExtraInfo,
     loc,
   }
   let te_pat_arg : @syntax.ConstrPatArg = {
-    pat: @syntax.Pattern::Var({ name: "te", loc }),
-    kind: @syntax.ArgumentKind::Positional,
+    pat: Var({ name: "te", loc }),
+    kind: Positional,
   }
-  let ext_pattern : @syntax.Pattern = @syntax.Pattern::Constr(
+  let ext_pattern : @syntax.Pattern = Constr(
     constr=ext_constr,
-    args=Some(@list.List([te_pat_arg])),
+    args=Some(List([te_pat_arg])),
     is_open=false,
     loc~,
   )
@@ -548,28 +486,22 @@ fn rewrite_ext_case(
 fn ext_unreachable_case(loc : @basic.Location) -> @syntax.Case {
   let ext_constr : @syntax.Constructor = {
     name: { name: "Ext", loc },
-    extra_info: @syntax.ConstructorExtraInfo::NoExtraInfo,
+    extra_info: NoExtraInfo,
     loc,
   }
-  let any_arg : @syntax.ConstrPatArg = {
-    pat: @syntax.Pattern::Any(loc~),
-    kind: @syntax.ArgumentKind::Positional,
-  }
-  let ext_pattern : @syntax.Pattern = @syntax.Pattern::Constr(
+  let any_arg : @syntax.ConstrPatArg = { pat: Any(loc~), kind: Positional }
+  let ext_pattern : @syntax.Pattern = Constr(
     constr=ext_constr,
-    args=Some(@list.List([any_arg])),
+    args=Some(List([any_arg])),
     is_open=false,
     loc~,
   )
   let abort_call = @syntax.Expr::Apply(
     func=var_expr("abort", loc),
-    args=@list.List([
+    args=List([
       {
-        value: @syntax.Expr::Constant(
-          c=@syntax.Constant::String("this language has no ext constructors"),
-          loc~,
-        ),
-        kind: @syntax.ArgumentKind::Positional,
+        value: Constant(c=String("this language has no ext constructors"), loc~),
+        kind: Positional,
       },
     ]),
     loc~,

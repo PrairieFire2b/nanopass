@@ -1,10 +1,10 @@
 ///|
 fn type_name(ty : @syntax.Type) -> String {
   match ty {
-    @syntax.Name(constr_id~, ..) =>
+    Name(constr_id~, ..) =>
       match constr_id.id {
-        @syntax.Ident(name~) => name
-        @syntax.Dot(id~, ..) => id
+        Ident(name~) => name
+        Dot(id~, ..) => id
       }
     _ => ""
   }
@@ -202,10 +202,10 @@ fn format_constr(c : @syntax.ConstrDecl) -> String {
           params.write_string(", ")
         }
         match p.ty {
-          @syntax.Name(constr_id~, ..) =>
+          Name(constr_id~, ..) =>
             match constr_id.id {
-              @syntax.Ident(name~) => params.write_string(name)
-              @syntax.Dot(id~, ..) => params.write_string(id)
+              Ident(name~) => params.write_string(name)
+              Dot(id~, ..) => params.write_string(id)
             }
           _ => params.write_string("_")
         }
@@ -227,7 +227,7 @@ fn format_nt(nt : NonTerminal) -> String {
 ///|
 fn format_typedecl(td : @syntax.TypeDecl) -> String {
   match td.components {
-    @syntax.Variant(constrs) => {
+    Variant(constrs) => {
       let parts = StringBuilder::new()
       constrs.eachi(fn(i, c) {
         if i > 0 {
