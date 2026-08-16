@@ -38,6 +38,15 @@ jobs:
       - name: Test
         run: moon test --deny-warn
 
+      - name: Run demo
+        run: moon -C examples/nanocake-demo run --deny-warn .
+
+      - name: Install demo
+        if: runner.os == 'Linux'
+        run: |
+          moon install ./examples/nanocake-demo --bin _build/demo-bin
+          ./_build/demo-bin/nanocake-demo
+
       - name: Verify formatting and interfaces
         if: runner.os == 'Linux'
         run: |

@@ -1,7 +1,7 @@
 # YumeXi/nanocake
 
 [![Check and Test](https://github.com/PrairieFire2b/nanocake/actions/workflows/check.yml/badge.svg?branch=master)](https://github.com/PrairieFire2b/nanocake/actions/workflows/check.yml)
-[![mooncakes.io](https://img.shields.io/badge/mooncakes.io-v0.2.0-blue)](https://mooncakes.io/docs/YumeXi/nanocake)
+[![mooncakes.io](https://img.shields.io/badge/mooncakes.io-v0.3.0-blue)](https://mooncakes.io/docs/YumeXi/nanocake)
 [![License](https://img.shields.io/badge/license-BSD--2--Clause-green)](LICENSE)
 
 A metaprogramming framework for defining composable, type-safe AST transformations.
@@ -20,7 +20,7 @@ resulting ASTs.
 Install a current MoonBit toolchain, then add nanocake to a MoonBit module:
 
 ```bash
-moon add YumeXi/nanocake@0.2.0
+moon add YumeXi/nanocake@0.3.0
 ```
 
 The repository currently targets the `wasm` backend by default. To work from
@@ -86,6 +86,31 @@ workflow: define a language, obtain its structural layout, then render generated
 MoonBit declarations into the consuming package. The checked-in `poc` and
 `unparser/gen/*_roundtrip` packages provide compilable fixtures for the same
 workflow and are exercised by `moon test`.
+
+### Run the demo
+
+Run the end-to-end expression pipeline from a source checkout:
+
+```bash
+moon -C examples/nanocake-demo run .
+```
+
+You can also install the standalone demo binary from the checkout:
+
+```bash
+moon install ./examples/nanocake-demo
+nanocake-demo
+```
+
+The demo is a separate `YumeXi/nanocake-demo` module. The root `moon.work`
+resolves its `YumeXi/nanocake@0.3.0` dependency to the local source checkout.
+It parses `(+ 1 (* 2 3))` with nanocake's S-expression runtime, decodes it
+into a wrapper-based typed AST in the shape emitted by the language generator,
+runs a bottom-up constant-folding algebra through the generated `cata` API, and
+renders the result as `7`. It is self-contained after installation and does not
+read repository fixtures at runtime. See `examples/nanocake-demo/ast.mbt`,
+`codec.mbt`, and `semantics.mbt` for the generated-code boundary and the
+user-authored algebra.
 
 ### 1. Define languages
 
@@ -197,6 +222,7 @@ API.
 | `unparser/gen/` | Generate S-expression codecs from a language layout |
 | `pass/` | Generate transformation APIs and provide pass composition runtime |
 | `poc/` | Language definitions used by interface-backed integration tests |
+| `examples/nanocake-demo/` | Independent installable constant-folding module |
 
 See [SOURCES.md](SOURCES.md) for generated-file ownership, fixture provenance,
 third-party dependencies, and regeneration notes.

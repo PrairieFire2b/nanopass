@@ -1,6 +1,6 @@
 name = "YumeXi/nanocake"
 
-version = "0.2.0"
+version = "0.3.0"
 
 import {
   "moonbit-community/prettyprinter@0.4.10",
@@ -12,12 +12,12 @@ import {
 
 readme = "README.mbt.md"
 
-repository = ""
+repository = "https://github.com/PrairieFire2b/nanocake"
 
 license = "BSD-2-Clause"
 
-keywords = [ ]
+keywords = [ "compiler", "ast", "nanopass", "code-generation", "sexp" ]
 
-description = ""
+description = "Composable, type-safe AST and compiler-pass generation for MoonBit."
 
 preferred_target = "wasm"
