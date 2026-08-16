@@ -1,7 +1,7 @@
 # YumeXi/nanocake
 
 [![Check and Test](https://github.com/PrairieFire2b/nanocake/actions/workflows/check.yml/badge.svg?branch=master)](https://github.com/PrairieFire2b/nanocake/actions/workflows/check.yml)
-[![mooncakes.io](https://img.shields.io/badge/mooncakes.io-v0.3.1-blue)](https://mooncakes.io/docs/YumeXi/nanocake)
+[![mooncakes.io](https://img.shields.io/badge/mooncakes.io-v0.3.3-blue)](https://mooncakes.io/docs/YumeXi/nanocake)
 [![License](https://img.shields.io/badge/license-BSD--2--Clause-green)](LICENSE)
 
 A metaprogramming framework for defining composable, type-safe AST transformations.
@@ -19,7 +19,7 @@ resulting ASTs.
 Install a current MoonBit toolchain, then add nanocake to a MoonBit module:
 
 ```bash
-moon add YumeXi/nanocake@0.3.1
+moon add YumeXi/nanocake@0.3.3
 ```
 
 The repository currently targets the `wasm` backend by default. To work from
@@ -80,11 +80,47 @@ It is not part of the first-round public package split.
 
 ## Quick Start
 
-Nanocake is a code-generation library. The examples below show the generation
-workflow: define a language, obtain its structural layout, then render generated
-MoonBit declarations into the consuming package. The checked-in `poc` and
-`unparser/gen/*_roundtrip` packages provide compilable fixtures for the same
-workflow and are exercised by `moon test`.
+Nanocake is a code-generation library. Define ordinary MoonBit enums plus a
+`.cake` metadata sidecar, then generate a package containing the typed AST,
+S-expression codecs, and pass APIs.
+
+### Generate MoonBit sources
+
+From a source checkout:
+
+```bash
+moon run cmd/nanocake -- generate \
+  --spec examples/nanocake-demo/schema/arithmetic.cake \
+  --language Arithmetic \
+  --module YumeXi/nanocake-demo \
+  --pkg examples/nanocake-demo/schema \
+  --out-dir examples/nanocake-demo/generated
+```
+
+This writes:
+
+```text
+generated/
+  ast.mbt
+  codec.mbt
+  pass.mbt
+  moon.pkg
+```
+
+Use `--check` in CI to fail when any generated file is missing or stale:
+
+```bash
+moon run cmd/nanocake -- generate \
+  --spec examples/nanocake-demo/schema/arithmetic.cake \
+  --language Arithmetic \
+  --module YumeXi/nanocake-demo \
+  --pkg examples/nanocake-demo/schema \
+  --out-dir examples/nanocake-demo/generated \
+  --check
+```
+
+The command only rewrites files whose content changed. The generated package is
+formatted MoonBit source and is checked by the workspace build.
 
 ### Run the demo
 
@@ -102,14 +138,13 @@ nanocake-demo
 ```
 
 The demo is a separate `YumeXi/nanocake-demo` module. The root `moon.work`
-resolves its `YumeXi/nanocake@0.3.1` dependency to the local source checkout.
+resolves its `YumeXi/nanocake@0.3.3` dependency to the local source checkout.
 It parses `(+ 1 (* 2 3))` with nanocake's S-expression runtime, decodes it
 into a wrapper-based typed AST in the shape emitted by the language generator,
 runs a bottom-up constant-folding algebra through the generated `cata` API, and
 renders the result as `7`. It is self-contained after installation and does not
-read repository fixtures at runtime. See `examples/nanocake-demo/ast.mbt`,
-`codec.mbt`, and `semantics.mbt` for the generated-code boundary and the
-user-authored algebra.
+read repository fixtures at runtime. See `examples/nanocake-demo/generated/`
+for checked-in CLI output and `semantics.mbt` for the user-authored algebra.
 
 ### 1. Define languages
 

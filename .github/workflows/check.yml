@@ -41,11 +41,21 @@ jobs:
       - name: Run demo
         run: moon -C examples/nanocake-demo run --deny-warn .
 
+      - name: Verify generated files
+        run: |
+          moon run cmd/nanocake -- generate --spec examples/nanocake-demo/schema/arithmetic.cake --language Arithmetic --module YumeXi/nanocake-demo --pkg examples/nanocake-demo/schema --out-dir examples/nanocake-demo/generated --check
+
       - name: Install demo
         if: runner.os == 'Linux'
         run: |
           moon install ./examples/nanocake-demo --bin _build/demo-bin
           ./_build/demo-bin/nanocake-demo
+
+      - name: Install generator CLI
+        if: runner.os == 'Linux'
+        run: |
+          moon install ./cmd/nanocake --bin _build/cli-bin
+          ./_build/cli-bin/nanocake --help
 
       - name: Verify formatting and interfaces
         if: runner.os == 'Linux'

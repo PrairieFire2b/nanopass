@@ -87,3 +87,20 @@ continue to the expanded layout.
 
 The existing attribute frontend remains supported. The two frontends converge on
 the same `NanoLangDef` validation and generation pipeline.
+
+## Generate Files
+
+The `nanocake generate` command writes a complete generated package:
+
+```bash
+moon run cmd/nanocake -- generate \
+  --spec schema/language.cake \
+  --language Lambda \
+  --module user/compiler \
+  --pkg schema \
+  --out-dir generated
+```
+
+Add `--check` to compare the expected output with files already on disk without
+writing. The command fails if `ast.mbt`, `codec.mbt`, `pass.mbt`, or `moon.pkg`
+is missing or stale.

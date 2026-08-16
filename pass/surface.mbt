@@ -78,6 +78,7 @@ fn is_keyword(name : String) -> Bool {
     | "as"
     | "in"
     | "guard"
+    | "var"
     | "raise"
     | "try"
     | "catch" => true

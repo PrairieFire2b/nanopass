@@ -1,0 +1,10 @@
+import {
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "moonbitlang/parser/fmt",
+  "YumeXi/nanocake/language",
+  "YumeXi/nanocake/unparser/gen",
+  "YumeXi/nanocake/pass",
+}
+
+pkgtype(kind: "executable")

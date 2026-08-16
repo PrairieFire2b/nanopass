@@ -1,0 +1,51 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "YumeXi/nanocake-demo/generated"
+
+import {
+  "YumeXi/error/cause",
+  "YumeXi/nanocake/unparser/sexp",
+}
+
+// Values
+pub fn parse_Arithmetic(@sexp.Sexp) -> ExprSchema raise @cause.Cause
+
+pub fn parse_OptimizedArithmetic(@sexp.Sexp) -> OptimizedExprSchema raise @cause.Cause
+
+pub fn unparse_Arithmetic(ExprSchema) -> @sexp.SexpDoc raise @cause.Cause
+
+pub fn unparse_OptimizedArithmetic(OptimizedExprSchema) -> @sexp.SexpDoc raise @cause.Cause
+
+// Errors
+
+// Types and methods
+type ExprSchema
+pub fn ExprSchema::from_sexp(@sexp.Sexp) -> Self raise @sexp.SexpError
+pub fn ExprSchema::from_sexp_without_hooks(@sexp.Sexp) -> Self raise @sexp.SexpError
+pub fn ExprSchema::parse_sexp(StringView) -> Self raise @sexp.SexpError
+pub fn ExprSchema::to_sexp_doc(Self) -> @sexp.SexpDoc raise @sexp.SexpError
+pub fn ExprSchema::unparse_sexp(Self, width? : Int) -> String raise @sexp.SexpError
+
+type ExprSchemaRewriteAlg[Env, St, Log, Err]
+
+type ExprSchemaSemantics[Repr]
+
+type ExprSchemaView
+
+type OptimizedExprSchema
+pub fn OptimizedExprSchema::from_sexp(@sexp.Sexp) -> Self raise @sexp.SexpError
+pub fn OptimizedExprSchema::from_sexp_without_hooks(@sexp.Sexp) -> Self raise @sexp.SexpError
+pub fn OptimizedExprSchema::parse_sexp(StringView) -> Self raise @sexp.SexpError
+pub fn OptimizedExprSchema::to_sexp_doc(Self) -> @sexp.SexpDoc raise @sexp.SexpError
+pub fn OptimizedExprSchema::unparse_sexp(Self, width? : Int) -> String raise @sexp.SexpError
+
+type OptimizedExprSchemaRewriteAlg[Env, St, Log, Err]
+
+type OptimizedExprSchemaSemantics[Repr]
+
+type OptimizedExprSchemaView
+
+type Tree[Self_]
+
+// Type aliases
+
+// Traits

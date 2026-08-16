@@ -116,7 +116,7 @@ fn gen_identity_impl(
     params_loc: loc,
     quantifiers: @list.empty(),
     return_type: Some(ret_ty),
-    error_type: DefaultErrorType(loc~),
+    error_type: NoErrorType,
     vis: Default,
     attrs: @list.empty(),
     doc: @syntax.DocString::empty(),
@@ -164,7 +164,7 @@ fn identity_field_from_desc(
     params_loc: loc,
     body,
     return_type: None,
-    error_type: DefaultErrorType(loc~),
+    error_type: NoErrorType,
     kind: Lambda,
     is_async: None,
     loc,
@@ -250,7 +250,7 @@ fn gen_cata_impl(
     params_loc: loc,
     quantifiers: List([{ name: "R", name_loc: loc, constraints: @list.empty() }]),
     return_type: Some(repr_ty),
-    error_type: DefaultErrorType(loc~),
+    error_type: NoErrorType,
     vis: Default,
     attrs: @list.empty(),
     doc: @syntax.DocString::empty(),
@@ -419,11 +419,10 @@ fn cata_field_call(
     args.push({ value: arg_e, kind: Positional })
   })
 
-  DotApply(
-    self=var_expr("s", loc),
-    method_name={ name: d.field_name, loc },
-    args=List(args[:]),
-    return_self=false,
+  let handler = @syntax.Expr::Field(
+    record=var_expr("s", loc),
+    accessor=Label({ name: d.field_name, loc }),
     loc~,
   )
+  @syntax.Expr::Apply(func=handler, args=List(args[:]), loc~)
 }

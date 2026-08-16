@@ -144,7 +144,12 @@ fn fill_type(
 ///|
 /// Sanitize a constructor name for use as a struct field name.
 fn field_name(name : String) -> String {
-  name + "_"
+  let lowered = smart_ctor_name(name)
+  if lowered.has_suffix("_") {
+    lowered
+  } else {
+    lowered + "_"
+  }
 }
 
 ///|
@@ -172,7 +177,7 @@ priv struct ParamDescriptor {
 priv struct ConstrDescriptor {
   /// Constructor name, e.g. "Int", "Lam".
   name : String
-  /// Sanitized field name, e.g. "Int_", "Lam_".
+  /// Sanitized field name, e.g. "int_", "lam_".
   field_name : String
   /// Descriptors for each parameter.
   params : Array[ParamDescriptor]
