@@ -35,8 +35,13 @@ pub fn parse_nano_spec(input : String) -> NanoSpec raise NanopassParseError {
   let root = parse_spec(input)
   let top = spec_list(root, "root")
   expect_head(top, "nanocake", "root")
-  let version = one_int(find_clause(top, "version"), "version")
-  let source = one_text(find_clause(top, "source"), "source")
+  validate_clause_names(
+    top,
+    ["version", "source", "nonterminal", "language"],
+    "nanocake",
+  )
+  let version = one_int(unique_clause(top, "version"), "version")
+  let source = one_text(unique_clause(top, "source"), "source")
   let nonterminals = clauses(top, "nonterminal").map(node => {
     node_one_text(node, "nonterminal")
   })
@@ -90,21 +95,6 @@ fn expect_head(
 }
 
 ///|
-fn find_clause(items : Array[SpecNode], name : String) -> SpecNode? {
-  for node in items[1:] {
-    match node {
-      SpecList(items~, ..) =>
-        match items.get(0) {
-          Some(SpecAtom(value~, ..)) => if value == name { return Some(node) }
-          _ => ()
-        }
-      _ => ()
-    }
-  }
-  None
-}
-
-///|
 fn clauses(items : Array[SpecNode], name : String) -> Array[SpecNode] {
   items[1:].filter(node => {
     match node {
@@ -116,6 +106,40 @@ fn clauses(items : Array[SpecNode], name : String) -> Array[SpecNode] {
       _ => false
     }
   })
+}
+
+///|
+fn unique_clause(
+  items : Array[SpecNode],
+  name : String,
+) -> SpecNode? raise NanopassParseError {
+  let matches = clauses(items, name)
+  match matches.length() {
+    0 => None
+    1 => Some(matches[0])
+    _ =>
+      raise InvalidLanguage(
+        ".cake: (" + name + " ...) is declared more than once",
+      )
+  }
+}
+
+///|
+fn validate_clause_names(
+  items : Array[SpecNode],
+  allowed : Array[String],
+  path : String,
+) -> Unit raise NanopassParseError {
+  for node in items[1:] {
+    let clause = spec_list(node, path)
+    guard clause.get(0) is Some(head) else {
+      raise InvalidLanguage(".cake: empty clause at " + path)
+    }
+    let name = spec_atom(head, path)
+    if !allowed.contains(name) {
+      raise InvalidLanguage(".cake: unknown clause '" + name + "' at " + path)
+    }
+  }
 }
 
 ///|
@@ -155,18 +179,23 @@ fn parse_spec_language(
     raise InvalidLanguage(".cake: language requires a name")
   }
   let name = spec_atom(items[1], "language.name")
-  let tycon = one_text(find_clause(items, "type"), "type")
-  let extends = find_clause(items, "extends").map(node => {
+  validate_clause_names(
+    [items[0]] + items[2:].to_owned(),
+    ["type", "extends", "layer", "entry", "meta", "remove", "production"],
+    "language " + name,
+  )
+  let tycon = one_text(unique_clause(items, "type"), "type")
+  let extends = unique_clause(items, "extends").map(node => {
     node_one_text(node, "extends")
   })
-  let layer = find_clause(items, "layer").map(node => {
+  let layer = unique_clause(items, "layer").map(node => {
     node_one_text(node, "layer")
   })
-  let entry = find_clause(items, "entry").map(node => {
+  let entry = unique_clause(items, "entry").map(node => {
     node_one_text(node, "entry")
   })
   let meta_vars = clauses(items, "meta").map(node => node_one_text(node, "meta"))
-  let removed = match find_clause(items, "remove") {
+  let removed = match unique_clause(items, "remove") {
     Some(remove) =>
       spec_list(remove, "remove")[1:].map(node => spec_text(node, "remove"))
     None => []
@@ -184,6 +213,11 @@ fn parse_spec_production(
     raise InvalidLanguage(".cake: production requires a name")
   }
   let name = spec_atom(items[1], "production.name")
+  validate_clause_names(
+    [items[0]] + items[2:].to_owned(),
+    ["form", "form-only", "parse-by", "unparse-by", "context"],
+    "production " + name,
+  )
   let forms = clauses(items, "form").map(node => {
     let form_items = spec_list(node, "form")
     if form_items.length() != 2 {
@@ -191,11 +225,11 @@ fn parse_spec_production(
     }
     spec_pattern(form_items[1])
   })
-  let form_only = find_clause(items, "form-only") is Some(_)
-  let parse_by = find_clause(items, "parse-by").map(node => {
+  let form_only = unique_clause(items, "form-only") is Some(_)
+  let parse_by = unique_clause(items, "parse-by").map(node => {
     node_one_text(node, "parse-by")
   })
-  let unparse_by = find_clause(items, "unparse-by").map(node => {
+  let unparse_by = unique_clause(items, "unparse-by").map(node => {
     node_one_text(node, "unparse-by")
   })
   let contexts = clauses(items, "context").map(node => {

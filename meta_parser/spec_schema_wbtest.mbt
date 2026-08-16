@@ -53,3 +53,36 @@ test "parse derived nano spec language" {
   assert_eq(child.extends, Some("Base"))
   assert_eq(child.removed, ["App", "Gone"])
 }
+
+///|
+test "reject duplicate cake single-value clauses" {
+  let input =
+    #|(nanocake
+    #|  (version 1)
+    #|  (version 2)
+    #|  (source lang.mbt)
+    #|  (language Base (type Expr)))
+  try parse_nano_spec(input) catch {
+    InvalidLanguage(message) =>
+      assert_true(message.contains("declared more than once"))
+    _ => fail("unexpected error")
+  } noraise {
+    _ => fail("expected duplicate version to fail")
+  }
+}
+
+///|
+test "reject unknown cake clauses" {
+  let input =
+    #|(nanocake
+    #|  (version 1)
+    #|  (source lang.mbt)
+    #|  (langauge Base (type Expr)))
+  try parse_nano_spec(input) catch {
+    InvalidLanguage(message) =>
+      assert_true(message.contains("unknown clause 'langauge'"))
+    _ => fail("unexpected error")
+  } noraise {
+    _ => fail("expected unknown clause to fail")
+  }
+}
