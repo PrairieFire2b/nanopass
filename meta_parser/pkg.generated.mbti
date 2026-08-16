@@ -15,9 +15,15 @@ pub fn find_languages(SourceLocRepr) -> Array[NanoLangDef] raise
 
 pub fn find_languages_by_file(String) -> Array[NanoLangDef] raise
 
+pub fn find_languages_by_spec_file(String) -> Array[NanoLangDef] raise
+
 pub fn get_name_from_attr(@attribute.Attribute) -> String raise
 
 pub fn normalize_language_defs(Array[NanoLangDef], extra_known_types? : Array[String]) -> Array[NanoLangDef] raise
+
+pub fn parse_nano_spec(String) -> NanoSpec raise NanopassParseError
+
+pub fn parse_spec(String) -> SpecNode raise NanopassParseError
 
 pub fn resolve(SourceLoc) -> SourceLocRepr
 
@@ -100,7 +106,35 @@ pub struct NanoLangDef {
 }
 pub fn NanoLangDef::diff(Self, Self) -> Diff
 pub fn NanoLangDef::with_constructors(Self, Array[@syntax.ConstrDecl]) -> Self raise
+pub fn NanoLangDef::with_constructors_and_metadata(Self, Array[@syntax.ConstrDecl], Array[ProductionDef]) -> Self
 pub impl @debug.Debug for NanoLangDef
+
+pub(all) struct NanoSpec {
+  version : Int
+  source : String
+  nonterminals : Array[String]
+  languages : Array[NanoSpecLanguage]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct NanoSpecLanguage {
+  name : String
+  tycon : String
+  extends : String?
+  layer : String?
+  entry : String?
+  meta_vars : Array[String]
+  removed : Array[String]
+  productions : Array[NanoSpecProduction]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct NanoSpecProduction {
+  name : String
+  forms : Array[FormPattern]
+  form_only : Bool
+  parse_by : String?
+  unparse_by : String?
+  contexts : Array[String]
+} derive(Eq, @debug.Debug)
 
 pub enum NonTerminal {
   Constructor(@syntax.ConstrDecl)
@@ -134,6 +168,7 @@ pub(all) struct ProductionDef {
   contexts : Array[String]
   source_constr : @syntax.ConstrDecl
 }
+pub fn ProductionDef::with_constructor(Self, @syntax.ConstrDecl) -> Self
 
 pub(all) struct ProductionField {
   index : Int
@@ -170,6 +205,17 @@ pub struct SourceLocRepr {
 } derive(@debug.Debug)
 pub fn SourceLocRepr::file_path(Self) -> String
 pub fn SourceLocRepr::for_pkg(pkg~ : String, mod~ : String) -> Self
+
+pub(all) enum SpecNode {
+  SpecAtom(value~ : String, span~ : SpecSpan)
+  SpecString(value~ : String, span~ : SpecSpan)
+  SpecList(items~ : Array[SpecNode], span~ : SpecSpan)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SpecSpan {
+  start : Int
+  end : Int
+} derive(Eq, @debug.Debug)
 
 pub struct Terminal(@syntax.ConstrDecl)
 pub impl @debug.Debug for Terminal

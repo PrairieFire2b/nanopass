@@ -28,6 +28,7 @@ pub(all) enum ConstructorOrigin {
 pub(all) struct ExpandedConstructor {
   owner : String
   constr : @syntax.ConstrDecl
+  production : @meta_parser.ProductionDef
   origin : ConstructorOrigin
 }
 
@@ -124,9 +125,13 @@ fn expand_base(lang : @meta_parser.NanoLangDef) -> ExpandedLanguage raise {
     None => raise NoLanguageFound
   }
   let constructors = declared_constrs(lang).map(c => {
-    owner: lang.type_decl.tycon,
-    constr: c,
-    origin: Shared,
+    let production = find_production(lang.production_defs, c.name.name)
+    {
+      owner: lang.type_decl.tycon,
+      constr: c,
+      production: production.with_constructor(c),
+      origin: Shared,
+    }
   })
   { name: lang.name, extends: lang.extends, entry, constructors, def: lang }
 }
@@ -161,15 +166,39 @@ fn expand_derived(
     let name = pc.constr.name.name
     if !removed.contains(name) && !own_names.contains(name) {
       let retargeted = retarget_constr(pc.constr, pc.owner, tycon, loc)
-      constructors.push({ owner: tycon, constr: retargeted, origin: Shared })
+      constructors.push({
+        owner: tycon,
+        constr: retargeted,
+        production: pc.production.with_constructor(retargeted),
+        origin: Shared,
+      })
     }
   })
   // Own constructors: same name as parent => Shared (override), else Own.
   own.each(c => {
     let origin = if parent_names.contains(c.name.name) { Shared } else { Own }
-    constructors.push({ owner: tycon, constr: c, origin })
+    let production = find_production(lang.production_defs, c.name.name)
+    constructors.push({
+      owner: tycon,
+      constr: c,
+      production: production.with_constructor(c),
+      origin,
+    })
   })
   { name: lang.name, extends: lang.extends, entry, constructors, def: lang }
+}
+
+///|
+fn find_production(
+  defs : Array[@meta_parser.ProductionDef],
+  name : String,
+) -> @meta_parser.ProductionDef {
+  for def in defs {
+    if def.constr_name == name {
+      return def
+    }
+  }
+  panic()
 }
 
 ///|

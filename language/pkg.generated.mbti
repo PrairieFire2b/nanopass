@@ -26,6 +26,7 @@ pub(all) enum ConstructorOrigin {
 pub(all) struct ExpandedConstructor {
   owner : String
   constr : @syntax.ConstrDecl
+  production : @meta_parser.ProductionDef
   origin : ConstructorOrigin
 }
 
@@ -50,6 +51,7 @@ pub struct Language {
 pub fn Language::def(name? : String, loc~ : SourceLoc, _args_loc~ : ArgsLoc) -> Self raise
 pub fn Language::expand(Self) -> ExpandedLanguageGroup raise
 pub fn Language::from_file(name? : String, path~ : String, mod~ : String) -> Self raise
+pub fn Language::from_spec(name? : String, path~ : String, mod~ : String) -> Self raise
 pub fn Language::gen(Self) -> @list.List[@syntax.Impl] raise
 pub fn Language::layout(Self) -> @layout.GeneratedLanguageLayout raise
 

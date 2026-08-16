@@ -774,8 +774,8 @@ fn validate_language_defs_with_known_types(
 
 ///|
 /// Return a copy of this language whose enum body (`type_decl.components`) is
-/// replaced with the given constructors. The `production_defs` are rebuilt from
-/// those constructors so downstream surface-form/hook metadata stays in sync.
+/// replaced with the given constructors. Existing production metadata is kept
+/// by constructor name while fields and source constructor nodes are rebuilt.
 /// Used by downstream packages to feed an expanded constructor set back through
 /// the raw-language pipeline without re-implementing `NanoLangDef` construction.
 pub fn NanoLangDef::with_constructors(
@@ -787,9 +787,45 @@ pub fn NanoLangDef::with_constructors(
     components: Variant(List(constrs[:])),
   }
   let production_defs = constrs.map(c => {
-    production_def_from_constr(self.type_decl.tycon, c)
+    match find_production_def(self.production_defs, c.name.name) {
+      Some(def) =>
+        production_def_from_metadata(
+          self.type_decl.tycon,
+          c,
+          production_metadata_from_def(def),
+        )
+      None => production_def_from_constr(self.type_decl.tycon, c)
+    }
   })
   { ..self, type_decl: td, production_defs }
+}
+
+///|
+/// Rebuild a language after inheritance expansion without discarding metadata
+/// from a sidecar specification.
+pub fn NanoLangDef::with_constructors_and_metadata(
+  self : NanoLangDef,
+  constrs : Array[@syntax.ConstrDecl],
+  defs : Array[ProductionDef],
+) -> NanoLangDef {
+  let td : @syntax.TypeDecl = {
+    ..self.type_decl,
+    components: Variant(List(constrs[:])),
+  }
+  { ..self, type_decl: td, production_defs: defs }
+}
+
+///|
+fn find_production_def(
+  defs : Array[ProductionDef],
+  name : String,
+) -> ProductionDef? {
+  for def in defs {
+    if def.constr_name == name {
+      return Some(def)
+    }
+  }
+  None
 }
 
 ///|

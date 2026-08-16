@@ -226,6 +226,11 @@ API.
 See [SOURCES.md](SOURCES.md) for generated-file ownership, fixture provenance,
 third-party dependencies, and regeneration notes.
 
+The metadata DSL MVP is documented in
+[meta_parser/README.cake.md](meta_parser/README.cake.md). It replaces
+verbose nanopass attributes with a structured sidecar while preserving ordinary
+MoonBit enum definitions.
+
 ## Package Reference
 
 ### `@meta_parser` — Parse annotations

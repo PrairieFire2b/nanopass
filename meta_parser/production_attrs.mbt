@@ -130,6 +130,76 @@ fn production_fields_from_constr(
 }
 
 ///|
+/// Metadata-independent constructor fields shared by all metadata frontends.
+priv struct ProductionMetadata {
+  patterns : Array[FormPattern]
+  canonical_policy : CanonicalPolicy
+  hooks : NanoHooks
+  name_alias : String?
+  inline : Bool
+  infix_operator : String?
+  contexts : Array[String]
+}
+
+///|
+fn production_def_from_metadata(
+  owner : String,
+  c : @syntax.ConstrDecl,
+  metadata : ProductionMetadata,
+) -> ProductionDef {
+  let constr_name = c.name.name
+  let fields = production_fields_from_constr(c)
+  {
+    owner,
+    constr_name,
+    fields,
+    patterns: metadata.patterns,
+    surface_forms: surface_form_rules_from_metadata(
+      constr_name,
+      fields,
+      metadata.patterns,
+      metadata.canonical_policy,
+      metadata.name_alias,
+      metadata.inline,
+      metadata.infix_operator,
+    ),
+    canonical_policy: metadata.canonical_policy,
+    hooks: metadata.hooks,
+    name_alias: metadata.name_alias,
+    inline: metadata.inline,
+    infix_operator: metadata.infix_operator,
+    contexts: metadata.contexts,
+    source_constr: c,
+  }
+}
+
+///|
+fn production_metadata_from_def(def : ProductionDef) -> ProductionMetadata {
+  {
+    patterns: def.patterns,
+    canonical_policy: def.canonical_policy,
+    hooks: def.hooks,
+    name_alias: def.name_alias,
+    inline: def.inline,
+    infix_operator: def.infix_operator,
+    contexts: def.contexts,
+  }
+}
+
+///|
+/// Rebind a production's source constructor while preserving its metadata.
+pub fn ProductionDef::with_constructor(
+  self : ProductionDef,
+  c : @syntax.ConstrDecl,
+) -> ProductionDef {
+  production_def_from_metadata(
+    self.owner,
+    c,
+    production_metadata_from_def(self),
+  )
+}
+
+///|
 fn field_pattern_from_index(index : Int) -> FormPattern {
   FieldPattern(index~, prefix="", suffix="")
 }
@@ -244,28 +314,13 @@ fn production_def_from_constr(
   c : @syntax.ConstrDecl,
 ) -> ProductionDef raise {
   let constr_name = c.name.name
-  let fields = production_fields_from_constr(c)
-  let patterns = form_patterns_from_attrs(c.attrs)
-  let canonical_policy = canonical_policy_from_attrs(c.attrs)
-  let hooks = hooks_from_attrs(owner, constr_name, c.attrs)
-  let name_alias = name_alias_from_attrs(owner, constr_name, c.attrs)
-  let inline = c.attrs.any(attr => is_nano_attr(attr, "inline"))
-  let infix_operator = infix_operator_from_attrs(owner, constr_name, c.attrs)
-  let contexts = contexts_from_attrs(c.attrs)
-  {
-    owner,
-    constr_name,
-    fields,
-    patterns,
-    surface_forms: surface_form_rules_from_metadata(
-      constr_name, fields, patterns, canonical_policy, name_alias, inline, infix_operator,
-    ),
-    canonical_policy,
-    hooks,
-    name_alias,
-    inline,
-    infix_operator,
-    contexts,
-    source_constr: c,
-  }
+  production_def_from_metadata(owner, c, {
+    patterns: form_patterns_from_attrs(c.attrs),
+    canonical_policy: canonical_policy_from_attrs(c.attrs),
+    hooks: hooks_from_attrs(owner, constr_name, c.attrs),
+    name_alias: name_alias_from_attrs(owner, constr_name, c.attrs),
+    inline: c.attrs.any(attr => is_nano_attr(attr, "inline")),
+    infix_operator: infix_operator_from_attrs(owner, constr_name, c.attrs),
+    contexts: contexts_from_attrs(c.attrs),
+  })
 }

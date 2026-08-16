@@ -371,7 +371,8 @@ fn Language::expanded_group(
   )
   group.languages.map(el => {
     let constrs = el.constructors.map(ec => ec.constr)
-    el.def.with_constructors(constrs)
+    let defs = el.constructors.map(ec => ec.production)
+    el.def.with_constructors_and_metadata(constrs, defs)
   })
 }
 
