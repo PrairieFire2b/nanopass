@@ -13,7 +13,6 @@ resulting ASTs.
 
 - GitHub: <https://github.com/PrairieFire2b/nanocake>
 - Package: <https://mooncakes.io/docs/YumeXi/nanocake>
-- License and source provenance: [LICENSE](LICENSE) and [SOURCES.md](SOURCES.md)
 
 ## Installation
 
