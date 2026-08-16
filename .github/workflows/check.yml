@@ -1,0 +1,46 @@
+name: Check and Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup MoonBit
+        uses: hustcer/setup-moonbit@v1
+
+      - name: Toolchain and dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Check
+        run: moon check --deny-warn
+
+      - name: Build
+        run: moon build
+
+      - name: Test
+        run: moon test --deny-warn
+
+      - name: Verify formatting and interfaces
+        if: runner.os == 'Linux'
+        run: |
+          moon fmt --check
+          moon info
+          git diff --exit-code

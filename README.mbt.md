@@ -1,11 +1,38 @@
 # YumeXi/nanocake
 
+[![Check and Test](https://github.com/PrairieFire2b/nanocake/actions/workflows/check.yml/badge.svg?branch=master)](https://github.com/PrairieFire2b/nanocake/actions/workflows/check.yml)
+[![mooncakes.io](https://img.shields.io/badge/mooncakes.io-v0.2.0-blue)](https://mooncakes.io/docs/YumeXi/nanocake)
+[![License](https://img.shields.io/badge/license-BSD--2--Clause-green)](LICENSE)
+
 A metaprogramming framework for defining composable, type-safe AST transformations.
 
 Given MoonBit enums annotated with `#nanopass.language`, the library generates
 unified `Tree` types that merge shared constructors across language extensions,
 plus S-expression parsers/unparsers and transformation-pass scaffolding for the
 resulting ASTs.
+
+- GitHub: <https://github.com/PrairieFire2b/nanocake>
+- Package: <https://mooncakes.io/docs/YumeXi/nanocake>
+- License and source provenance: [LICENSE](LICENSE) and [SOURCES.md](SOURCES.md)
+
+## Installation
+
+Install a current MoonBit toolchain, then add nanocake to a MoonBit module:
+
+```bash
+moon add YumeXi/nanocake@0.2.0
+```
+
+The repository currently targets the `wasm` backend by default. To work from
+source instead, clone the repository and fetch its declared dependencies:
+
+```bash
+git clone https://github.com/PrairieFire2b/nanocake.git
+cd nanocake
+moon update
+moon check
+moon test
+```
 
 ## Architecture
 
@@ -53,6 +80,12 @@ The `poc` package is kept as a fixture/example package for `.mbti`-backed tests.
 It is not part of the first-round public package split.
 
 ## Quick Start
+
+Nanocake is a code-generation library. The examples below show the generation
+workflow: define a language, obtain its structural layout, then render generated
+MoonBit declarations into the consuming package. The checked-in `poc` and
+`unparser/gen/*_roundtrip` packages provide compilable fixtures for the same
+workflow and are exercised by `moon test`.
 
 ### 1. Define languages
 
@@ -134,6 +167,39 @@ the generated parser without infinite recursion.
 
 See the `pass` package for transform/fold scaffolding and the `PassM` effectful
 pipeline combinator.
+
+## Development
+
+Run the same checks used by CI before submitting a change:
+
+```bash
+moon check --deny-warn
+moon build
+moon test --deny-warn
+moon fmt --check
+moon info
+git diff --exit-code
+```
+
+The test suite includes parser validation, inheritance and removal semantics,
+layout consistency, pass generation, S-expression forms and hooks, plus compiled
+roundtrip tests for generated codecs. Generated interfaces
+(`pkg.generated.mbti`) are versioned and must remain synchronized with the public
+API.
+
+## Repository Layout
+
+| Path | Purpose |
+|------|---------|
+| `meta_parser/` | Parse and validate `#nanopass` / `#nano` annotations |
+| `language/` | Expand language inheritance and generate typed AST layouts |
+| `unparser/sexp/` | S-expression runtime, form matching, rendering, and errors |
+| `unparser/gen/` | Generate S-expression codecs from a language layout |
+| `pass/` | Generate transformation APIs and provide pass composition runtime |
+| `poc/` | Language definitions used by interface-backed integration tests |
+
+See [SOURCES.md](SOURCES.md) for generated-file ownership, fixture provenance,
+third-party dependencies, and regeneration notes.
 
 ## Package Reference
 
