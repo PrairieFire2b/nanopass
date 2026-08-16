@@ -1,6 +1,6 @@
 name = "YumeXi/nanocake"
 
-version = "0.3.3"
+version = "0.4.0"
 
 import {
   "moonbit-community/prettyprinter@0.4.10",
