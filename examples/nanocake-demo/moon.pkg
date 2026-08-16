@@ -2,4 +2,10 @@ import {
   "YumeXi/nanocake/unparser/sexp",
 }
 
+import {
+  "YumeXi/nanocake/language",
+  "YumeXi/nanocake/unparser/gen",
+  "YumeXi/nanocake/pass",
+} for "wbtest"
+
 pkgtype(kind: "executable")

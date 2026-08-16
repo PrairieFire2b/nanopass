@@ -58,8 +58,9 @@ the escapes `\"`, `\\`, `\n`, `\r`, and `\t` are supported.
 let langs = @meta_parser.find_languages_by_spec_file("language.cake")
 let language = @language.Language::from_spec(
   name="Lambda",
-  path~="language.cake",
-  mod~="user/compiler",
+  path="language.cake",
+  mod="user/compiler",
+  pkg="src/language",
 )
 ```
 

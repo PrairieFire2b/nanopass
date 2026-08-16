@@ -39,15 +39,20 @@ pub fn Language::from_spec(
   name? : String = "",
   path~ : String,
   mod~ : String,
+  pkg? : String = "",
 ) -> Language raise {
   let langs = @meta_parser.find_languages_by_spec_file(path)
   let selected = langs.filter(lang => belongs_to(lang, name, langs))
   if selected.length() == 0 {
     raise NoLanguageFound
   }
-  let pkg = match path.split("/").collect() {
-    [p, ..] => p.to_owned()
-    _ => path
+  let pkg = if pkg == "" {
+    match path.split("/").collect() {
+      [p, ..] => p.to_owned()
+      _ => path
+    }
+  } else {
+    pkg
   }
   let repr = @meta_parser.SourceLocRepr::for_pkg(pkg~, mod~)
   let mbti = @meta_parser.resolve_mbti(repr)
