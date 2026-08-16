@@ -1,7 +1,7 @@
 # YumeXi/nanocake
 
 [![Check and Test](https://github.com/PrairieFire2b/nanocake/actions/workflows/check.yml/badge.svg?branch=master)](https://github.com/PrairieFire2b/nanocake/actions/workflows/check.yml)
-[![mooncakes.io](https://img.shields.io/badge/mooncakes.io-v0.3.3-blue)](https://mooncakes.io/docs/YumeXi/nanocake)
+[![mooncakes.io](https://img.shields.io/badge/mooncakes.io-v0.4.1-blue)](https://mooncakes.io/docs/YumeXi/nanocake)
 [![License](https://img.shields.io/badge/license-BSD--2--Clause-green)](LICENSE)
 
 A metaprogramming framework for defining composable, type-safe AST transformations.
@@ -20,13 +20,13 @@ available for compatibility.
 Install a current MoonBit toolchain, then add nanocake to a MoonBit module:
 
 ```bash
-moon add YumeXi/nanocake@0.3.3
+moon add YumeXi/nanocake@0.4.1
 ```
 
 Install the generator command from mooncakes.io:
 
 ```bash
-moon install YumeXi/nanocake/cmd/nanocake@0.3.3
+moon install YumeXi/nanocake/cmd/nanocake@0.4.1
 nanocake --help
 ```
 
@@ -179,7 +179,7 @@ nanocake-demo
 ```
 
 The demo is a separate `YumeXi/nanocake-demo` module. The root `moon.work`
-resolves its `YumeXi/nanocake@0.3.3` dependency to the local source checkout.
+resolves its `YumeXi/nanocake@0.4.1` dependency to the local source checkout.
 It parses `(+ 1 (* 2 3))` with nanocake's S-expression runtime, decodes it
 into a wrapper-based typed AST in the shape emitted by the language generator,
 runs a bottom-up constant-folding algebra through the generated `cata` API, and

@@ -89,7 +89,14 @@ fn ensure_dir(path : String) -> Unit raise {
 
 ///|
 fn file_matches(path : String, expected : String) -> Bool raise {
-  @fs.path_exists(path) && @fs.read_file_to_string(path) == expected
+  @fs.path_exists(path) &&
+  normalize_newlines(@fs.read_file_to_string(path)) ==
+  normalize_newlines(expected)
+}
+
+///|
+fn normalize_newlines(text : String) -> String {
+  text.replace_all(old="\r\n", new="\n")
 }
 
 ///|

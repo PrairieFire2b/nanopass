@@ -151,16 +151,19 @@ Alpha-renaming — override only `var_` and `lam_`, extend the environment
 *before* running the body:
 
 ```mbt nocheck
+///|
 let rename = {
   ..ExprRewriteAlg::identity(),
   var_: fn(x) { ask_env().map(fn(env) { Expr::var_(env.get_or(x, x)) }) },
   lam_: fn(x, body_m, e) {
     fresh(x).flat_map(fn(x2) {
-      local_env(fn(env) { env.set(x, x2) }, body_m)   // body_m runs in the new env
-        .map(fn(body) { Expr::lam(x2, body, e) })
+      local_env(fn(env) { env.set(x, x2) }, body_m) // body_m runs in the new env
+      .map(fn(body) { Expr::lam(x2, body, e) })
     })
   },
 }
+
+///|
 let out = expr.rewrite_m(rename).exec(Map::new(), 0)
 ```
 
@@ -171,13 +174,14 @@ added between base and derived language (from `NanoLangDef::diff`); everything
 else stays `identity()` via spread:
 
 ```mbt nocheck
+///|
 fn[Env, St, Log, Err] simplify() -> TypedExprRewriteAlg[Env, St, Log, Err] {
   let base = TypedExprRewriteAlg::identity()
   TypedExprRewriteAlg::{
     ..base,
-    lam_: base.lam_,     // changed
-    if_: base.if_,       // added; replace with your handler
-    true_: base.true_,   // added
+    lam_: base.lam_, // changed
+    if_: base.if_, // added; replace with your handler
+    true_: base.true_, // added
     false_: base.false_, // added
   }
 }

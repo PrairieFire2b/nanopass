@@ -44,3 +44,8 @@ test "detect stale generated files without writing" {
   assert_eq(changed.length(), 4)
   assert_false(@fs.path_exists("_build/nonexistent-nanocake-generated"))
 }
+
+///|
+test "generated file checks tolerate Windows line endings" {
+  assert_eq(normalize_newlines("a\r\nb\r\n"), "a\nb\n")
+}

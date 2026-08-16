@@ -3,7 +3,7 @@ name = "YumeXi/nanocake-demo"
 version = "0.1.0"
 
 import {
-  "YumeXi/nanocake@0.3.3",
+  "YumeXi/nanocake@0.4.1",
 }
 
 repository = "https://github.com/PrairieFire2b/nanocake"
