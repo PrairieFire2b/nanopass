@@ -89,11 +89,11 @@ fn Expr::view(self : Expr) -> ExprView {
 ```mbt nocheck
 // 1. Parameterized algebra (Self_ positions → Repr)
 struct ExprSemantics[Repr] {
-  Int_ : (Int) -> Repr
-  Lam_ : (LambdaVar, Repr, Unit) -> Repr
-  App_ : (Repr, Repr) -> Repr
+  int_ : (Int) -> Repr
+  lam_ : (LambdaVar, Repr, Unit) -> Repr
+  app_ : (Repr, Repr) -> Repr
   // ext constructors lifted to top-level fields
-  If_  : (Repr, Repr, Repr) -> Repr
+  if_  : (Repr, Repr, Repr) -> Repr
 }
 
 // 2. Canonical identity denotation
@@ -116,7 +116,7 @@ Write a pass by spread-overriding only the constructors you care about — no
 fn has_true() -> TypedExprSemantics[Bool] {
   let id = TypedExprSemantics::identity()   // (won't type-check: identity is Repr=TypedExpr)
   // for analysis use a purpose-built algebra:
-  { Int_: fn(_) { false }, True_: fn() { true }, If_: fn(c, t, e) { c || t || e }, .. }
+  { int_: fn(_) { false }, true_: fn() { true }, if_: fn(c, t, e) { c || t || e }, .. }
 }
 let seen = expr.cata(has_true())
 ```
@@ -134,10 +134,10 @@ handler decides *when* and *in what environment* to run each subtree.
 ```mbt nocheck
 // Sub-tree positions become delayed PassM computations
 struct ExprRewriteAlg[Env, St, Log, Err] {
-  Int_ : (Int) -> @pass.PassM[Env, St, Log, Err, Expr]
-  Lam_ : (LambdaVar, @pass.PassM[Env, St, Log, Err, Expr], Unit)
+  int_ : (Int) -> @pass.PassM[Env, St, Log, Err, Expr]
+  lam_ : (LambdaVar, @pass.PassM[Env, St, Log, Err, Expr], Unit)
          -> @pass.PassM[Env, St, Log, Err, Expr]
-  App_ : (@pass.PassM[Env, St, Log, Err, Expr], @pass.PassM[Env, St, Log, Err, Expr])
+  app_ : (@pass.PassM[Env, St, Log, Err, Expr], @pass.PassM[Env, St, Log, Err, Expr])
          -> @pass.PassM[Env, St, Log, Err, Expr]
 }
 
@@ -147,14 +147,14 @@ fn[Env, St, Log, Err] Expr::rewrite_m(
 ) -> @pass.PassM[Env, St, Log, Err, Expr]
 ```
 
-Alpha-renaming — override only `Var_` and `Lam_`, extend the environment
+Alpha-renaming — override only `var_` and `lam_`, extend the environment
 *before* running the body:
 
 ```mbt nocheck
 let rename = {
   ..ExprRewriteAlg::identity(),
-  Var_: fn(x) { ask_env().map(fn(env) { Expr::var(env.get_or(x, x)) }) },
-  Lam_: fn(x, body_m, e) {
+  var_: fn(x) { ask_env().map(fn(env) { Expr::var_(env.get_or(x, x)) }) },
+  lam_: fn(x, body_m, e) {
     fresh(x).flat_map(fn(x2) {
       local_env(fn(env) { env.set(x, x2) }, body_m)   // body_m runs in the new env
         .map(fn(body) { Expr::lam(x2, body, e) })
@@ -175,16 +175,16 @@ fn[Env, St, Log, Err] simplify() -> TypedExprRewriteAlg[Env, St, Log, Err] {
   let base = TypedExprRewriteAlg::identity()
   TypedExprRewriteAlg::{
     ..base,
-    Lam_: base.Lam_,     // changed
-    If_: base.If_,       // added   ← replace with your handler
-    True_: base.True_,   // added
-    False_: base.False_, // added
+    lam_: base.lam_,     // changed
+    if_: base.if_,       // added; replace with your handler
+    true_: base.true_,   // added
+    false_: base.false_, // added
   }
 }
 ```
 
 `changed_and_added_fields(diff)` returns the covering set (e.g.
-`[Lam_, If_, True_, False_]` for `Lambda → SimplyTypedLambda`).
+`[lam_, if_, true_, false_]` for `Lambda → SimplyTypedLambda`).
 
 ## `PassM` effect monad
 

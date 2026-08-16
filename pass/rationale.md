@@ -34,12 +34,12 @@ catamorphism 用代数方式解耦了"遍历策略"和"构造子语义"：
 // cata 处理递归（框架代码，生成一次）
 fn[R] Expr::cata(self, s: ExprSemantics[R]) -> R {
   match ... {
-    App(f, a) => (s.App_)(f.cata(s), a.cata(s))  // 框架决定递归顺序
+    App(f, a) => (s.app_)(f.cata(s), a.cata(s))  // 框架决定递归顺序
   }
 }
 
 // 用户只写构造子语义（业务代码）
-{ ..id, App_: fn(f, a) { ... } }  // 用户不碰递归
+{ ..id, app_: fn(f, a) { ... } }  // 用户不碰递归
 ```
 
 ## 4. 为什么是 record-of-functions，不是 trait
@@ -62,7 +62,7 @@ fn cata(s: ExprSemantics[R]) -> R
 
 ```mbt
 let id = ExprSemantics::identity()
-{ ..id, App_: fn(f, a) { ... } }  // 只覆盖 App_，其余自动走 id
+{ ..id, app_: fn(f, a) { ... } }  // 只覆盖 app_，其余自动走 id
 ```
 
 不需要额外的类型、适配器、或 Diff → stub 的代码生成。`identity()` 就是默认值，spread 就是覆盖。
@@ -75,10 +75,10 @@ let id = ExprSemantics::identity()
 
 ```mbt
 struct TypedExprSemantics[Repr] {
-  Int_ : (Int) -> Repr      // 共享
-  Lam_ : (Var, Repr, Type) -> Repr  // 共享
-  True_ : () -> Repr        // ext，提升到顶层
-  If_ : (Repr, Repr, Repr) -> Repr  // ext，提升到顶层
+  int_ : (Int) -> Repr      // 共享
+  lam_ : (Var, Repr, Type) -> Repr  // 共享
+  true_ : () -> Repr        // ext，提升到顶层
+  if_ : (Repr, Repr, Repr) -> Repr  // ext，提升到顶层
 }
 ```
 
@@ -122,7 +122,7 @@ Lam("x_0", Lam("x_1", Var("x_1")))
 
 **为什么 BottomUp cata 做不到：**
 
-cata 生成的代码是 `Lam(x, body_rec) => s.Lam_(x, body_rec)`——`body_rec` 是已经递归完的结果。handler 拿到的是 `Var("x_1")`（内层已被处理），但当下一次外层 `Lam` 扩展 env 时，它无法区分哪个 `Var` 已经解析到了哪个作用域。更根本地说，cata 的 handler **不知道** body 里有哪些自由变量、它们在哪个作用域被绑定——递归顺序使这些信息不可达。
+cata 生成的代码是 `Lam(x, body_rec) => (s.lam_)(x, body_rec)`——`body_rec` 是已经递归完的结果。handler 拿到的是 `Var("x_1")`（内层已被处理），但当下一次外层 `Lam` 扩展 env 时，它无法区分哪个 `Var` 已经解析到了哪个作用域。更根本地说，cata 的 handler **不知道** body 里有哪些自由变量、它们在哪个作用域被绑定——递归顺序使这些信息不可达。
 
 **PassM 的解决方案（实现于 `pass_m_test.mbt`）：**
 

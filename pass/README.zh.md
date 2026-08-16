@@ -61,10 +61,10 @@ fn Expr::view(self : Expr) -> ExprView { ... }
 ```mbt nocheck
 // 1. 参数化代数结构体（Self_ 位置 → Repr）
 struct ExprSemantics[Repr] {
-  Int_ : (Int) -> Repr
-  Lam_ : (LambdaVar, Repr, Unit) -> Repr
-  App_ : (Repr, Repr) -> Repr
-  If_  : (Repr, Repr, Repr) -> Repr   // ext 构造子提升为顶层字段
+  int_ : (Int) -> Repr
+  lam_ : (LambdaVar, Repr, Unit) -> Repr
+  app_ : (Repr, Repr) -> Repr
+  if_  : (Repr, Repr, Repr) -> Repr   // ext 构造子提升为顶层字段
 }
 
 // 2. 典范恒等语义
@@ -84,9 +84,9 @@ fn[R] Expr::cata(self : Expr, s : ExprSemantics[R]) -> R
 ```mbt nocheck
 // 检测是否存在 True 字面量
 let has_true : TypedExprSemantics[Bool] = {
-  Int_:   fn(_) { false },
-  True_:  fn() { true },
-  If_:    fn(c, t, e) { c || t || e },
+  int_:   fn(_) { false },
+  true_:  fn() { true },
+  if_:    fn(c, t, e) { c || t || e },
   // ... 其余字段
 }
 let seen = expr.cata(has_true)
@@ -101,10 +101,10 @@ let seen = expr.cata(has_true)
 ```mbt nocheck
 // Self_ 位置变为延迟 PassM 子计算
 struct ExprRewriteAlg[Env, St, Log, Err] {
-  Int_ : (Int) -> @pass.PassM[Env, St, Log, Err, Expr]
-  Lam_ : (LambdaVar, @pass.PassM[Env, St, Log, Err, Expr], Unit)
+  int_ : (Int) -> @pass.PassM[Env, St, Log, Err, Expr]
+  lam_ : (LambdaVar, @pass.PassM[Env, St, Log, Err, Expr], Unit)
          -> @pass.PassM[Env, St, Log, Err, Expr]
-  App_ : (@pass.PassM[Env, St, Log, Err, Expr], @pass.PassM[Env, St, Log, Err, Expr])
+  app_ : (@pass.PassM[Env, St, Log, Err, Expr], @pass.PassM[Env, St, Log, Err, Expr])
          -> @pass.PassM[Env, St, Log, Err, Expr]
 }
 
@@ -114,13 +114,13 @@ fn[Env, St, Log, Err] Expr::rewrite_m(
 ) -> @pass.PassM[Env, St, Log, Err, Expr]
 ```
 
-Alpha-renaming：只覆盖 `Var_` 和 `Lam_`，先扩环境**再**执行 body：
+Alpha-renaming：只覆盖 `var_` 和 `lam_`，先扩环境**再**执行 body：
 
 ```mbt nocheck
 let rename = {
   ..ExprRewriteAlg::identity(),
-  Var_: fn(x) { ask_env().map(fn(env) { Expr::var(env.get_or(x, x)) }) },
-  Lam_: fn(x, body_m, e) {
+  var_: fn(x) { ask_env().map(fn(env) { Expr::var_(env.get_or(x, x)) }) },
+  lam_: fn(x, body_m, e) {
     fresh(x).flat_map(fn(x2) {
       local_env(fn(env) { env.set(x, x2) }, body_m)   // body_m 在新环境中执行
         .map(fn(body) { Expr::lam(x2, body, e) })
@@ -139,15 +139,15 @@ fn[Env, St, Log, Err] simplify() -> TypedExprRewriteAlg[Env, St, Log, Err] {
   let base = TypedExprRewriteAlg::identity()
   TypedExprRewriteAlg::{
     ..base,
-    Lam_: base.Lam_,     // changed ← 替换为真实 handler
-    If_: base.If_,       // added
-    True_: base.True_,   // added
-    False_: base.False_, // added
+    lam_: base.lam_,     // changed，替换为真实 handler
+    if_: base.if_,       // added
+    true_: base.true_,   // added
+    false_: base.false_, // added
   }
 }
 ```
 
-`changed_and_added_fields(diff)` 返回覆盖集合（例如 Lambda → SimplyTypedLambda 为 `[Lam_, If_, True_, False_]`）。
+`changed_and_added_fields(diff)` 返回覆盖集合（例如 Lambda → SimplyTypedLambda 为 `[lam_, if_, true_, false_]`）。
 
 ## `PassM` effect monad
 

@@ -37,7 +37,7 @@ pub(all) struct PassM[Env, St, Log, Err, A] {
 
 ```mbt
 // cata 风格: body 已经是 Repr，环境信息已丢失
-Lam(x, body_result, _lam_e) => (s.Lam_)(x, body_result)
+Lam(x, body_result, _lam_e) => (s.lam_)(x, body_result)
 
 // PassM 风格: body 是延迟计算，handler 先扩环境再执行
 Lam(x, body_m, _lam_e) =>

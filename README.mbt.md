@@ -6,10 +6,11 @@
 
 A metaprogramming framework for defining composable, type-safe AST transformations.
 
-Given MoonBit enums annotated with `#nanopass.language`, the library generates
-unified `Tree` types that merge shared constructors across language extensions,
-plus S-expression parsers/unparsers and transformation-pass scaffolding for the
-resulting ASTs.
+Given ordinary MoonBit enums and a `.cake` metadata sidecar, the library
+generates unified `Tree` types that merge shared constructors across language
+extensions, plus S-expression parsers/unparsers and transformation-pass
+scaffolding for the resulting ASTs. The original attribute frontend remains
+available for compatibility.
 
 - GitHub: <https://github.com/PrairieFire2b/nanocake>
 - Package: <https://mooncakes.io/docs/YumeXi/nanocake>
@@ -20,6 +21,13 @@ Install a current MoonBit toolchain, then add nanocake to a MoonBit module:
 
 ```bash
 moon add YumeXi/nanocake@0.3.3
+```
+
+Install the generator command from mooncakes.io:
+
+```bash
+moon install YumeXi/nanocake/cmd/nanocake@0.3.3
+nanocake --help
 ```
 
 The repository currently targets the `wasm` backend by default. To work from
@@ -37,8 +45,8 @@ moon test
 
 ```
                    ┌─────────────┐
-#nanopass.language │ meta_parser │  parse annotations, resolve extends chains,
-                   └──────┬──────┘  apply #nano.remove, resolve entries/.mbti
+ .cake / attributes│ meta_parser │  parse metadata, resolve extends chains,
+                   └──────┬──────┘  apply removals, resolve entries/.mbti
                           │ NanoLangDef[]
                           ▼
                    ┌─────────────┐
@@ -57,17 +65,16 @@ moon test
      └─────────────┘
 ```
 
-- **`meta_parser`** — Parses `#nanopass.language` / `#nanopass.nonterminal` and
-  `#nano.*` annotations from source files. Resolves language definitions,
-  `extends` chains, `#nano.remove` deletions, effective entries, and `.mbti`
-  interfaces.
+- **`meta_parser`** — Parses `.cake` sidecars or the compatibility attribute
+  syntax. Resolves language definitions, inheritance, constructor removals,
+  effective entries, surface forms, hooks, and `.mbti` interfaces.
 - **`language`** — Expands each language against its parent (inheritance,
   override, and `#nano.remove`) into a `GeneratedLanguageLayout`, then generates
   the AST scaffolding: unified syntax trees, per-language wrappers, extension
   enums, and terminal aliases.
 - **`unparser/sexp`** — S-expression runtime shared by generated code: a parser,
-  a pretty-printing document model, `#nano.form` pattern matching, and layered
-  parse/decode/hook errors.
+  a pretty-printing document model, structural `.cake` form matching, and
+  layered parse/decode/hook errors.
 - **`unparser/gen`** — Generates concrete `from_sexp` / `to_sexp_doc` /
   `parse_sexp` / `unparse_sexp` codecs from a language's layout, honoring custom
   surface syntax and hooks.
@@ -86,7 +93,18 @@ S-expression codecs, and pass APIs.
 
 ### Generate MoonBit sources
 
-From a source checkout:
+With an installed CLI:
+
+```bash
+nanocake generate \
+  --spec schema/arithmetic.cake \
+  --language Arithmetic \
+  --module user/compiler \
+  --pkg schema \
+  --out-dir generated
+```
+
+The equivalent command from a nanocake source checkout is:
 
 ```bash
 moon run cmd/nanocake -- generate \
@@ -107,6 +125,28 @@ generated/
   moon.pkg
 ```
 
+| File | Contents |
+|------|----------|
+| `ast.mbt` | Shared `Tree`, language wrappers, extension enums, external type aliases, and language entry stubs |
+| `codec.mbt` | `from_sexp`, `parse_sexp`, `to_sexp_doc`, and `unparse_sexp` implementations |
+| `pass.mbt` | Smart constructors, flat views, pure `cata` semantics, and effectful rewrite APIs |
+| `moon.pkg` | Imports, generated-source formatter exclusions, and warning policy for the generated package |
+
+Generator options:
+
+| Option | Required | Meaning |
+|--------|----------|---------|
+| `--spec <file.cake>` | Yes | Metadata sidecar; its `(source ...)` path is resolved relative to this file |
+| `--language <name>` | Yes | Root language to generate, including its derived language group |
+| `--module <name>` | Yes | MoonBit module containing the source enums |
+| `--pkg <path>` | No | Package containing `pkg.generated.mbti`; use this for nested or external packages |
+| `--out-dir <path>` | No | Generated package directory; defaults to `generated` |
+| `--check` | No | Compare expected output with disk without writing |
+
+Run the command from the module or workspace root so `--spec`, `--pkg`, and
+`--out-dir` resolve consistently. Generation is deterministic and only rewrites
+files whose content changed.
+
 Use `--check` in CI to fail when any generated file is missing or stale:
 
 ```bash
@@ -119,8 +159,9 @@ moon run cmd/nanocake -- generate \
   --check
 ```
 
-The command only rewrites files whose content changed. The generated package is
-formatted MoonBit source and is checked by the workspace build.
+The generated `moon.pkg` marks generated `.mbt` files as formatter-managed, so
+`moon fmt` leaves them unchanged. Add the generated directory to the consuming
+workspace and run `moon check` to compile the actual generated output.
 
 ### Run the demo
 
@@ -146,7 +187,7 @@ renders the result as `7`. It is self-contained after installation and does not
 read repository fixtures at runtime. See `examples/nanocake-demo/generated/`
 for checked-in CLI output and `semantics.mbt` for the user-authored algebra.
 
-### 1. Define languages
+### Compatibility: define languages with attributes
 
 ```mbt nocheck
 ///|
@@ -195,7 +236,7 @@ enum NoAppExpr {
 }
 ```
 
-### 2. Generate AST scaffolding
+### Library API: generate AST scaffolding
 
 ```mbt nocheck
 let lang = @language.Language::from_file(
@@ -209,7 +250,7 @@ This produces a unified `Tree[Self_, LamE, TreeExt]` enum, per-language structs
 (`Expr`, `TypedExpr`), extension enums (`TypedExprExt`), external terminal
 aliases, and stub parse/unparse entry functions.
 
-### 3. Generate S-expression codecs
+### Library API: generate S-expression codecs
 
 ```mbt nocheck
 let lang = @language.Language::from_file(...)
@@ -222,7 +263,7 @@ surface syntax and `#nano.parse_by` / `#nano.unparse_by` hook escape hatches.
 It also emits a `from_sexp_without_hooks` variant so hooks can call back into
 the generated parser without infinite recursion.
 
-### 4. Write passes
+### Library API: write passes
 
 See the `pass` package for transform/fold scaffolding and the `PassM` effectful
 pipeline combinator.
@@ -272,6 +313,8 @@ MoonBit enum definitions.
 
 | API | Description |
 |-----|-------------|
+| `find_languages_by_spec_file(path)` | Parse and lower a `.cake` sidecar with its referenced MoonBit source |
+| `parse_nano_spec(source)` | Parse `.cake` text into the schema-level `NanoSpec` model |
 | `find_languages(src)` | Parse `#nanopass.language` annotations from a `SourceLocRepr` |
 | `find_languages_by_file(path)` | Parse language annotations from a file path |
 | `normalize_language_defs(langs)` | Validate and resolve entries; returns langs with `resolved_entry` populated |
@@ -287,6 +330,7 @@ Key types: `NanoLangDef` (with `removed : Array[String]` for `#nano.remove`),
 
 | API | Description |
 |-----|-------------|
+| `Language::from_spec(name?, path~, mod~, pkg?)` | Resolve a language group from a `.cake` sidecar |
 | `Language::def(name?, loc~)` | Resolve languages from the callsite file |
 | `Language::from_file(name?, path~, mod~)` | Resolve languages from an explicit file |
 | `Language::gen()` | Generate AST definitions (Tree, wrappers, ext enums, terminals, entry stubs) |
@@ -322,17 +366,26 @@ Cause-chained context via `with_context`.
 Generated per type: `Ty::from_sexp`, `Ty::from_sexp_without_hooks` (safe hook
 fallback), `Ty::parse_sexp`, `Ty::to_sexp_doc`, `Ty::unparse_sexp`.
 
+### `nanocake` — Generator CLI
+
+| Command | Description |
+|---------|-------------|
+| `nanocake generate ...` | Generate `ast.mbt`, `codec.mbt`, `pass.mbt`, and `moon.pkg` from a `.cake` sidecar |
+| `nanocake generate ... --check` | Verify checked-in generated files without modifying them |
+
+The executable package is `YumeXi/nanocake/cmd/nanocake`.
+
 ### `@pass` — Transformation-pass scaffolding
 
 See `pass/README.mbt.md` for the full API. Highlights:
 
-| Milestone | What is generated |
-|-----------|-------------------|
-| M1 (surface) | Smart constructors + view functions for wrapper-based ASTs |
-| M2 (cata) | Catamorphism `cata` for bottom-up folds |
-| M3 (rewrite_m) | Effectful delayed-subtree rewrite with `RewriteAlg` |
-| M4 (stub) | Diff-driven pass stub generator |
-| M5 (PassM) | Effectful pipeline/trace combinators |
+| Capability | API |
+|------------|-----|
+| Stable AST construction and inspection | Smart constructors, flat view enums, and `view()` |
+| Pure bottom-up folds and transforms | `{Lang}Semantics[Repr]` and `cata` |
+| Scope-sensitive effectful rewrites | `{Lang}RewriteAlg` and `rewrite_m` |
+| Focused pass templates | Diff-driven rewrite stub generation |
+| Stateful and logged pipelines | `PassM`, `pipeline_m`, `when_m`, and `traced` |
 
 ## Design Rationale
 

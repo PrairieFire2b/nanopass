@@ -11,13 +11,13 @@
 
 ### `gen_semantics(lang) -> List[Impl]`
 
-Replaces the old `gen_transform` + `gen_fold` + `gen_minimal_pass`. Generates **per language**:
+Generates the following APIs for each language:
 
 ```mbt nocheck
 // 1. Parameterized algebra struct
 struct {Lang}Semantics[Repr] {
-  Int_ : (Int) -> Repr
-  Lam_ : (Var, Repr, Unit) -> Repr     // Self_ positions → Repr
+  int_ : (Int) -> Repr
+  lam_ : (Var, Repr, Unit) -> Repr     // Self_ positions → Repr
   ...
 }
 
@@ -45,7 +45,7 @@ After running the generators and writing output to files, users write:
 // Override one constructor, keep identity for the rest
 fn constant_fold() -> ExprSemantics[Expr] {
   let id = ExprSemantics::identity()
-  { ..id, App_: fn(f, a) { ... } }
+  { ..id, app_: fn(f, a) { ... } }
 }
 
 let result = expr.cata(constant_fold())
