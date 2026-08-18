@@ -172,14 +172,14 @@ fn[Env, St, Log, Err] ExprSchemaRewriteAlg::identity() -> ExprSchemaRewriteAlg[
     int_: fn(arg0) { @pass.PassM::pure(ExprSchema::int(arg0)) },
     var_: fn(arg0) { @pass.PassM::pure(ExprSchema::var_(arg0)) },
     add_: fn(arg0, arg1) {
-      arg0.flat_map(fn(arg0_v) {
-        arg1.map(fn(arg1_v) { ExprSchema::add(arg0_v, arg1_v) })
-      })
+      arg0.flat_map(
+        fn(arg0_v) { arg1.map(fn(arg1_v) { ExprSchema::add(arg0_v, arg1_v) }) }
+      )
     },
     mul_: fn(arg0, arg1) {
-      arg0.flat_map(fn(arg0_v) {
-        arg1.map(fn(arg1_v) { ExprSchema::mul(arg0_v, arg1_v) })
-      })
+      arg0.flat_map(
+        fn(arg0_v) { arg1.map(fn(arg1_v) { ExprSchema::mul(arg0_v, arg1_v) }) }
+      )
     },
   }
 }
@@ -223,14 +223,18 @@ fn[Env, St, Log, Err] OptimizedExprSchemaRewriteAlg::identity() -> OptimizedExpr
     int_: fn(arg0) { @pass.PassM::pure(OptimizedExprSchema::int(arg0)) },
     var_: fn(arg0) { @pass.PassM::pure(OptimizedExprSchema::var_(arg0)) },
     add_: fn(arg0, arg1) {
-      arg0.flat_map(fn(arg0_v) {
-        arg1.map(fn(arg1_v) { OptimizedExprSchema::add(arg0_v, arg1_v) })
-      })
+      arg0.flat_map(
+        fn(arg0_v) {
+          arg1.map(fn(arg1_v) { OptimizedExprSchema::add(arg0_v, arg1_v) })
+        },
+      )
     },
     mul_: fn(arg0, arg1) {
-      arg0.flat_map(fn(arg0_v) {
-        arg1.map(fn(arg1_v) { OptimizedExprSchema::mul(arg0_v, arg1_v) })
-      })
+      arg0.flat_map(
+        fn(arg0_v) {
+          arg1.map(fn(arg1_v) { OptimizedExprSchema::mul(arg0_v, arg1_v) })
+        },
+      )
     },
   }
 }

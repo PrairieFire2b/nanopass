@@ -15,33 +15,39 @@ struct ExprSchema(Tree[ExprSchema])
 struct OptimizedExprSchema(Tree[OptimizedExprSchema])
 
 ///|
+///
 pub fn parse_Arithmetic(sexp : @sexp.Sexp) -> ExprSchema raise @sexp.Cause {
   @sexp.with_context("parse Arithmetic", () => parse_Arithmetic_raw(sexp))
 }
 
 ///|
+///
 fn parse_Arithmetic_raw(_sexp : @sexp.Sexp) -> ExprSchema raise @sexp.SexpError {
   raise  @sexp.GeneratedCode(message="parse Arithmetic is not generated yet")
 }
 
 ///|
+///
 pub fn unparse_Arithmetic(value : ExprSchema) -> @sexp.SexpDoc raise @sexp.Cause {
   @sexp.with_context("unparse Arithmetic", () => unparse_Arithmetic_raw(value))
 }
 
 ///|
+///
 fn unparse_Arithmetic_raw(_value : ExprSchema) -> @sexp.SexpDoc raise @sexp.SexpError {
   raise  @sexp.GeneratedCode(message="unparse Arithmetic is not generated yet")
 }
 
 ///|
+///
 pub fn parse_OptimizedArithmetic(sexp : @sexp.Sexp) -> OptimizedExprSchema raise @sexp.Cause {
-  @sexp.with_context("parse OptimizedArithmetic", () => {
-    parse_OptimizedArithmetic_raw(sexp)
-  })
+  @sexp.with_context(
+    "parse OptimizedArithmetic", () => parse_OptimizedArithmetic_raw(sexp)
+  )
 }
 
 ///|
+///
 fn parse_OptimizedArithmetic_raw(_sexp : @sexp.Sexp) -> OptimizedExprSchema raise @sexp.SexpError {
   raise  @sexp.GeneratedCode(
     message="parse OptimizedArithmetic is not generated yet",
@@ -49,13 +55,15 @@ fn parse_OptimizedArithmetic_raw(_sexp : @sexp.Sexp) -> OptimizedExprSchema rais
 }
 
 ///|
+///
 pub fn unparse_OptimizedArithmetic(value : OptimizedExprSchema) -> @sexp.SexpDoc raise @sexp.Cause {
-  @sexp.with_context("unparse OptimizedArithmetic", () => {
-    unparse_OptimizedArithmetic_raw(value)
-  })
+  @sexp.with_context(
+    "unparse OptimizedArithmetic", () => unparse_OptimizedArithmetic_raw(value)
+  )
 }
 
 ///|
+///
 fn unparse_OptimizedArithmetic_raw(_value : OptimizedExprSchema) -> @sexp.SexpDoc raise @sexp.SexpError {
   raise  @sexp.GeneratedCode(
     message="unparse OptimizedArithmetic is not generated yet",

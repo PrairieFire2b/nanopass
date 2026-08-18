@@ -11,7 +11,13 @@ fn generated_header(kind : String) -> String {
 
 ///|
 fn generated_source(header : String, body : String) -> String {
-  header + body.trim_end().to_owned() + "\n"
+  let clean = body
+    .split("\n")
+    .map(line => line.trim_end().to_owned())
+    .join("\n")
+    .trim_end()
+    .to_owned()
+  header + clean + "\n"
 }
 
 ///|

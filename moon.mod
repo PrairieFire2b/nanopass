@@ -1,12 +1,12 @@
 name = "YumeXi/nanocake"
 
-version = "0.4.1"
+version = "0.4.3"
 
 import {
   "moonbit-community/prettyprinter@0.4.10",
-  "moonbitlang/parser@0.3.13",
-  "moonbitlang/lexer@0.3.13",
-  "moonbitlang/x@0.4.49",
+  "moonbitlang/parser@0.3.17",
+  "moonbitlang/lexer@0.3.15",
+  "moonbitlang/x@0.4.50",
   "YumeXi/error@0.2.2",
 }
 

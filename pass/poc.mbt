@@ -9,9 +9,14 @@ let lang : @language.Language = @language.Language::from_file(
 }
 
 ///|
+fn clean_generated_output(text : String) -> String {
+  text.split("\n").map(line => line.trim_end().to_owned()).join("\n")
+}
+
+///|
 test "gen_semantics - Semantics struct, identity, and cata method" {
   let impls = gen_semantics(lang)
-  let output = @fmt.impls_to_string(impls)
+  let output = clean_generated_output(@fmt.impls_to_string(impls))
   inspect(
     output,
     content=(
@@ -81,7 +86,7 @@ test "gen_semantics - Semantics struct, identity, and cata method" {
       #|      match te {
       #|        True => (s.true_)()
       #|        False => (s.false_)()
-      #|        If(cond=cond, arg1, arg2) => 
+      #|        If(cond~, arg1, arg2) =>
       #|          (s.if_)(cond.cata(s), arg1.cata(s), arg2.cata(s))
       #|      }
       #|    }
@@ -96,7 +101,7 @@ test "gen_semantics - Semantics struct, identity, and cata method" {
 ///|
 test "gen_identity - identity functions for each language" {
   let impls = gen_identity(lang)
-  let output = @fmt.impls_to_string(impls)
+  let output = clean_generated_output(@fmt.impls_to_string(impls))
   inspect(
     output,
     content=(
@@ -118,7 +123,7 @@ test "gen_identity - identity functions for each language" {
 ///|
 test "gen_surface - smart constructors and view for each language" {
   let impls = gen_surface(lang)
-  let output = @fmt.impls_to_string(impls)
+  let output = clean_generated_output(@fmt.impls_to_string(impls))
   inspect(
     output,
     content=(
@@ -220,7 +225,7 @@ test "gen_surface - smart constructors and view for each language" {
       #|      match te {
       #|        True => VTrue
       #|        False => VFalse
-      #|        If(cond=cond, arg1, arg2) => VIf(cond, arg1, arg2)
+      #|        If(cond~, arg1, arg2) => VIf(cond, arg1, arg2)
       #|      }
       #|    }
       #|  }
@@ -280,7 +285,7 @@ test "fixpoint - apply pass until stable" {
 ///|
 test "gen_rewrite - RewriteAlg struct, identity, and rewrite_m driver" {
   let impls = gen_rewrite(lang)
-  let output = @fmt.impls_to_string(impls)
+  let output = clean_generated_output(@fmt.impls_to_string(impls))
   inspect(
     output,
     content=(
@@ -315,9 +320,9 @@ test "gen_rewrite - RewriteAlg struct, identity, and rewrite_m driver" {
       #|      arg1.map(fn(arg1_v) { Expr::lam(arg0, arg1_v, arg2) })
       #|    },
       #|    app_: fn(arg0, arg1) {
-      #|      arg0.flat_map(fn(arg0_v) {
-      #|        arg1.map(fn(arg1_v) { Expr::app(arg0_v, arg1_v) })
-      #|      })
+      #|      arg0.flat_map(
+      #|        fn(arg0_v) { arg1.map(fn(arg1_v) { Expr::app(arg0_v, arg1_v) }) }
+      #|      )
       #|    },
       #|  }
       #|}
@@ -375,18 +380,22 @@ test "gen_rewrite - RewriteAlg struct, identity, and rewrite_m driver" {
       #|      arg1.map(fn(arg1_v) { TypedExpr::lam(arg0, arg1_v, arg2) })
       #|    },
       #|    app_: fn(arg0, arg1) {
-      #|      arg0.flat_map(fn(arg0_v) {
-      #|        arg1.map(fn(arg1_v) { TypedExpr::app(arg0_v, arg1_v) })
-      #|      })
+      #|      arg0.flat_map(
+      #|        fn(arg0_v) { arg1.map(fn(arg1_v) { TypedExpr::app(arg0_v, arg1_v) }) }
+      #|      )
       #|    },
       #|    true_: fn() { @pass.PassM::pure(TypedExpr::true_()) },
       #|    false_: fn() { @pass.PassM::pure(TypedExpr::false_()) },
       #|    if_: fn(arg0, arg1, arg2) {
-      #|      arg0.flat_map(fn(arg0_v) {
-      #|        arg1.flat_map(fn(arg1_v) {
-      #|          arg2.map(fn(arg2_v) { TypedExpr::if_(arg0_v, arg1_v, arg2_v) })
-      #|        })
-      #|      })
+      #|      arg0.flat_map(
+      #|        fn(arg0_v) {
+      #|          arg1.flat_map(
+      #|            fn(arg1_v) {
+      #|              arg2.map(fn(arg2_v) { TypedExpr::if_(arg0_v, arg1_v, arg2_v) })
+      #|            },
+      #|          )
+      #|        },
+      #|      )
       #|    },
       #|  }
       #|}
@@ -406,7 +415,7 @@ test "gen_rewrite - RewriteAlg struct, identity, and rewrite_m driver" {
       #|      match te {
       #|        True => (alg.true_)()
       #|        False => (alg.false_)()
-      #|        If(cond=cond, arg1, arg2) => {
+      #|        If(cond~, arg1, arg2) => {
       #|          (
       #|            alg.if_
       #|          )(cond.rewrite_m(alg), arg1.rewrite_m(alg), arg2.rewrite_m(alg))
@@ -424,7 +433,7 @@ test "gen_rewrite - RewriteAlg struct, identity, and rewrite_m driver" {
 ///|
 test "gen_rewrite_stub - minimal coverage stub for derived language" {
   let impls = gen_rewrite_stub(lang, "simplify")
-  let output = @fmt.impls_to_string(impls)
+  let output = clean_generated_output(@fmt.impls_to_string(impls))
   inspect(
     output,
     content=(
